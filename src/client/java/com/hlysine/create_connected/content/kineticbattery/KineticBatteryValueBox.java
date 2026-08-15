@@ -1,16 +1,14 @@
 package com.hlysine.create_connected.content.kineticbattery;
 
 import com.mojang.blaze3d.vertex.PoseStack;
-import com.simibubi.create.foundation.blockEntity.behaviour.ValueBoxTransform;
-
-import dev.engine_room.flywheel.lib.transform.TransformStack;
-import net.createmod.catnip.math.Pointing;
-import net.createmod.catnip.math.VecHelper;
-import net.createmod.catnip.math.AngleHelper;
-import net.minecraft.core.BlockPos;
+import com.zurrtum.create.catnip.math.AngleHelper;
+import com.zurrtum.create.catnip.math.Pointing;
+import com.zurrtum.create.catnip.math.VecHelper;
+import com.zurrtum.create.client.flywheel.lib.transform.TransformStack;
+import com.zurrtum.create.client.foundation.blockEntity.behaviour.ValueBoxTransform;
+import com.zurrtum.create.content.kinetics.base.DirectionalKineticBlock;
 import net.minecraft.core.Direction;
 import net.minecraft.core.Direction.Axis;
-import net.minecraft.world.level.LevelAccessor;
 import net.minecraft.world.level.block.state.BlockState;
 import net.minecraft.world.phys.Vec3;
 
@@ -24,14 +22,14 @@ public class KineticBatteryValueBox extends ValueBoxTransform.Sided {
 
     @Override
     protected boolean isSideActive(BlockState state, Direction side) {
-        Direction batteryFacing = state.getValue(KineticBatteryBlock.FACING);
+        Direction batteryFacing = state.getValue(DirectionalKineticBlock.FACING);
         return batteryFacing.getAxis() != side.getAxis();
     }
 
     @Override
-    public Vec3 getLocalOffset(LevelAccessor level, BlockPos pos, BlockState state) {
+    public Vec3 getLocalOffset(BlockState state) {
         Direction side = getSide();
-        Direction batteryFacing = state.getValue(KineticBatteryBlock.FACING);
+        Direction batteryFacing = state.getValue(DirectionalKineticBlock.FACING);
 
         float roll = 0;
         for (Pointing p : Pointing.values())
@@ -52,11 +50,11 @@ public class KineticBatteryValueBox extends ValueBoxTransform.Sided {
     }
 
     @Override
-    public void rotate(LevelAccessor level, BlockPos pos, BlockState state, PoseStack ms) {
-        Direction facing = state.getValue(KineticBatteryBlock.FACING);
+    public void rotate(BlockState state, PoseStack ms) {
+        Direction facing = state.getValue(DirectionalKineticBlock.FACING);
 
         if (facing.getAxis() == Axis.Y) {
-            super.rotate(level, pos, state, ms);
+            super.rotate(state, ms);
             return;
         }
 
@@ -76,6 +74,4 @@ public class KineticBatteryValueBox extends ValueBoxTransform.Sided {
     protected Vec3 getSouthLocation() {
         return Vec3.ZERO;
     }
-
 }
-

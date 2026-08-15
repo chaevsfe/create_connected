@@ -1,53 +1,118 @@
 package com.hlysine.create_connected.content.copycat;
 
-import com.simibubi.create.foundation.model.BakedModelHelper;
-import com.simibubi.create.foundation.model.BakedQuadHelper;
-import net.minecraft.client.renderer.block.model.BakedQuad;
+import com.zurrtum.create.catnip.data.Iterate;
+import com.zurrtum.create.client.foundation.model.BakedModelHelper;
+import com.zurrtum.create.client.infrastructure.model.CopycatModel;
+import com.zurrtum.create.content.decoration.copycat.CopycatBlock;
+import net.minecraft.client.renderer.block.BlockAndTintGetter;
+import net.minecraft.client.renderer.block.dispatch.BlockStateModel;
+import net.minecraft.client.renderer.block.dispatch.BlockStateModelPart;
+import net.minecraft.client.resources.model.SimpleModelWrapper;
+import net.minecraft.client.resources.model.geometry.BakedQuad;
+import net.minecraft.client.resources.model.geometry.QuadCollection;
+import net.minecraft.core.BlockPos;
 import net.minecraft.core.Direction;
+import net.minecraft.util.RandomSource;
+import net.minecraft.world.level.block.state.BlockState;
 import net.minecraft.world.phys.AABB;
 import net.minecraft.world.phys.Vec3;
 
+import java.util.ArrayList;
 import java.util.List;
 
-public interface ISimpleCopycatModel {
+public abstract class SimpleCopycatModel extends CopycatModel {
 
-    /**
-     * Assemble the quads of a piece of copycat material.
-     *
-     * @param sourceQuads The source model to copy from.
-     * @param destQuads   The destination model to copy to.
-     * @param angle       Number of degrees to rotate the whole operation for. Only supports multiples of 90.
-     * @param flipY       Whether to flip the whole operation vertically.
-     * @param offset      In voxel space, the final position of the assembled piece.
-     * @param select      In voxel space, the selection on the source model to copy from.
-     * @param cull        Faces to skip rendering in the destination model.
-     */
-    default void assemblePiece(List<BakedQuad> sourceQuads, List<BakedQuad> destQuads, int angle, boolean flipY, MutableVec3 offset, MutableAABB select, MutableCullFace cull) {
-        select.rotate(angle).flipY(flipY);
-        offset.rotate(angle).flipY(flipY);
-        cull.rotate(angle).flipY(flipY);
-        for (BakedQuad quad : sourceQuads) {
-            if (cull.isCulled(quad.getDirection())) {
-                continue;
+    public static final AABB UNIT_CUBE = new AABB(BlockPos.ZERO);
+
+    public SimpleCopycatModel(BlockState state, BlockStateModel.UnbakedRoot unbaked) {
+        super(state, unbaked);
+    }
+
+    protected abstract void collectPieces(BlockState state, List<Piece> pieces);
+
+    @Override
+    protected void addPartsWithInfo(
+            BlockAndTintGetter world,
+            BlockPos pos,
+            BlockState state,
+            CopycatBlock block,
+            BlockState material,
+            RandomSource random,
+            List<BlockStateModelPart> parts
+    ) {
+        List<Piece> pieces = new ArrayList<>();
+        collectPieces(state, pieces);
+        if (pieces.isEmpty())
+            return;
+
+        List<BlockStateModelPart> source = getMaterialParts(world, pos, material, random, getModelOf(material));
+        if (source.isEmpty())
+            return;
+
+        boolean[] uncull = new boolean[6];
+        for (Direction direction : Iterate.directions)
+            uncull[direction.get3DDataValue()] = block.shouldFaceAlwaysRender(state, direction);
+
+        for (BlockStateModelPart part : source) {
+            QuadCollection.Builder builder = new QuadCollection.Builder();
+
+            for (BakedQuad quad : part.getQuads(null))
+                for (Piece piece : pieces)
+                    if (!piece.cull().isCulled(quad.direction()))
+                        builder.addUnculledFace(BakedModelHelper.cropAndMove(quad, piece.crop(), piece.move()));
+
+            for (Direction direction : Iterate.directions) {
+                List<BakedQuad> quads = part.getQuads(direction);
+                if (quads.isEmpty())
+                    continue;
+                boolean noCull = uncull[direction.get3DDataValue()];
+                for (BakedQuad quad : quads)
+                    for (Piece piece : pieces) {
+                        if (piece.cull().isCulled(direction))
+                            continue;
+                        BakedQuad cropped = BakedModelHelper.cropAndMove(quad, piece.crop(), piece.move());
+                        if (noCull)
+                            builder.addUnculledFace(cropped);
+                        else
+                            builder.addCulledFace(direction, cropped);
+                    }
             }
-            destQuads.add(BakedQuadHelper.cloneWithCustomGeometry(quad,
-                    BakedModelHelper.cropAndMove(quad.getVertices(), quad.getSprite(), select.toAABB(), offset.toVec3().subtract(select.minX / 16f, select.minY / 16f, select.minZ / 16f))));
+
+            parts.add(new SimpleModelWrapper(builder.build(), part.useAmbientOcclusion(), part.particleMaterial()));
         }
     }
 
-    default MutableCullFace cull(int mask) {
+    public static Piece piece(int angle, boolean flipY, MutableVec3 offset, MutableAABB select, MutableCullFace cull) {
+        select.rotate(angle).flipY(flipY);
+        offset.rotate(angle).flipY(flipY);
+        cull.rotate(angle).flipY(flipY);
+        return new Piece(
+                select.toAABB(),
+                offset.toVec3().subtract(select.minX / 16f, select.minY / 16f, select.minZ / 16f),
+                cull
+        );
+    }
+
+    public static Piece piece(AABB crop, Vec3 move, MutableCullFace cull) {
+        return new Piece(crop, move, cull);
+    }
+
+    public static MutableCullFace cull(int mask) {
         return new MutableCullFace(mask);
     }
 
-    default MutableVec3 vec3(float x, float y, float z) {
+    public static MutableVec3 vec3(float x, float y, float z) {
         return new MutableVec3(x, y, z);
     }
 
-    default MutableAABB aabb(float sizeX, float sizeY, float sizeZ) {
+    public static MutableAABB aabb(float sizeX, float sizeY, float sizeZ) {
         return new MutableAABB(sizeX, sizeY, sizeZ);
     }
 
-    class MutableCullFace {
+    public record Piece(AABB crop, Vec3 move, MutableCullFace cull) {
+    }
+
+    public static class MutableCullFace {
 
         public static final int UP = 2 << Direction.UP.get3DDataValue();
         public static final int DOWN = 2 << Direction.DOWN.get3DDataValue();
@@ -65,6 +130,17 @@ public interface ISimpleCopycatModel {
 
         private MutableCullFace(int mask) {
             set((mask & UP) > 0, (mask & DOWN) > 0, (mask & NORTH) > 0, (mask & SOUTH) > 0, (mask & EAST) > 0, (mask & WEST) > 0);
+        }
+
+        public MutableCullFace add(Direction direction) {
+            return switch (direction) {
+                case DOWN -> set(up, true, north, south, east, west);
+                case UP -> set(true, down, north, south, east, west);
+                case NORTH -> set(up, down, true, south, east, west);
+                case SOUTH -> set(up, down, north, true, east, west);
+                case WEST -> set(up, down, north, south, east, true);
+                case EAST -> set(up, down, north, south, true, west);
+            };
         }
 
         public MutableCullFace rotate(int angle) {
@@ -105,7 +181,7 @@ public interface ISimpleCopycatModel {
         }
     }
 
-    class MutableVec3 {
+    public static class MutableVec3 {
         public float x;
         public float y;
         public float z;
@@ -142,7 +218,7 @@ public interface ISimpleCopycatModel {
         }
     }
 
-    class MutableAABB {
+    public static class MutableAABB {
         public float minX;
         public float minY;
         public float minZ;

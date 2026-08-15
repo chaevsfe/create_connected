@@ -9,13 +9,14 @@ import net.minecraft.world.level.block.Block;
 import org.spongepowered.asm.mixin.Mixin;
 import org.spongepowered.asm.mixin.injection.At;
 
-@Mixin(ValueBoxRenderer.class)
+@Mixin(value = ValueBoxRenderer.class, remap = false)
 public class ValueBoxRendererMixin {
+
     @WrapOperation(
-            at = @At(value = "INVOKE", target = "Lnet/minecraft/world/item/BlockItem;getBlock()Lnet/minecraft/world/level/block/Block;"),
-            method = "customZOffset(Lnet/minecraft/world/item/Item;)F"
+            method = "customZOffset(Lnet/minecraft/world/item/Item;)F",
+            at = @At(value = "INVOKE", target = "Lnet/minecraft/world/item/BlockItem;getBlock()Lnet/minecraft/world/level/block/Block;")
     )
-    private static Block getWrappedBlock(BlockItem instance, Operation<Block> original) {
+    private static Block create_connected$getWrappedBlock(BlockItem instance, Operation<Block> original) {
         return ICopycatWithWrappedBlock.unwrap(original.call(instance));
     }
 }

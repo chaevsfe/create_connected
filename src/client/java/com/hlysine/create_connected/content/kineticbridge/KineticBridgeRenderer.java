@@ -1,55 +1,101 @@
 package com.hlysine.create_connected.content.kineticbridge;
 
+import com.hlysine.create_connected.content.kineticbridge.KineticBridgeRenderer.KineticBridgeRenderState;
 import com.hlysine.create_connected.registries.CCPartialModels;
 import com.mojang.blaze3d.vertex.PoseStack;
-import com.mojang.blaze3d.vertex.VertexConsumer;
-import com.simibubi.create.AllPartialModels;
-import com.simibubi.create.content.kinetics.base.KineticBlockEntity;
-import com.simibubi.create.content.kinetics.base.KineticBlockEntityRenderer;
-import dev.engine_room.flywheel.api.visualization.VisualizationManager;
-import net.createmod.catnip.render.CachedBuffers;
-import net.createmod.catnip.render.SuperByteBuffer;
-import net.minecraft.client.renderer.LevelRenderer;
-import net.minecraft.client.renderer.MultiBufferSource;
-import net.minecraft.client.renderer.RenderType;
-import net.minecraft.client.renderer.blockentity.BlockEntityRendererProvider;
+import com.zurrtum.create.client.AllPartialModels;
+import com.zurrtum.create.client.catnip.render.CachedBuffers;
+import com.zurrtum.create.client.catnip.render.SuperByteBufferRenderState;
+import com.zurrtum.create.client.foundation.blockEntity.renderer.SmartBlockEntityRenderer;
+import com.zurrtum.create.content.kinetics.base.KineticBlockEntity;
+import net.minecraft.client.renderer.SubmitNodeCollector;
+import net.minecraft.client.renderer.blockentity.BlockEntityRenderer;
+import net.minecraft.client.renderer.blockentity.BlockEntityRendererProvider.Context;
+import net.minecraft.client.renderer.blockentity.state.BlockEntityRenderState;
+import net.minecraft.client.renderer.feature.ModelFeatureRenderer.CrumblingOverlay;
+import net.minecraft.client.renderer.state.level.CameraRenderState;
 import net.minecraft.core.Direction;
+import net.minecraft.core.Direction.Axis;
+import net.minecraft.world.level.Level;
+import net.minecraft.world.level.block.state.BlockState;
+import net.minecraft.world.level.block.state.properties.BlockStateProperties;
+import net.minecraft.world.phys.Vec3;
+import org.jetbrains.annotations.Nullable;
+import org.jetbrains.annotations.UnknownNullability;
+import org.joml.Quaternionf;
 
-public class KineticBridgeRenderer extends KineticBlockEntityRenderer<KineticBlockEntity> {
+import static com.zurrtum.create.client.content.kinetics.base.KineticBlockEntityRenderer.getRotateAngleForBe;
+import static com.zurrtum.create.client.content.kinetics.base.KineticBlockEntityRenderer.getRotationAxisOf;
+import static com.zurrtum.create.client.content.kinetics.base.KineticBlockEntityRenderer.getTintColor;
+
+public class KineticBridgeRenderer implements BlockEntityRenderer<KineticBlockEntity, KineticBridgeRenderState> {
 
     private final boolean isDestination;
 
-    private KineticBridgeRenderer(BlockEntityRendererProvider.Context context, boolean isDestination) {
-        super(context);
+    private KineticBridgeRenderer(Context context, boolean isDestination) {
         this.isDestination = isDestination;
     }
 
-    public static KineticBridgeRenderer source(BlockEntityRendererProvider.Context ctx) {
+    public static KineticBridgeRenderer source(Context ctx) {
         return new KineticBridgeRenderer(ctx, false);
     }
 
-    public static KineticBridgeRenderer destination(BlockEntityRendererProvider.Context ctx) {
+    public static KineticBridgeRenderer destination(Context ctx) {
         return new KineticBridgeRenderer(ctx, true);
     }
 
     @Override
-    protected void renderSafe(KineticBlockEntity be, float partialTicks, PoseStack ms, MultiBufferSource buffer,
-                              int light, int overlay) {
-        if (VisualizationManager.supportsVisualization(be.getLevel())) return;
+    public KineticBridgeRenderState createRenderState() {
+        return new KineticBridgeRenderState();
+    }
 
-        Direction direction = be.getBlockState().getValue(KineticBridgeBlock.FACING);
-        VertexConsumer vb = buffer.getBuffer(RenderType.cutoutMipped());
+    @Override
+    public void extractRenderState(
+        KineticBlockEntity be,
+        KineticBridgeRenderState state,
+        float tickProgress,
+        Vec3 cameraPos,
+        @Nullable CrumblingOverlay crumblingOverlay
+    ) {
+        Level level = SmartBlockEntityRenderer.extractBase(be, state, crumblingOverlay);
+        state.blockState = be.getBlockState();
+        Direction facing = state.blockState.getValue(BlockStateProperties.FACING);
+        Direction modelFacing = isDestination ? facing : facing.getOpposite();
+        int color = getTintColor(be);
+        int lightBehind = SmartBlockEntityRenderer.getLightCoords(level, state.blockPos.relative(facing.getOpposite()));
+        int lightInFront = SmartBlockEntityRenderer.getLightCoords(level, state.blockPos.relative(facing));
+        Axis axis = getRotationAxisOf(be);
+        state.angle = getRotateAngleForBe(axis, axis.getPositive(), be, state, level);
+        state.shaft = CachedBuffers.partialFacing(AllPartialModels.SHAFT_HALF, state.blockState, modelFacing)
+            .cardinalLighting(level).light(lightBehind).color(color).extractRenderState();
+        state.coupling = CachedBuffers.partialFacing(
+            isDestination ? CCPartialModels.KINETIC_BRIDGE_DESTINATION : CCPartialModels.KINETIC_BRIDGE_SOURCE,
+            state.blockState,
+            modelFacing
+        ).cardinalLighting(level).light(lightInFront).color(color).extractRenderState();
+    }
 
-        int lightBehind = LevelRenderer.getLightColor(be.getLevel(), be.getBlockPos().relative(direction.getOpposite()));
-        int lightInFront = LevelRenderer.getLightColor(be.getLevel(), be.getBlockPos().relative(direction));
+    @Override
+    public void submit(
+        KineticBridgeRenderState state,
+        PoseStack matrices,
+        SubmitNodeCollector queue,
+        CameraRenderState cameraState
+    ) {
+        if (state.shaft == null || state.coupling == null) {
+            return;
+        }
+        if (state.angle != null) {
+            matrices.rotateAround(state.angle, 0.5f, 0.5f, 0.5f);
+        }
+        state.shaft.submit(matrices, queue);
+        state.coupling.submit(matrices, queue);
+    }
 
-        SuperByteBuffer shaftHalf =
-                CachedBuffers.partialFacing(AllPartialModels.SHAFT_HALF, be.getBlockState(), isDestination ? direction : direction.getOpposite());
-        SuperByteBuffer fanInner =
-                CachedBuffers.partialFacing(isDestination ? CCPartialModels.KINETIC_BRIDGE_DESTINATION : CCPartialModels.KINETIC_BRIDGE_SOURCE, be.getBlockState(), isDestination ? direction : direction.getOpposite());
-
-        standardKineticRotationTransform(shaftHalf, be, lightBehind).renderInto(ms, vb);
-        standardKineticRotationTransform(fanInner, be, lightInFront).renderInto(ms, vb);
+    public static class KineticBridgeRenderState extends BlockEntityRenderState {
+        public @UnknownNullability BlockState blockState;
+        public @Nullable SuperByteBufferRenderState shaft;
+        public @Nullable SuperByteBufferRenderState coupling;
+        public @Nullable Quaternionf angle;
     }
 }
-

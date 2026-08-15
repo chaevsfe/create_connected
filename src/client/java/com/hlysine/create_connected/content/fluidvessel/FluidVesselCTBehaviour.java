@@ -1,12 +1,12 @@
 package com.hlysine.create_connected.content.fluidvessel;
 
-import com.simibubi.create.api.connectivity.ConnectivityHandler;
-import com.simibubi.create.foundation.block.connected.CTSpriteShiftEntry;
-import com.simibubi.create.foundation.block.connected.ConnectedTextureBehaviour;
+import com.zurrtum.create.api.connectivity.ConnectivityHandler;
+import com.zurrtum.create.client.foundation.block.connected.CTSpriteShiftEntry;
+import com.zurrtum.create.client.foundation.block.connected.ConnectedTextureBehaviour;
+import net.minecraft.client.renderer.block.BlockAndTintGetter;
 import net.minecraft.client.renderer.texture.TextureAtlasSprite;
 import net.minecraft.core.BlockPos;
 import net.minecraft.core.Direction;
-import net.minecraft.world.level.BlockAndTintGetter;
 import net.minecraft.world.level.block.state.BlockState;
 import org.jetbrains.annotations.Nullable;
 
@@ -14,7 +14,7 @@ public class FluidVesselCTBehaviour extends ConnectedTextureBehaviour.Base {
 
     protected CTSpriteShiftEntry topShift;
     protected CTSpriteShiftEntry layerShift;
-    private CTSpriteShiftEntry innerShift;
+    private final CTSpriteShiftEntry innerShift;
 
     public FluidVesselCTBehaviour(CTSpriteShiftEntry layerShift, CTSpriteShiftEntry topShift, CTSpriteShiftEntry innerShift) {
         this.layerShift = layerShift;
@@ -59,6 +59,7 @@ public class FluidVesselCTBehaviour extends ConnectedTextureBehaviour.Base {
         return Direction.fromAxisAndDirection(Direction.Axis.Y, face.getAxisDirection());
     }
 
+    @Override
     public boolean buildContextForOccludedDirections() {
         return true;
     }

@@ -1,13 +1,11 @@
 package com.hlysine.create_connected.content.inventorybridge;
 
 import com.mojang.blaze3d.vertex.PoseStack;
-import com.simibubi.create.foundation.blockEntity.behaviour.CenteredSideValueBoxTransform;
-import dev.engine_room.flywheel.lib.transform.TransformStack;
-import net.createmod.catnip.math.AngleHelper;
-import net.createmod.catnip.math.VecHelper;
-import net.minecraft.core.BlockPos;
+import com.zurrtum.create.catnip.math.AngleHelper;
+import com.zurrtum.create.catnip.math.VecHelper;
+import com.zurrtum.create.client.flywheel.lib.transform.TransformStack;
+import com.zurrtum.create.client.foundation.blockEntity.behaviour.CenteredSideValueBoxTransform;
 import net.minecraft.core.Direction;
-import net.minecraft.world.level.LevelAccessor;
 import net.minecraft.world.level.block.state.BlockState;
 import net.minecraft.world.phys.Vec3;
 
@@ -18,22 +16,20 @@ public class InventoryBridgeFilterSlot extends CenteredSideValueBoxTransform {
     }
 
     @Override
-    public Vec3 getLocalOffset(LevelAccessor level, BlockPos pos, BlockState state) {
+    public Vec3 getLocalOffset(BlockState state) {
         Vec3 location = getSouthLocation();
-        if (getSide() == Direction.UP) {
+        if (getSide() == Direction.UP)
             location = new Vec3(location.x, 1 - location.y, location.z);
-        }
         location = VecHelper.rotateCentered(location, AngleHelper.horizontalAngle(getSide()), Direction.Axis.Y);
         location = VecHelper.rotateCentered(location, AngleHelper.verticalAngle(getSide()), Direction.Axis.X);
         return location;
     }
 
     @Override
-    public void rotate(LevelAccessor level, BlockPos pos, BlockState state, PoseStack ms) {
-        super.rotate(level, pos, state, ms);
+    public void rotate(BlockState state, PoseStack ms) {
+        super.rotate(state, ms);
         if (getSide() == Direction.UP)
-            TransformStack.of(ms)
-                    .rotateZDegrees(180);
+            TransformStack.of(ms).rotateZDegrees(180);
     }
 
     @Override

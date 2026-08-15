@@ -1,21 +1,19 @@
 package com.hlysine.create_connected.content.contraption.jukebox;
 
-import com.simibubi.create.content.contraptions.AbstractContraptionEntity;
-import net.createmod.catnip.data.Pair;
+import com.zurrtum.create.catnip.data.Pair;
+import com.zurrtum.create.content.contraptions.AbstractContraptionEntity;
 import net.minecraft.client.Minecraft;
+import net.minecraft.client.multiplayer.ClientLevel;
 import net.minecraft.client.resources.sounds.SoundInstance;
 import net.minecraft.core.BlockPos;
-import net.minecraft.core.Holder;
-import net.minecraft.core.HolderLookup;
-import net.minecraft.core.component.DataComponents;
 import net.minecraft.sounds.SoundSource;
-import net.minecraft.world.item.Item;
+import net.minecraft.world.entity.LivingEntity;
 import net.minecraft.world.item.JukeboxSong;
+import net.minecraft.world.phys.AABB;
+import org.jspecify.annotations.Nullable;
 
-import javax.annotation.Nullable;
 import java.util.HashMap;
 import java.util.Map;
-import java.util.Optional;
 
 public class ContraptionMusicManager {
     private static final Map<Pair<Integer, BlockPos>, SoundInstance> playingContraptionRecords = new HashMap<>();
@@ -25,16 +23,17 @@ public class ContraptionMusicManager {
                                             BlockPos localPos,
                                             BlockPos worldPos,
                                             boolean silent) {
+        Minecraft mc = Minecraft.getInstance();
         Pair<Integer, BlockPos> contraption = Pair.of(entity.getId(), localPos);
         SoundInstance soundInstance = playingContraptionRecords.get(contraption);
         if (soundInstance != null) {
-            Minecraft.getInstance().getSoundManager().stop(soundInstance);
+            mc.getSoundManager().stop(soundInstance);
             playingContraptionRecords.remove(contraption);
         }
 
         if (song != null) {
             if (!silent) {
-                Minecraft.getInstance().gui.setNowPlaying(song.description());
+                mc.gui.hud.setNowPlaying(song.description());
             }
 
             SoundInstance newInstance = new ContraptionRecordSoundInstance(
@@ -50,8 +49,16 @@ public class ContraptionMusicManager {
                     localPos
             );
             playingContraptionRecords.put(contraption, newInstance);
-            Minecraft.getInstance().getSoundManager().play(newInstance);
+            mc.getSoundManager().play(newInstance);
         }
-        Minecraft.getInstance().levelRenderer.notifyNearbyEntities(Minecraft.getInstance().level, worldPos, song != null);
+
+        notifyNearbyEntities(mc.level, worldPos, song != null);
+    }
+
+    private static void notifyNearbyEntities(@Nullable ClientLevel level, BlockPos worldPos, boolean playing) {
+        if (level == null)
+            return;
+        for (LivingEntity living : level.getEntitiesOfClass(LivingEntity.class, new AABB(worldPos).inflate(3)))
+            living.setRecordPlayingNearby(worldPos, playing);
     }
 }

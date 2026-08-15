@@ -1,64 +1,165 @@
 package com.hlysine.create_connected.mixin.sequencedgearshift;
 
 import com.hlysine.create_connected.registries.CCSequencerInstructions;
-import com.simibubi.create.content.kinetics.transmission.sequencer.Instruction;
-import com.simibubi.create.content.kinetics.transmission.sequencer.SequencedGearshiftScreen;
-import com.simibubi.create.content.kinetics.transmission.sequencer.SequencerInstructions;
-import com.simibubi.create.foundation.gui.widget.ScrollInput;
+import com.llamalad7.mixinextras.injector.ModifyExpressionValue;
+import com.llamalad7.mixinextras.sugar.Local;
+import com.zurrtum.create.client.content.kinetics.transmission.sequencer.SequencedGearshiftScreen;
+import com.zurrtum.create.client.foundation.gui.AllGuiTextures;
+import com.zurrtum.create.client.foundation.gui.widget.ScrollInput;
+import com.zurrtum.create.content.kinetics.transmission.sequencer.Instruction;
+import com.zurrtum.create.content.kinetics.transmission.sequencer.SequencerInstructions;
+import org.spongepowered.asm.mixin.Final;
 import org.spongepowered.asm.mixin.Mixin;
 import org.spongepowered.asm.mixin.Shadow;
 import org.spongepowered.asm.mixin.injection.At;
 import org.spongepowered.asm.mixin.injection.Inject;
 import org.spongepowered.asm.mixin.injection.callback.CallbackInfo;
+import org.spongepowered.asm.mixin.injection.callback.CallbackInfoReturnable;
 
 import java.util.Vector;
 
 @Mixin(value = SequencedGearshiftScreen.class, remap = false)
 public class SequencedGearshiftScreenMixin {
+
     @Shadow
+    @Final
     private Vector<Instruction> instructions;
+
     @Shadow
     private Vector<Vector<ScrollInput>> inputs;
 
-    @Inject(
-            method = "updateParamsOfRow(I)V",
-            at = @At(
-                    value = "INVOKE",
-                    target = "Lcom/simibubi/create/foundation/gui/widget/ScrollInput;standardStep()Ljava/util/function/Function;",
-                    shift = At.Shift.BY,
-                    by = 2
-            )
-    )
-    public void updateParamsOfRow(int row, CallbackInfo ci) {
-        if (((InstructionAccessor) instructions.get(row)).getInstruction() == CCSequencerInstructions.TURN_TIME) {
-            Vector<ScrollInput> rowInputs = inputs.get(row);
-            ScrollInput value = rowInputs.get(1);
-            value.withStepFunction(context -> {
-                int v = context.currentValue;
-                if (!context.forward)
-                    v--;
-                if (v < 20)
-                    return context.shift ? 20 : 1;
-                return context.shift ? 100 : 20;
-            });
-        }
+    @Shadow
+    private static String translationKey(SequencerInstructions instruction) {
+        throw new AssertionError();
     }
 
     @Inject(
-            at = @At(value = "INVOKE", target = "Lcom/simibubi/create/content/kinetics/transmission/sequencer/SequencedGearshiftScreen;updateParamsOfRow(I)V", shift = At.Shift.AFTER),
-            method = "instructionUpdated(II)V",
+            method = "hasValueParameter(Lcom/zurrtum/create/content/kinetics/transmission/sequencer/SequencerInstructions;)Z",
+            at = @At("HEAD"),
             cancellable = true
     )
-    private void handleLoop(int index, int state, CallbackInfo ci) {
-        SequencerInstructions newValue = SequencerInstructions.values()[state];
-        if (newValue == CCSequencerInstructions.LOOP) {
-            for (int i = instructions.size() - 1; i > index; i--) {
-                instructions.remove(i);
-                Vector<ScrollInput> rowInputs = inputs.get(i);
-                ((AbstractSimiScreenAccessor) this).callRemoveWidgets(rowInputs);
-                rowInputs.clear();
-            }
-            ci.cancel();
-        }
+    private static void create_connected$hasValueParameter(SequencerInstructions instruction, CallbackInfoReturnable<Boolean> cir) {
+        if (instruction == CCSequencerInstructions.TURN_TIME)
+            cir.setReturnValue(true);
+        else if (instruction == CCSequencerInstructions.TURN_AWAIT || instruction == CCSequencerInstructions.LOOP)
+            cir.setReturnValue(false);
+    }
+
+    @Inject(
+            method = "hasSpeedParameter(Lcom/zurrtum/create/content/kinetics/transmission/sequencer/SequencerInstructions;)Z",
+            at = @At("HEAD"),
+            cancellable = true
+    )
+    private static void create_connected$hasSpeedParameter(SequencerInstructions instruction, CallbackInfoReturnable<Boolean> cir) {
+        if (instruction == CCSequencerInstructions.TURN_AWAIT || instruction == CCSequencerInstructions.TURN_TIME)
+            cir.setReturnValue(true);
+        else if (instruction == CCSequencerInstructions.LOOP)
+            cir.setReturnValue(false);
+    }
+
+    @Inject(
+            method = "maxValue(Lcom/zurrtum/create/content/kinetics/transmission/sequencer/SequencerInstructions;)I",
+            at = @At("HEAD"),
+            cancellable = true
+    )
+    private static void create_connected$maxValue(SequencerInstructions instruction, CallbackInfoReturnable<Integer> cir) {
+        if (instruction == CCSequencerInstructions.TURN_TIME)
+            cir.setReturnValue(600);
+        else if (instruction == CCSequencerInstructions.TURN_AWAIT || instruction == CCSequencerInstructions.LOOP)
+            cir.setReturnValue(-1);
+    }
+
+    @Inject(
+            method = "parameterKey(Lcom/zurrtum/create/content/kinetics/transmission/sequencer/SequencerInstructions;)Ljava/lang/String;",
+            at = @At("HEAD"),
+            cancellable = true
+    )
+    private static void create_connected$parameterKey(SequencerInstructions instruction, CallbackInfoReturnable<String> cir) {
+        if (instruction == CCSequencerInstructions.TURN_TIME)
+            cir.setReturnValue(translationKey(instruction) + ".duration");
+        else if (instruction == CCSequencerInstructions.TURN_AWAIT || instruction == CCSequencerInstructions.LOOP)
+            cir.setReturnValue(translationKey(instruction));
+    }
+
+    @Inject(
+            method = "background(Lcom/zurrtum/create/content/kinetics/transmission/sequencer/SequencerInstructions;)Lcom/zurrtum/create/client/foundation/gui/AllGuiTextures;",
+            at = @At("HEAD"),
+            cancellable = true
+    )
+    private static void create_connected$background(SequencerInstructions instruction, CallbackInfoReturnable<AllGuiTextures> cir) {
+        if (instruction == CCSequencerInstructions.TURN_AWAIT || instruction == CCSequencerInstructions.TURN_TIME)
+            cir.setReturnValue(AllGuiTextures.SEQUENCER_INSTRUCTION);
+        else if (instruction == CCSequencerInstructions.LOOP)
+            cir.setReturnValue(AllGuiTextures.SEQUENCER_END);
+    }
+
+    @Inject(
+            method = "shiftStep(Lcom/zurrtum/create/content/kinetics/transmission/sequencer/SequencerInstructions;)I",
+            at = @At("HEAD"),
+            cancellable = true
+    )
+    private static void create_connected$shiftStep(SequencerInstructions instruction, CallbackInfoReturnable<Integer> cir) {
+        if (instruction == CCSequencerInstructions.TURN_TIME)
+            cir.setReturnValue(20);
+        else if (instruction == CCSequencerInstructions.TURN_AWAIT || instruction == CCSequencerInstructions.LOOP)
+            cir.setReturnValue(-1);
+    }
+
+    @Inject(
+            method = "defaultValue(Lcom/zurrtum/create/content/kinetics/transmission/sequencer/SequencerInstructions;)I",
+            at = @At("HEAD"),
+            cancellable = true
+    )
+    private static void create_connected$defaultValue(SequencerInstructions instruction, CallbackInfoReturnable<Integer> cir) {
+        if (instruction == CCSequencerInstructions.TURN_TIME)
+            cir.setReturnValue(10);
+        else if (instruction == CCSequencerInstructions.TURN_AWAIT || instruction == CCSequencerInstructions.LOOP)
+            cir.setReturnValue(-1);
+    }
+
+    @Inject(
+            method = "formatValue(Lcom/zurrtum/create/content/kinetics/transmission/sequencer/SequencerInstructions;I)Ljava/lang/String;",
+            at = @At("HEAD"),
+            cancellable = true
+    )
+    private static void create_connected$formatValue(SequencerInstructions instruction, int value, CallbackInfoReturnable<String> cir) {
+        if (instruction != CCSequencerInstructions.TURN_TIME)
+            return;
+        if (value >= 20)
+            cir.setReturnValue((value / 20) + "s");
+        else
+            cir.setReturnValue(value + "t");
+    }
+
+    @Inject(method = "updateParamsOfRow(I)V", at = @At("TAIL"))
+    private void create_connected$updateParamsOfRow(int row, CallbackInfo ci) {
+        if (instructions.get(row).instruction != CCSequencerInstructions.TURN_TIME)
+            return;
+        ScrollInput value = inputs.get(row).get(1);
+        value.withStepFunction(context -> {
+            int v = context.currentValue;
+            if (!context.forward)
+                v--;
+            if (v < 20)
+                return context.shift ? 20 : 1;
+            return context.shift ? 100 : 20;
+        });
+    }
+
+    @ModifyExpressionValue(
+            method = "instructionUpdated(II)V",
+            at = @At(
+                    value = "FIELD",
+                    target = "Lcom/zurrtum/create/content/kinetics/transmission/sequencer/SequencerInstructions;END:Lcom/zurrtum/create/content/kinetics/transmission/sequencer/SequencerInstructions;",
+                    ordinal = 0
+            )
+    )
+    private SequencerInstructions create_connected$loopIsTerminal(
+            SequencerInstructions original,
+            @Local(argsOnly = true, ordinal = 1) int state
+    ) {
+        if (SequencerInstructions.values()[state] == CCSequencerInstructions.LOOP)
+            return CCSequencerInstructions.LOOP;
+        return original;
     }
 }

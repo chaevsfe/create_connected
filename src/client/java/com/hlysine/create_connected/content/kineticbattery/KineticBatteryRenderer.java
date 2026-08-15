@@ -1,59 +1,95 @@
 package com.hlysine.create_connected.content.kineticbattery;
 
+import com.hlysine.create_connected.content.kineticbattery.KineticBatteryRenderer.KineticBatteryRenderState;
 import com.mojang.blaze3d.vertex.PoseStack;
-import com.simibubi.create.AllPartialModels;
-import com.simibubi.create.content.kinetics.base.IRotate;
-import com.simibubi.create.content.kinetics.base.KineticBlockEntityRenderer;
-
-import com.simibubi.create.content.kinetics.transmission.SplitShaftBlockEntity;
-import dev.engine_room.flywheel.api.visualization.VisualizationManager;
-import net.createmod.catnip.animation.AnimationTickHolder;
-import net.createmod.catnip.render.CachedBuffers;
-import net.createmod.catnip.render.SuperByteBuffer;
-import net.createmod.catnip.data.Iterate;
-import net.minecraft.client.renderer.MultiBufferSource;
-import net.minecraft.client.renderer.RenderType;
-import net.minecraft.client.renderer.blockentity.BlockEntityRendererProvider;
-import net.minecraft.core.BlockPos;
+import com.zurrtum.create.client.AllPartialModels;
+import com.zurrtum.create.client.catnip.render.CachedBuffers;
+import com.zurrtum.create.client.catnip.render.SuperByteBufferRenderState;
+import com.zurrtum.create.client.content.kinetics.base.KineticBlockEntityVisual;
+import com.zurrtum.create.client.foundation.blockEntity.renderer.SmartBlockEntityRenderer;
+import net.minecraft.client.renderer.SubmitNodeCollector;
+import net.minecraft.client.renderer.blockentity.BlockEntityRenderer;
+import net.minecraft.client.renderer.blockentity.BlockEntityRendererProvider.Context;
+import net.minecraft.client.renderer.blockentity.state.BlockEntityRenderState;
+import net.minecraft.client.renderer.feature.ModelFeatureRenderer.CrumblingOverlay;
+import net.minecraft.client.renderer.state.level.CameraRenderState;
 import net.minecraft.core.Direction;
 import net.minecraft.core.Direction.Axis;
-import net.minecraft.world.level.block.Block;
+import net.minecraft.world.level.Level;
+import net.minecraft.world.level.block.state.BlockState;
+import net.minecraft.world.phys.Vec3;
+import org.jetbrains.annotations.Nullable;
+import org.jetbrains.annotations.UnknownNullability;
+import org.joml.Quaternionf;
 
-public class KineticBatteryRenderer extends KineticBlockEntityRenderer<KineticBatteryBlockEntity> {
+import static com.zurrtum.create.client.content.kinetics.base.KineticBlockEntityRenderer.getProgress;
+import static com.zurrtum.create.client.content.kinetics.base.KineticBlockEntityRenderer.getRotateAngle;
+import static com.zurrtum.create.client.content.kinetics.base.KineticBlockEntityRenderer.getRotationAxisOf;
+import static com.zurrtum.create.client.content.kinetics.base.KineticBlockEntityRenderer.getTintColor;
 
-    public KineticBatteryRenderer(BlockEntityRendererProvider.Context context) {
-        super(context);
+public class KineticBatteryRenderer implements BlockEntityRenderer<KineticBatteryBlockEntity, KineticBatteryRenderState> {
+    public KineticBatteryRenderer(Context context) {
     }
 
     @Override
-    protected void renderSafe(KineticBatteryBlockEntity be, float partialTicks, PoseStack ms, MultiBufferSource buffer,
-                              int light, int overlay) {
-        if (VisualizationManager.supportsVisualization(be.getLevel())) return;
-
-        Block block = be.getBlockState().getBlock();
-        final Axis boxAxis = ((IRotate) block).getRotationAxis(be.getBlockState());
-        final BlockPos pos = be.getBlockPos();
-        float time = AnimationTickHolder.getRenderTime(be.getLevel());
-
-        for (Direction direction : Iterate.directions) {
-            Axis axis = direction.getAxis();
-            if (boxAxis != axis)
-                continue;
-
-            float offset = getRotationOffsetForPosition(be, pos, axis);
-            float angle = (time * be.getSpeed() * 3f / 10) % 360;
-            float modifier = be.getRotationSpeedModifier(direction);
-
-            angle *= modifier;
-            angle += offset;
-            angle = angle / 180f * (float) Math.PI;
-
-            SuperByteBuffer superByteBuffer =
-                    CachedBuffers.partialFacing(AllPartialModels.SHAFT_HALF, be.getBlockState(), direction);
-            kineticRotationTransform(superByteBuffer, be, axis, angle, light);
-            superByteBuffer.renderInto(ms, buffer.getBuffer(RenderType.solid()));
-        }
+    public KineticBatteryRenderState createRenderState() {
+        return new KineticBatteryRenderState();
     }
 
-}
+    @Override
+    public void extractRenderState(
+        KineticBatteryBlockEntity be,
+        KineticBatteryRenderState state,
+        float tickProgress,
+        Vec3 cameraPos,
+        @Nullable CrumblingOverlay crumblingOverlay
+    ) {
+        Level level = SmartBlockEntityRenderer.extractBase(be, state, crumblingOverlay);
+        state.blockState = be.getBlockState();
+        int color = getTintColor(be);
+        Axis axis = getRotationAxisOf(be);
+        Direction direction = axis.getPositive();
+        float offset = KineticBlockEntityVisual.rotationOffset(state.blockState, axis, state.blockPos)
+            + be.getRotationAngleOffset(axis);
+        float progress = getProgress(be, level);
+        state.topAngle = getRotateAngle(progress * be.getRotationSpeedModifier(direction), offset, direction);
+        state.top = CachedBuffers.partialFacing(AllPartialModels.SHAFT_HALF, state.blockState, direction)
+            .cardinalLighting(level).light(state.lightCoords).color(color).extractRenderState();
+        Direction bottom = direction.getOpposite();
+        state.bottomAngle = getRotateAngle(progress * be.getRotationSpeedModifier(bottom), offset, direction);
+        state.bottom = CachedBuffers.partialFacing(AllPartialModels.SHAFT_HALF, state.blockState, bottom)
+            .cardinalLighting(level).light(state.lightCoords).color(color).extractRenderState();
+    }
 
+    @Override
+    public void submit(
+        KineticBatteryRenderState state,
+        PoseStack matrices,
+        SubmitNodeCollector queue,
+        CameraRenderState cameraState
+    ) {
+        if (state.top == null || state.bottom == null) {
+            return;
+        }
+        if (state.topAngle != null) {
+            matrices.pushPose();
+            matrices.rotateAround(state.topAngle, 0.5f, 0.5f, 0.5f);
+            state.top.submit(matrices, queue);
+            matrices.popPose();
+        } else {
+            state.top.submit(matrices, queue);
+        }
+        if (state.bottomAngle != null) {
+            matrices.rotateAround(state.bottomAngle, 0.5f, 0.5f, 0.5f);
+        }
+        state.bottom.submit(matrices, queue);
+    }
+
+    public static class KineticBatteryRenderState extends BlockEntityRenderState {
+        public @UnknownNullability BlockState blockState;
+        public @Nullable SuperByteBufferRenderState top;
+        public @Nullable SuperByteBufferRenderState bottom;
+        public @Nullable Quaternionf topAngle;
+        public @Nullable Quaternionf bottomAngle;
+    }
+}

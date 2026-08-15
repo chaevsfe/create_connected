@@ -1,39 +1,34 @@
 package com.hlysine.create_connected.content.kineticbattery;
 
 import com.hlysine.create_connected.CreateConnected;
-import com.hlysine.create_connected.registries.CCDataComponents;
-import com.tterrag.registrate.providers.DataGenContext;
-import com.tterrag.registrate.providers.RegistrateItemModelProvider;
-import net.minecraft.client.renderer.item.ItemProperties;
-import net.minecraft.resources.ResourceLocation;
-import net.minecraft.world.item.Item;
-import net.neoforged.api.distmarker.Dist;
-import net.neoforged.api.distmarker.OnlyIn;
-import net.neoforged.neoforge.client.model.generators.ItemModelBuilder;
+import com.mojang.serialization.MapCodec;
+import net.minecraft.client.multiplayer.ClientLevel;
+import net.minecraft.client.renderer.item.properties.numeric.RangeSelectItemModelProperties;
+import net.minecraft.client.renderer.item.properties.numeric.RangeSelectItemModelProperty;
+import net.minecraft.resources.Identifier;
+import net.minecraft.world.entity.ItemOwner;
+import net.minecraft.world.item.ItemStack;
+import org.jspecify.annotations.Nullable;
 
 public class KineticBatteryOverrides {
 
-    public static final ResourceLocation ID = CreateConnected.asResource("kinetic_battery_level");
+    public static final Identifier ID = CreateConnected.asResource("kinetic_battery_level");
 
-    @OnlyIn(Dist.CLIENT)
-    public static void registerModelOverridesClient(KineticBatteryBlockItem item) {
-        ItemProperties.register(item, ID, (pStack, pLevel, pEntity, pSeed) -> {
-            double level = pStack.getOrDefault(CCDataComponents.KINETIC_BATTERY_CHARGE, 0.0);
-            return KineticBatteryBlockEntity.getCrudeBatteryLevel(level, 5);
-        });
+    public static void register() {
+        RangeSelectItemModelProperties.ID_MAPPER.put(ID, Level.MAP_CODEC);
     }
 
-    public static ItemModelBuilder addOverrideModels(DataGenContext<Item, KineticBatteryBlockItem> c,
-                                                     RegistrateItemModelProvider p) {
-        ItemModelBuilder builder = p.getBuilder(c.getName());
-        for (int i = 0; i <= 5; i++) {
-            builder.override()
-                    .predicate(ID, i)
-                    .model(p.withExistingParent("kinetic_battery_level_" + i, CreateConnected.asResource("block/kinetic_battery/item"))
-                            .texture("level", CreateConnected.asResource("block/kinetic_battery/level_" + i + "_discharge")))
-                    .end();
+    public record Level() implements RangeSelectItemModelProperty {
+        public static final MapCodec<Level> MAP_CODEC = MapCodec.unit(new Level());
+
+        @Override
+        public float get(ItemStack stack, @Nullable ClientLevel level, @Nullable ItemOwner owner, int seed) {
+            return KineticBatteryBlockEntity.getCrudeBatteryLevel(KineticBatteryBlockItem.getBatteryLevel(stack), 5);
         }
-        return builder;
+
+        @Override
+        public MapCodec<Level> type() {
+            return MAP_CODEC;
+        }
     }
 }
-

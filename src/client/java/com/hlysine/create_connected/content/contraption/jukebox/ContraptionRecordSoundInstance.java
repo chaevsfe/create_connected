@@ -1,6 +1,6 @@
 package com.hlysine.create_connected.content.contraption.jukebox;
 
-import com.simibubi.create.content.contraptions.AbstractContraptionEntity;
+import com.zurrtum.create.content.contraptions.AbstractContraptionEntity;
 import net.minecraft.client.resources.sounds.AbstractTickableSoundInstance;
 import net.minecraft.client.resources.sounds.SoundInstance;
 import net.minecraft.core.BlockPos;
@@ -15,22 +15,22 @@ public class ContraptionRecordSoundInstance extends AbstractTickableSoundInstanc
     public WeakReference<AbstractContraptionEntity> contraptionEntity;
     public BlockPos contraptionPos;
 
-    public ContraptionRecordSoundInstance(SoundEvent pSoundEvent,
-                                          SoundSource pSource,
-                                          float pVolume,
-                                          float pPitch,
-                                          RandomSource pRandom,
-                                          boolean pLooping,
-                                          int pDelay,
-                                          SoundInstance.Attenuation pAttenuation,
+    public ContraptionRecordSoundInstance(SoundEvent soundEvent,
+                                          SoundSource source,
+                                          float volume,
+                                          float pitch,
+                                          RandomSource random,
+                                          boolean looping,
+                                          int delay,
+                                          SoundInstance.Attenuation attenuation,
                                           AbstractContraptionEntity contraptionEntity,
                                           BlockPos contraptionPos) {
-        super(pSoundEvent, pSource, pRandom);
-        this.volume = pVolume;
-        this.pitch = pPitch;
-        this.looping = pLooping;
-        this.delay = pDelay;
-        this.attenuation = pAttenuation;
+        super(soundEvent, source, random);
+        this.volume = volume;
+        this.pitch = pitch;
+        this.looping = looping;
+        this.delay = delay;
+        this.attenuation = attenuation;
         this.contraptionEntity = new WeakReference<>(contraptionEntity);
         this.contraptionPos = contraptionPos;
         tick();

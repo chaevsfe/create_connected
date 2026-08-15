@@ -1,21 +1,24 @@
 package com.hlysine.create_connected.content.sequencedpulsegenerator;
 
-import com.hlysine.create_connected.registries.CCBlocks;
-import com.hlysine.create_connected.registries.CCGuiTextures;
 import com.hlysine.create_connected.ConnectedLang;
 import com.hlysine.create_connected.content.sequencedpulsegenerator.instructions.EndInstruction;
 import com.hlysine.create_connected.content.sequencedpulsegenerator.instructions.Instruction;
-import com.simibubi.create.foundation.gui.AllIcons;
-import com.simibubi.create.foundation.gui.widget.IconButton;
-import com.simibubi.create.foundation.gui.widget.ScrollInput;
-import com.simibubi.create.foundation.gui.widget.SelectionScrollInput;
-import net.createmod.catnip.gui.AbstractSimiScreen;
-import net.createmod.catnip.gui.element.GuiGameElement;
-import net.minecraft.client.gui.GuiGraphics;
+import com.hlysine.create_connected.registries.CCBlocks;
+import com.hlysine.create_connected.registries.CCGuiTextures;
+import com.zurrtum.create.client.catnip.gui.AbstractSimiScreen;
+import com.zurrtum.create.client.catnip.gui.element.GuiGameElement;
+import com.zurrtum.create.client.catnip.gui.widget.ElementWidget;
+import com.zurrtum.create.client.foundation.blockEntity.behaviour.scrollValue.ScrollValueBehaviour;
+import com.zurrtum.create.client.foundation.gui.AllIcons;
+import com.zurrtum.create.client.foundation.gui.widget.IconButton;
+import com.zurrtum.create.client.foundation.gui.widget.ScrollInput;
+import com.zurrtum.create.client.foundation.gui.widget.SelectionScrollInput;
+import net.fabricmc.fabric.api.client.networking.v1.ClientPlayNetworking;
+import net.minecraft.client.gui.GuiGraphicsExtractor;
+import net.minecraft.locale.Language;
 import net.minecraft.nbt.ListTag;
 import net.minecraft.network.chat.Component;
 import net.minecraft.world.item.ItemStack;
-import net.neoforged.neoforge.network.PacketDistributor;
 
 import java.util.Vector;
 import java.util.function.Function;
@@ -24,21 +27,23 @@ import static com.hlysine.create_connected.content.sequencedpulsegenerator.Seque
 
 public class SequencedPulseGeneratorScreen extends AbstractSimiScreen {
 
-    private final ItemStack renderedItem = CCBlocks.SEQUENCED_PULSE_GENERATOR.asStack();
-    private final CCGuiTextures background = CCGuiTextures.SEQUENCER;
-    private IconButton confirmButton;
-    private final SequencedPulseGeneratorBlockEntity be;
+    private static final int TITLE_COLOR = 0xFF592424;
+    private static final int LABEL_COLOR = 0xFFFFFFEE;
 
+    private final CCGuiTextures background = CCGuiTextures.SEQUENCER;
+    private final SequencedPulseGeneratorBlockEntity be;
     private final ListTag compareTag;
     private final Vector<Instruction> instructions;
 
+    private GuiGameElement.GuiItemRenderBuilder renderedItem;
+    private IconButton confirmButton;
     private Vector<Vector<ScrollInput>> inputs;
 
     public SequencedPulseGeneratorScreen(SequencedPulseGeneratorBlockEntity be) {
         super(ConnectedLang.translateDirect("gui.sequenced_pulse_generator.title"));
         this.instructions = be.instructions;
         this.be = be;
-        compareTag = Instruction.serializeAll(instructions);
+        this.compareTag = Instruction.serializeAll(instructions);
     }
 
     @Override
@@ -50,6 +55,8 @@ public class SequencedPulseGeneratorScreen extends AbstractSimiScreen {
         int x = guiLeft;
         int y = guiTop;
 
+        renderedItem = GuiGameElement.of(new ItemStack(CCBlocks.SEQUENCED_PULSE_GENERATOR)).scale(5);
+
         inputs = new Vector<>(INSTRUCTION_CAPACITY);
         for (int row = 0; row < inputs.capacity(); row++)
             inputs.add(new Vector<>(3));
@@ -60,6 +67,10 @@ public class SequencedPulseGeneratorScreen extends AbstractSimiScreen {
         confirmButton = new IconButton(x + background.width - 33, y + background.height - 24, AllIcons.I_CONFIRM);
         confirmButton.withCallback(this::onClose);
         addRenderableWidget(confirmButton);
+
+        ElementWidget itemWidget = new ElementWidget(x + background.width + 6, y + background.height - 56)
+                .showingElement(renderedItem);
+        addRenderableWidget(itemWidget);
     }
 
     public void initInputsOfRow(int row, int backgroundX, int backgroundY) {
@@ -72,20 +83,17 @@ public class SequencedPulseGeneratorScreen extends AbstractSimiScreen {
         rowInputs.clear();
         Instruction instruction = instructions.get(row);
 
-        ScrollInput type =
-                new SelectionScrollInput(x, y + rowHeight * row, 138, 18)
-                        .forOptions(Instruction.getOptions())
-                        .calling(state -> instructionUpdated(row, state))
-                        .setState(instruction.getOrdinal())
-                        .titled(ConnectedLang.translateDirect("gui.sequenced_pulse_generator.instruction"));
-        ScrollInput value =
-                new ScrollInput(x + 140, y + rowHeight * row, 28, 18)
-                        .calling(state -> instructions.get(row).setParam(state));
-        ScrollInput signal =
-                new ScrollInput(x + 170, y + rowHeight * row, 28, 18)
-                        .withRange(0, 16)
-                        .setState(instruction.getSignal())
-                        .calling(state -> instructions.get(row).setSignal(state));
+        ScrollInput type = new SelectionScrollInput(x, y + rowHeight * row, 138, 18)
+                .forOptions(Instruction.getOptions())
+                .calling(state -> instructionUpdated(row, state))
+                .setState(instruction.getOrdinal())
+                .titled(ConnectedLang.translateDirect("gui.sequenced_pulse_generator.instruction"));
+        ScrollInput value = new ScrollInput(x + 140, y + rowHeight * row, 28, 18)
+                .calling(state -> instructions.get(row).setParam(state));
+        ScrollInput signal = new ScrollInput(x + 170, y + rowHeight * row, 28, 18)
+                .withRange(0, 16)
+                .setState(instruction.getSignal())
+                .calling(state -> instructions.get(row).setSignal(state));
 
         rowInputs.add(type);
         rowInputs.add(value);
@@ -105,27 +113,28 @@ public class SequencedPulseGeneratorScreen extends AbstractSimiScreen {
         param.active = param.visible = hasParam;
         if (hasParam) {
             param.withRange(instruction.paramConfig.minValue(), instruction.paramConfig.maxValue() + 1)
-                    .titled(ConnectedLang.translateDirect(instruction.getParamLangKey()))
+                    .titled(ConnectedLang.translateDirect(paramLangKey(instruction)))
                     .withShiftStep(instruction.paramConfig.shiftStepValue())
                     .setState(instruction.getParam())
                     .onChanged();
-            if (instruction.paramConfig.stepFunction() != null) {
-                param.withStepFunction(instruction.paramConfig.stepFunction());
-            } else
+            Function<Instruction.StepContext, Integer> stepFunction = instruction.paramConfig.stepFunction();
+            if (stepFunction != null)
+                param.withStepFunction(adaptStepFunction(stepFunction));
+            else
                 param.withStepFunction(param.standardStep());
         }
 
         ScrollInput signal = rowInputs.get(2);
         signal.active = signal.visible = hasSignal;
         if (hasSignal) {
-            signal.titled(ConnectedLang.translateDirect(instruction.getSignalLangKey()))
+            signal.titled(ConnectedLang.translateDirect(signalLangKey(instruction)))
                     .setState(instruction.getSignal())
                     .onChanged();
         }
     }
 
     @Override
-    protected void renderWindow(GuiGraphics graphics, int mouseX, int mouseY, float partialTicks) {
+    protected void renderWindow(GuiGraphicsExtractor graphics, int mouseX, int mouseY, float partialTicks) {
         int x = guiLeft;
         int y = guiTop;
 
@@ -147,12 +156,14 @@ public class SequencedPulseGeneratorScreen extends AbstractSimiScreen {
             }
 
             Instruction instruction = instructions.get(row);
-            instruction.getBackground().render(graphics, x, y + 16 + yOffset);
+            backgroundOf(instruction).render(graphics, x, y + 16 + yOffset);
 
             label(graphics, 36, yOffset - 1, ConnectedLang.translateDirect(instruction.getLangKey()));
             if (instruction.paramConfig != null) {
                 Function<Integer, Component> formatter = instruction.paramConfig.formatter();
-                Component text = formatter == null ? Component.literal(String.valueOf(instruction.getParam())) : formatter.apply(instruction.getParam());
+                Component text = formatter == null
+                        ? Component.literal(String.valueOf(instruction.getParam()))
+                        : formatter.apply(instruction.getParam());
                 int stringWidth = font.width(text);
                 label(graphics, 172 + (12 - stringWidth / 2), yOffset - 1, text);
             }
@@ -160,32 +171,27 @@ public class SequencedPulseGeneratorScreen extends AbstractSimiScreen {
                 label(graphics, 209, yOffset - 1, Component.literal(String.valueOf(instruction.getSignal())));
         }
 
-        graphics.drawString(font, title, x + (background.width - 8) / 2 - font.width(title) / 2, y + 4, 0x592424, false);
-        renderAdditional(graphics, mouseX, mouseY, partialTicks, x, y, background);
+        graphics.text(font, title,
+                x + (background.width - 8) / 2 - font.width(title) / 2,
+                y + 4, TITLE_COLOR, false);
     }
 
-    private void renderAdditional(GuiGraphics graphics, int mouseX, int mouseY, float partialTicks, int guiLeft, int guiTop,
-                                  CCGuiTextures background) {
-        GuiGameElement.of(renderedItem).<GuiGameElement
-                        .GuiRenderBuilder>at(guiLeft + background.width + 6, guiTop + background.height - 56, 100)
-                .scale(5)
-                .render(graphics);
-    }
-
-    private void label(GuiGraphics graphics, int x, int y, Component text) {
-        graphics.drawString(font, text, guiLeft + x, guiTop + 26 + y, 0xFFFFEE);
+    private void label(GuiGraphicsExtractor graphics, int x, int y, Component text) {
+        graphics.text(font, text, guiLeft + x, guiTop + 26 + y, LABEL_COLOR, true);
     }
 
     public void sendPacket() {
         ListTag serialized = Instruction.serializeAll(instructions);
         if (serialized.equals(compareTag))
             return;
-        PacketDistributor.sendToServer(new ConfigureSequencedPulseGeneratorPacket(be.getBlockPos(), serialized));
+        ClientPlayNetworking.send(new ConfigureSequencedPulseGeneratorPacket(be.getBlockPos(), serialized));
     }
 
     @Override
     public void removed() {
         sendPacket();
+        if (renderedItem != null)
+            renderedItem.clear();
     }
 
     private void instructionUpdated(int index, int state) {
@@ -207,5 +213,31 @@ public class SequencedPulseGeneratorScreen extends AbstractSimiScreen {
         }
     }
 
-}
+    private static CCGuiTextures backgroundOf(Instruction instruction) {
+        return switch (instruction.getBackground()) {
+            case INSTRUCTION -> CCGuiTextures.SEQUENCER_INSTRUCTION;
+            case DELAY -> CCGuiTextures.SEQUENCER_DELAY;
+            case END -> CCGuiTextures.SEQUENCER_END;
+        };
+    }
 
+    private static Function<ScrollValueBehaviour.StepContext, Integer> adaptStepFunction(
+            Function<Instruction.StepContext, Integer> stepFunction) {
+        return context -> stepFunction.apply(
+                new Instruction.StepContext(context.currentValue, context.forward, context.shift, context.control));
+    }
+
+    private static String paramLangKey(Instruction instruction) {
+        String key = instruction.getLangKey() + ".param";
+        if (Language.getInstance().has(ConnectedLang.translationKey(key)))
+            return key;
+        return "gui.sequenced_pulse_generator.param";
+    }
+
+    private static String signalLangKey(Instruction instruction) {
+        String key = instruction.getLangKey() + ".signal";
+        if (Language.getInstance().has(ConnectedLang.translationKey(key)))
+            return key;
+        return "gui.sequenced_pulse_generator.signal";
+    }
+}

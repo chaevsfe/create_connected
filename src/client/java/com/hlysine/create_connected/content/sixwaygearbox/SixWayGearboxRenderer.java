@@ -1,56 +1,98 @@
 package com.hlysine.create_connected.content.sixwaygearbox;
 
+import com.hlysine.create_connected.content.sixwaygearbox.SixWayGearboxRenderer.SixWayGearboxRenderState;
 import com.mojang.blaze3d.vertex.PoseStack;
-import com.simibubi.create.AllPartialModels;
-import com.simibubi.create.content.kinetics.base.KineticBlockEntityRenderer;
-import dev.engine_room.flywheel.api.visualization.VisualizationManager;
-import net.createmod.catnip.animation.AnimationTickHolder;
-import net.createmod.catnip.data.Iterate;
-import net.createmod.catnip.render.CachedBuffers;
-import net.createmod.catnip.render.SuperByteBuffer;
-import net.minecraft.client.renderer.MultiBufferSource;
-import net.minecraft.client.renderer.RenderType;
-import net.minecraft.client.renderer.blockentity.BlockEntityRendererProvider;
-import net.minecraft.core.BlockPos;
+import com.zurrtum.create.catnip.data.Iterate;
+import com.zurrtum.create.client.AllPartialModels;
+import com.zurrtum.create.client.catnip.render.CachedBuffers;
+import com.zurrtum.create.client.catnip.render.SuperByteBufferRenderState;
+import com.zurrtum.create.client.foundation.blockEntity.renderer.SmartBlockEntityRenderer;
+import net.minecraft.client.renderer.SubmitNodeCollector;
+import net.minecraft.client.renderer.blockentity.BlockEntityRenderer;
+import net.minecraft.client.renderer.blockentity.BlockEntityRendererProvider.Context;
+import net.minecraft.client.renderer.blockentity.state.BlockEntityRenderState;
+import net.minecraft.client.renderer.feature.ModelFeatureRenderer.CrumblingOverlay;
+import net.minecraft.client.renderer.state.level.CameraRenderState;
 import net.minecraft.core.Direction;
 import net.minecraft.core.Direction.Axis;
+import net.minecraft.world.level.Level;
 import net.minecraft.world.level.block.state.BlockState;
-import net.minecraft.world.level.block.state.properties.BlockStateProperties;
+import net.minecraft.world.phys.Vec3;
+import org.jetbrains.annotations.Nullable;
+import org.jetbrains.annotations.UnknownNullability;
+import org.joml.Quaternionf;
 
-public class SixWayGearboxRenderer extends KineticBlockEntityRenderer<SixWayGearboxBlockEntity> {
+import java.util.ArrayList;
+import java.util.List;
 
-    public SixWayGearboxRenderer(BlockEntityRendererProvider.Context context) {
-        super(context);
+import static com.zurrtum.create.client.content.kinetics.base.KineticBlockEntityRenderer.getProgress;
+import static com.zurrtum.create.client.content.kinetics.base.KineticBlockEntityRenderer.getRotateAngle;
+import static com.zurrtum.create.client.content.kinetics.base.KineticBlockEntityRenderer.getRotationOffsetForPosition;
+import static com.zurrtum.create.client.content.kinetics.base.KineticBlockEntityRenderer.getTintColor;
+
+public class SixWayGearboxRenderer implements BlockEntityRenderer<SixWayGearboxBlockEntity, SixWayGearboxRenderState> {
+    public SixWayGearboxRenderer(Context context) {
     }
 
     @Override
-    protected void renderSafe(SixWayGearboxBlockEntity be, float partialTicks, PoseStack ms, MultiBufferSource buffer,
-                              int light, int overlay) {
-        if (VisualizationManager.supportsVisualization(be.getLevel())) return;
+    public SixWayGearboxRenderState createRenderState() {
+        return new SixWayGearboxRenderState();
+    }
 
-        final BlockState state = be.getBlockState();
-        final Axis boxAxis = state.getValue(BlockStateProperties.AXIS);
-        final BlockPos pos = be.getBlockPos();
-        float time = AnimationTickHolder.getRenderTime(be.getLevel());
-
+    @Override
+    public void extractRenderState(
+        SixWayGearboxBlockEntity be,
+        SixWayGearboxRenderState state,
+        float tickProgress,
+        Vec3 cameraPos,
+        @Nullable CrumblingOverlay crumblingOverlay
+    ) {
+        Level level = SmartBlockEntityRenderer.extractBase(be, state, crumblingOverlay);
+        state.blockState = be.getBlockState();
+        int color = getTintColor(be);
+        float progress = getProgress(be, level);
+        List<ShaftRenderState> shafts = new ArrayList<>(Iterate.directions.length);
         for (Direction direction : Iterate.directions) {
-            final Axis axis = direction.getAxis();
-
-            SuperByteBuffer shaft = CachedBuffers.partialFacing(AllPartialModels.SHAFT_HALF, be.getBlockState(), direction);
-            float offset = getRotationOffsetForPosition(be, pos, axis);
-            float angle = (time * be.getSpeed() * 3f / 10) % 360;
-
-            if (be.getSpeed() != 0 && be.hasSource()) {
-                BlockPos source = be.source.subtract(be.getBlockPos());
-                Direction sourceFacing = Direction.getNearest(source.getX(), source.getY(), source.getZ());
-                angle *= SixWayGearboxBlockEntity.getRotationSpeedModifier(state, direction, sourceFacing);
-            }
-
-            angle += offset;
-            angle = angle / 180f * (float) Math.PI;
-
-            kineticRotationTransform(shaft, be, axis, angle, light);
-            shaft.renderInto(ms, buffer.getBuffer(RenderType.solid()));
+            Axis axis = direction.getAxis();
+            float offset = getRotationOffsetForPosition(be, state.blockPos, axis);
+            Quaternionf angle = getRotateAngle(progress * be.getRotationSpeedModifier(direction), offset, axis);
+            SuperByteBufferRenderState model = CachedBuffers.partialFacing(
+                AllPartialModels.SHAFT_HALF,
+                state.blockState,
+                direction
+            ).cardinalLighting(level).light(state.lightCoords).color(color).extractRenderState();
+            shafts.add(new ShaftRenderState(model, angle));
         }
+        state.shafts = shafts;
+    }
+
+    @Override
+    public void submit(
+        SixWayGearboxRenderState state,
+        PoseStack matrices,
+        SubmitNodeCollector queue,
+        CameraRenderState cameraState
+    ) {
+        if (state.shafts == null) {
+            return;
+        }
+        for (ShaftRenderState shaft : state.shafts) {
+            if (shaft.angle() == null) {
+                shaft.model().submit(matrices, queue);
+                continue;
+            }
+            matrices.pushPose();
+            matrices.rotateAround(shaft.angle(), 0.5f, 0.5f, 0.5f);
+            shaft.model().submit(matrices, queue);
+            matrices.popPose();
+        }
+    }
+
+    public record ShaftRenderState(SuperByteBufferRenderState model, @Nullable Quaternionf angle) {
+    }
+
+    public static class SixWayGearboxRenderState extends BlockEntityRenderState {
+        public @UnknownNullability BlockState blockState;
+        public @Nullable List<ShaftRenderState> shafts;
     }
 }

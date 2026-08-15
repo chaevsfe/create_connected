@@ -3,12 +3,6 @@
   "package": "com.hlysine.create_connected.mixin",
   "compatibilityLevel": "JAVA_25",
   "minVersion": "0.8",
-  "client": [
-    "featuretoggle.SubMenuConfigScreenMixin",
-    "nestedschematics.ClientSchematicLoaderMixin",
-    "sequencedgearshift.AbstractSimiScreenAccessor",
-    "sequencedgearshift.SequencedGearshiftScreenMixin"
-  ],
   "injectors": {
     "defaultRequire": 1
   },

@@ -32,16 +32,13 @@ sourceSets {
     main {
         resources.srcDir("src/generated/resources")
         java.exclude(
-            "com/hlysine/create_connected/CreateConnectedClient.java",
-            "com/hlysine/create_connected/datagen/**",
             "com/hlysine/create_connected/compat/CreateConnectedJEI.java",
             "com/hlysine/create_connected/registries/CCPonderPlugin.java",
-            "com/hlysine/create_connected/ponder/**",
         )
     }
     named("client") {
         java.exclude(
-            "com/hlysine/create_connected/**",
+            "com/hlysine/create_connected/ponder/**",
         )
     }
 }

@@ -1,16 +1,15 @@
 package com.hlysine.create_connected.content.sixwaygearbox;
 
-
-import com.simibubi.create.AllPartialModels;
-import com.simibubi.create.content.kinetics.base.KineticBlockEntityVisual;
-import com.simibubi.create.content.kinetics.base.RotatingInstance;
-import com.simibubi.create.foundation.render.AllInstanceTypes;
-import dev.engine_room.flywheel.api.instance.Instance;
-import dev.engine_room.flywheel.api.visualization.VisualizationContext;
-import dev.engine_room.flywheel.lib.instance.AbstractInstance;
-import dev.engine_room.flywheel.lib.instance.FlatLit;
-import dev.engine_room.flywheel.lib.model.Models;
-import net.createmod.catnip.data.Iterate;
+import com.zurrtum.create.catnip.data.Iterate;
+import com.zurrtum.create.client.AllPartialModels;
+import com.zurrtum.create.client.content.kinetics.base.KineticBlockEntityVisual;
+import com.zurrtum.create.client.content.kinetics.base.RotatingInstance;
+import com.zurrtum.create.client.flywheel.api.instance.Instance;
+import com.zurrtum.create.client.flywheel.api.visualization.VisualizationContext;
+import com.zurrtum.create.client.flywheel.lib.instance.AbstractInstance;
+import com.zurrtum.create.client.flywheel.lib.instance.FlatLit;
+import com.zurrtum.create.client.flywheel.lib.model.Models;
+import com.zurrtum.create.client.foundation.render.AllInstanceTypes;
 import net.minecraft.core.BlockPos;
 import net.minecraft.core.Direction;
 
@@ -28,17 +27,18 @@ public class SixWayGearboxVisual extends KineticBlockEntityVisual<SixWayGearboxB
 
         updateSourceFacing();
 
-        var instancer = instancerProvider().instancer(AllInstanceTypes.ROTATING, Models.partial(AllPartialModels.SHAFT_HALF));
+        var instancer = instancerProvider().instancer(
+            AllInstanceTypes.ROTATING,
+            Models.chunkPartial(AllPartialModels.SHAFT_HALF)
+        );
 
         for (Direction direction : Iterate.directions) {
             final Direction.Axis axis = direction.getAxis();
 
             RotatingInstance instance = instancer.createInstance();
 
-            instance.setup(blockEntity, axis, getSpeed(direction))
-                    .setPosition(getVisualPosition())
-                    .rotateToFace(Direction.SOUTH, direction)
-                    .setChanged();
+            instance.setup(blockEntity, axis, getSpeed(direction)).setPosition(getVisualPosition())
+                .rotateToFace(Direction.SOUTH, direction).setChanged();
 
             keys.put(direction, instance);
         }
@@ -48,7 +48,7 @@ public class SixWayGearboxVisual extends KineticBlockEntityVisual<SixWayGearboxB
         float speed = blockEntity.getSpeed();
 
         if (speed != 0 && sourceFacing != null) {
-            speed *= SixWayGearboxBlockEntity.getRotationSpeedModifier(blockEntity.getBlockState(), direction, sourceFacing);
+            speed *= SixWayGearboxBlockEntity.getRotationSpeedModifier(blockState, direction, sourceFacing);
         }
         return speed;
     }
@@ -56,7 +56,7 @@ public class SixWayGearboxVisual extends KineticBlockEntityVisual<SixWayGearboxB
     protected void updateSourceFacing() {
         if (blockEntity.hasSource()) {
             BlockPos source = blockEntity.source.subtract(pos);
-            sourceFacing = Direction.getNearest(source.getX(), source.getY(), source.getZ());
+            sourceFacing = Direction.getApproximateNearest(source.getX(), source.getY(), source.getZ());
         } else {
             sourceFacing = null;
         }
@@ -69,9 +69,7 @@ public class SixWayGearboxVisual extends KineticBlockEntityVisual<SixWayGearboxB
             Direction direction = key.getKey();
             Direction.Axis axis = direction.getAxis();
 
-            key.getValue()
-                    .setup(blockEntity, axis, getSpeed(direction))
-                    .setChanged();
+            key.getValue().setup(blockEntity, axis, getSpeed(direction)).setChanged();
         }
     }
 
@@ -88,8 +86,6 @@ public class SixWayGearboxVisual extends KineticBlockEntityVisual<SixWayGearboxB
 
     @Override
     public void collectCrumblingInstances(Consumer<Instance> consumer) {
-        keys.values()
-                .forEach(consumer);
+        keys.values().forEach(consumer);
     }
 }
-
