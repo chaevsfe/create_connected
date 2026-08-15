@@ -32,18 +32,10 @@ sourceSets {
     main {
         resources.srcDir("src/generated/resources")
         java.exclude(
-            "com/hlysine/create_connected/ConnectedLang.java",
-            "com/hlysine/create_connected/CreateConnected.java",
             "com/hlysine/create_connected/CreateConnectedClient.java",
             "com/hlysine/create_connected/datagen/**",
-            "com/hlysine/create_connected/content/sequencedpulsegenerator/**",
-            "com/hlysine/create_connected/content/attributefilter/**",
-            "com/hlysine/create_connected/content/redstonelinkwildcard/**",
-            "com/hlysine/create_connected/registries/CCPackets.java",
             "com/hlysine/create_connected/compat/CreateConnectedJEI.java",
-            "com/hlysine/create_connected/registries/CCTags.java",
             "com/hlysine/create_connected/registries/CCPonderPlugin.java",
-            "com/hlysine/create_connected/mixin/**",
             "com/hlysine/create_connected/ponder/**",
         )
     }
