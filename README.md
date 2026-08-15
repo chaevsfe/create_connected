@@ -1,3 +1,16 @@
+<div align="center">
+  <h1>Create: Connected — Create Fly port</h1>
+  <p>Create: Connected for Fabric, Minecraft 26.2, and Create Fly.</p>
+</div>
+
+This repository ports [Create: Connected](https://modrinth.com/mod/create-connected) to the latest public version of [Create Fly](https://github.com/ZurrTum/Create-Fly) for stable Minecraft 26.2. Create: Connected adds gearboxes, clutches, item silos, fluid vessels, kinetic batteries, copycat blocks and many other additions to Create.
+
+This is an **unofficial port**; all credit for the mod belongs to hlysine and the upstream contributors. Please report issues with this port here, not upstream.
+
+Requires Fabric API and Create Fly 6.0.9-1 on Java 25.
+
+---
+
 <p align="center"><img src="https://raw.githubusercontent.com/hlysine/create_connected/main/src/main/resources/create_connected_icon.png" alt="Logo" width="128"></p>
 
 <h1 align="center">Create: Connected</h1>
