@@ -1,26 +1,22 @@
 {
-  "neoforge:conditions": [
-    {
-      "type": "create_connected:feature_enabled",
-      "tag": "create_connected:six_way_gearbox"
-    },
-    {
-      "type": "create_connected:feature_enabled",
-      "tag": "create_connected:parallel_gearbox"
-    }
-  ],
   "type": "minecraft:crafting_shapeless",
   "category": "misc",
   "ingredients": [
-    {
-      "item": "create_connected:parallel_gearbox"
-    },
-    {
-      "item": "create:large_cogwheel"
-    }
+    "create_connected:parallel_gearbox",
+    "create:large_cogwheel"
   ],
   "result": {
     "count": 1,
     "id": "create_connected:six_way_gearbox"
-  }
+  },
+  "fabric:load_conditions": [
+    {
+      "condition": "create_connected:feature_enabled",
+      "tag": "create_connected:six_way_gearbox"
+    },
+    {
+      "condition": "create_connected:feature_enabled",
+      "tag": "create_connected:parallel_gearbox"
+    }
+  ]
 }

@@ -1,20 +1,16 @@
 {
-  "neoforge:conditions": [
-    {
-      "type": "create_connected:feature_enabled",
-      "tag": "create_connected:shear_pin"
-    }
-  ],
   "type": "create:cutting",
-  "ingredients": [
-    {
-      "item": "create:shaft"
-    }
-  ],
   "processing_time": 200,
   "results": [
     {
       "id": "create_connected:shear_pin"
     }
-  ]
+  ],
+  "fabric:load_conditions": [
+    {
+      "condition": "create_connected:feature_enabled",
+      "tag": "create_connected:shear_pin"
+    }
+  ],
+  "ingredient": "create:shaft"
 }

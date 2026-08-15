@@ -1,10 +1,4 @@
 {
-  "neoforge:conditions": [
-    {
-      "type": "create_connected:feature_enabled",
-      "tag": "create_connected:six_way_gearbox"
-    }
-  ],
   "parent": "minecraft:recipes/root",
   "criteria": {
     "has_item": {
@@ -34,5 +28,11 @@
     "recipes": [
       "create_connected:crafting/kinetics/six_way_gearbox_from_gearbox"
     ]
-  }
+  },
+  "fabric:load_conditions": [
+    {
+      "condition": "create_connected:feature_enabled",
+      "tag": "create_connected:six_way_gearbox"
+    }
+  ]
 }

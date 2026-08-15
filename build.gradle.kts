@@ -65,6 +65,10 @@ tasks.withType<JavaCompile>().configureEach {
     options.release.set(25)
 }
 
+tasks.withType<AbstractCopyTask>().configureEach {
+    duplicatesStrategy = DuplicatesStrategy.EXCLUDE
+}
+
 tasks.processResources {
     duplicatesStrategy = DuplicatesStrategy.EXCLUDE
     inputs.property("version", version)

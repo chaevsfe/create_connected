@@ -1,13 +1,4 @@
 {
-  "neoforge:conditions": [
-    {
-      "type": "neoforge:false"
-    },
-    {
-      "type": "create_connected:feature_enabled",
-      "tag": "create_connected:empty_fan_catalyst"
-    }
-  ],
   "parent": "minecraft:recipes/root",
   "criteria": {
     "has_item": {
@@ -37,5 +28,20 @@
     "recipes": [
       "create_connected:crafting/kinetics/empty_fan_catalyst_from_withering"
     ]
-  }
+  },
+  "fabric:load_conditions": [
+    {
+      "condition": "fabric:not",
+      "value": {
+        "condition": "fabric:all_mods_loaded",
+        "values": [
+          "minecraft"
+        ]
+      }
+    },
+    {
+      "condition": "create_connected:feature_enabled",
+      "tag": "create_connected:empty_fan_catalyst"
+    }
+  ]
 }

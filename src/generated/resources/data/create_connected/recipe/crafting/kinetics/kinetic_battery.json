@@ -1,25 +1,11 @@
 {
-  "neoforge:conditions": [
-    {
-      "type": "create_connected:feature_enabled",
-      "tag": "create_connected:kinetic_battery"
-    }
-  ],
   "type": "minecraft:crafting_shaped",
   "category": "misc",
   "key": {
-    "b": {
-      "item": "create:brass_casing"
-    },
-    "i": {
-      "item": "create:iron_sheet"
-    },
-    "p": {
-      "item": "create:precision_mechanism"
-    },
-    "r": {
-      "item": "minecraft:redstone"
-    }
+    "b": "create:brass_casing",
+    "i": "create:iron_sheet",
+    "p": "create:precision_mechanism",
+    "r": "minecraft:redstone"
   },
   "pattern": [
     " p ",
@@ -29,5 +15,11 @@
   "result": {
     "count": 8,
     "id": "create_connected:kinetic_battery"
-  }
+  },
+  "fabric:load_conditions": [
+    {
+      "condition": "create_connected:feature_enabled",
+      "tag": "create_connected:kinetic_battery"
+    }
+  ]
 }

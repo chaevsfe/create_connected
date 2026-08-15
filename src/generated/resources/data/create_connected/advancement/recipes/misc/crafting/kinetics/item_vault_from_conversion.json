@@ -1,14 +1,4 @@
 {
-  "neoforge:conditions": [
-    {
-      "type": "create_connected:feature_enabled",
-      "tag": "create_connected:item_silo"
-    },
-    {
-      "type": "create_connected:feature_enabled",
-      "tag": "create:item_vault"
-    }
-  ],
   "parent": "minecraft:recipes/root",
   "criteria": {
     "has_item": {
@@ -38,5 +28,15 @@
     "recipes": [
       "create_connected:crafting/kinetics/item_vault_from_conversion"
     ]
-  }
+  },
+  "fabric:load_conditions": [
+    {
+      "condition": "create_connected:feature_enabled",
+      "tag": "create_connected:item_silo"
+    },
+    {
+      "condition": "create_connected:feature_enabled",
+      "tag": "create:item_vault"
+    }
+  ]
 }

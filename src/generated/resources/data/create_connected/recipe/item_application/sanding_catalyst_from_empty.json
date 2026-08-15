@@ -1,32 +1,30 @@
 {
-  "neoforge:conditions": [
+  "type": "create:item_application",
+  "fabric:load_conditions": [
     {
-      "type": "create_connected:feature_enabled",
+      "condition": "create_connected:feature_enabled",
       "tag": "create_connected:empty_fan_catalyst"
     },
     {
-      "type": "neoforge:or",
+      "condition": "fabric:or",
       "values": [
         {
-          "type": "neoforge:mod_loaded",
-          "modid": "dndesires"
+          "condition": "fabric:all_mods_loaded",
+          "values": [
+            "dndesires"
+          ]
         },
         {
-          "type": "neoforge:mod_loaded",
-          "modid": "create_dragons_plus"
+          "condition": "fabric:all_mods_loaded",
+          "values": [
+            "create_dragons_plus"
+          ]
         }
       ]
     }
   ],
-  "type": "create:item_application",
-  "ingredients": [
-    {
-      "item": "create_connected:empty_fan_catalyst"
-    },
-    {
-      "item": "minecraft:sand"
-    }
-  ],
+  "target": "create_connected:empty_fan_catalyst",
+  "ingredient": "minecraft:sand",
   "results": [
     {
       "id": "create_connected:fan_sanding_catalyst"

@@ -1,23 +1,21 @@
 {
-  "neoforge:conditions": [
-    {
-      "type": "create_connected:feature_enabled",
-      "tag": "create:item_vault"
-    },
-    {
-      "type": "create_connected:feature_enabled",
-      "tag": "create_connected:item_silo"
-    }
-  ],
   "type": "minecraft:crafting_shapeless",
   "category": "misc",
   "ingredients": [
-    {
-      "item": "create:item_vault"
-    }
+    "create:item_vault"
   ],
   "result": {
     "count": 1,
     "id": "create_connected:item_silo"
-  }
+  },
+  "fabric:load_conditions": [
+    {
+      "condition": "create_connected:feature_enabled",
+      "tag": "create:item_vault"
+    },
+    {
+      "condition": "create_connected:feature_enabled",
+      "tag": "create_connected:item_silo"
+    }
+  ]
 }

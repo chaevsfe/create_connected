@@ -1,22 +1,10 @@
 {
-  "neoforge:conditions": [
-    {
-      "type": "create_connected:feature_enabled",
-      "tag": "create_connected:kinetic_bridge"
-    }
-  ],
   "type": "minecraft:crafting_shaped",
   "category": "misc",
   "key": {
-    "b": {
-      "item": "create:brass_casing"
-    },
-    "c": {
-      "item": "create:clutch"
-    },
-    "s": {
-      "item": "create:shaft"
-    }
+    "b": "create:brass_casing",
+    "c": "create:clutch",
+    "s": "create:shaft"
   },
   "pattern": [
     " b ",
@@ -26,5 +14,11 @@
   "result": {
     "count": 1,
     "id": "create_connected:kinetic_bridge"
-  }
+  },
+  "fabric:load_conditions": [
+    {
+      "condition": "create_connected:feature_enabled",
+      "tag": "create_connected:kinetic_bridge"
+    }
+  ]
 }

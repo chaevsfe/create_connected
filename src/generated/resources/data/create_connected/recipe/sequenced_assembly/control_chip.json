@@ -1,14 +1,14 @@
 {
   "type": "create:sequenced_assembly",
-  "ingredient": {
-    "item": "create:golden_sheet"
+  "ingredient": "create:golden_sheet",
+  "transitional_item": {
+    "id": "create_connected:incomplete_control_chip"
   },
-  "loops": 3,
-  "results": [
-    {
-      "chance": 120.0,
-      "id": "create_connected:control_chip"
-    },
+  "result": {
+    "chance": 0.8,
+    "id": "create_connected:control_chip"
+  },
+  "junks": [
     {
       "chance": 8.0,
       "id": "minecraft:redstone"
@@ -40,54 +40,30 @@
       "id": "minecraft:compass"
     }
   ],
+  "loops": 3,
   "sequence": [
     {
       "type": "create:deploying",
-      "ingredients": [
-        {
-          "item": "create_connected:incomplete_control_chip"
-        },
-        {
-          "item": "create:electron_tube"
-        }
-      ],
+      "target": "$ingredient",
+      "ingredient": "create:electron_tube",
       "results": [
-        {
-          "id": "create_connected:incomplete_control_chip"
-        }
+        "$result"
       ]
     },
     {
       "type": "create:deploying",
-      "ingredients": [
-        {
-          "item": "create_connected:incomplete_control_chip"
-        },
-        {
-          "item": "minecraft:redstone"
-        }
-      ],
+      "target": "$ingredient",
+      "ingredient": "minecraft:redstone",
       "results": [
-        {
-          "id": "create_connected:incomplete_control_chip"
-        }
+        "$result"
       ]
     },
     {
       "type": "create:pressing",
-      "ingredients": [
-        {
-          "item": "create_connected:incomplete_control_chip"
-        }
-      ],
+      "ingredient": "$ingredient",
       "results": [
-        {
-          "id": "create_connected:incomplete_control_chip"
-        }
+        "$result"
       ]
     }
-  ],
-  "transitional_item": {
-    "id": "create_connected:incomplete_control_chip"
-  }
+  ]
 }

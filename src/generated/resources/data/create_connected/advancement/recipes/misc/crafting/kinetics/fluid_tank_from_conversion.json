@@ -1,14 +1,4 @@
 {
-  "neoforge:conditions": [
-    {
-      "type": "create_connected:feature_enabled",
-      "tag": "create_connected:fluid_vessel"
-    },
-    {
-      "type": "create_connected:feature_enabled",
-      "tag": "create:fluid_tank"
-    }
-  ],
   "parent": "minecraft:recipes/root",
   "criteria": {
     "has_item": {
@@ -38,5 +28,15 @@
     "recipes": [
       "create_connected:crafting/kinetics/fluid_tank_from_conversion"
     ]
-  }
+  },
+  "fabric:load_conditions": [
+    {
+      "condition": "create_connected:feature_enabled",
+      "tag": "create_connected:fluid_vessel"
+    },
+    {
+      "condition": "create_connected:feature_enabled",
+      "tag": "create:fluid_tank"
+    }
+  ]
 }

@@ -1,17 +1,4 @@
 {
-  "neoforge:conditions": [
-    {
-      "type": "create_connected:feature_enabled",
-      "tag": "create_connected:copycat_wall"
-    },
-    {
-      "type": "neoforge:not",
-      "value": {
-        "type": "create_connected:feature_enabled_in_copycats",
-        "tag": "create_connected:copycat_wall"
-      }
-    }
-  ],
   "parent": "minecraft:recipes/root",
   "criteria": {
     "has_item": {
@@ -41,5 +28,18 @@
     "recipes": [
       "create_connected:crafting/palettes/copycat_wall"
     ]
-  }
+  },
+  "fabric:load_conditions": [
+    {
+      "condition": "create_connected:feature_enabled",
+      "tag": "create_connected:copycat_wall"
+    },
+    {
+      "condition": "fabric:not",
+      "value": {
+        "condition": "create_connected:feature_enabled_in_copycats",
+        "tag": "create_connected:copycat_wall"
+      }
+    }
+  ]
 }

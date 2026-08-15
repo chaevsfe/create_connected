@@ -1,14 +1,4 @@
 {
-  "neoforge:conditions": [
-    {
-      "type": "create_connected:feature_enabled",
-      "tag": "create:redstone_link"
-    },
-    {
-      "type": "create_connected:feature_enabled",
-      "tag": "create_connected:linked_transmitter"
-    }
-  ],
   "parent": "minecraft:recipes/root",
   "criteria": {
     "has_item": {
@@ -38,5 +28,15 @@
     "recipes": [
       "create_connected:crafting/kinetics/linked_transmitter_from_conversion"
     ]
-  }
+  },
+  "fabric:load_conditions": [
+    {
+      "condition": "create_connected:feature_enabled",
+      "tag": "create:redstone_link"
+    },
+    {
+      "condition": "create_connected:feature_enabled",
+      "tag": "create_connected:linked_transmitter"
+    }
+  ]
 }

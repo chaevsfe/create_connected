@@ -11,5 +11,11 @@
   ],
   "injectors": {
     "defaultRequire": 1
-  }
+  },
+  "mixins": [
+    "copycat.fence.ValueBoxRendererMixin",
+    "featuretoggle.CreativeModeTabsAccessor",
+    "nestedschematics.ClientSchematicLoaderMixin",
+    "sequencedgearshift.SequencedGearshiftScreenMixin"
+  ]
 }

@@ -1,22 +1,22 @@
 {
-  "neoforge:conditions": [
+  "type": "create:item_application",
+  "fabric:load_conditions": [
     {
-      "type": "create_connected:feature_enabled",
+      "condition": "create_connected:feature_enabled",
       "tag": "create_connected:empty_fan_catalyst"
     },
     {
-      "type": "neoforge:false"
+      "condition": "fabric:not",
+      "value": {
+        "condition": "fabric:all_mods_loaded",
+        "values": [
+          "minecraft"
+        ]
+      }
     }
   ],
-  "type": "create:item_application",
-  "ingredients": [
-    {
-      "item": "create_connected:empty_fan_catalyst"
-    },
-    {
-      "item": "minecraft:wither_rose"
-    }
-  ],
+  "target": "create_connected:empty_fan_catalyst",
+  "ingredient": "minecraft:wither_rose",
   "results": [
     {
       "id": "create_connected:fan_withering_catalyst"

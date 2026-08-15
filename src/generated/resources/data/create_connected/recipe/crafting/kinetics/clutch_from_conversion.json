@@ -1,23 +1,21 @@
 {
-  "neoforge:conditions": [
-    {
-      "type": "create_connected:feature_enabled",
-      "tag": "create_connected:inverted_clutch"
-    },
-    {
-      "type": "create_connected:feature_enabled",
-      "tag": "create:clutch"
-    }
-  ],
   "type": "minecraft:crafting_shapeless",
   "category": "misc",
   "ingredients": [
-    {
-      "item": "create_connected:inverted_clutch"
-    }
+    "create_connected:inverted_clutch"
   ],
   "result": {
     "count": 1,
     "id": "create:clutch"
-  }
+  },
+  "fabric:load_conditions": [
+    {
+      "condition": "create_connected:feature_enabled",
+      "tag": "create_connected:inverted_clutch"
+    },
+    {
+      "condition": "create_connected:feature_enabled",
+      "tag": "create:clutch"
+    }
+  ]
 }

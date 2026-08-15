@@ -1,32 +1,34 @@
 {
-  "neoforge:conditions": [
-    {
-      "type": "neoforge:or",
-      "values": [
-        {
-          "type": "neoforge:mod_loaded",
-          "modid": "garnished"
-        },
-        {
-          "type": "neoforge:mod_loaded",
-          "modid": "create_dragons_plus"
-        }
-      ]
-    },
-    {
-      "type": "create_connected:feature_enabled",
-      "tag": "create_connected:empty_fan_catalyst"
-    }
-  ],
   "type": "minecraft:crafting_shapeless",
   "category": "misc",
   "ingredients": [
-    {
-      "item": "create_connected:gray_fan_dyeing_catalyst"
-    }
+    "create_connected:gray_fan_dyeing_catalyst"
   ],
   "result": {
     "count": 1,
     "id": "create_connected:empty_fan_catalyst"
-  }
+  },
+  "fabric:load_conditions": [
+    {
+      "condition": "fabric:or",
+      "values": [
+        {
+          "condition": "fabric:all_mods_loaded",
+          "values": [
+            "garnished"
+          ]
+        },
+        {
+          "condition": "fabric:all_mods_loaded",
+          "values": [
+            "create_dragons_plus"
+          ]
+        }
+      ]
+    },
+    {
+      "condition": "create_connected:feature_enabled",
+      "tag": "create_connected:empty_fan_catalyst"
+    }
+  ]
 }

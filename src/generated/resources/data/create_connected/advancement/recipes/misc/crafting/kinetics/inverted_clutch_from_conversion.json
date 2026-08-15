@@ -1,14 +1,4 @@
 {
-  "neoforge:conditions": [
-    {
-      "type": "create_connected:feature_enabled",
-      "tag": "create:clutch"
-    },
-    {
-      "type": "create_connected:feature_enabled",
-      "tag": "create_connected:inverted_clutch"
-    }
-  ],
   "parent": "minecraft:recipes/root",
   "criteria": {
     "has_item": {
@@ -38,5 +28,15 @@
     "recipes": [
       "create_connected:crafting/kinetics/inverted_clutch_from_conversion"
     ]
-  }
+  },
+  "fabric:load_conditions": [
+    {
+      "condition": "create_connected:feature_enabled",
+      "tag": "create:clutch"
+    },
+    {
+      "condition": "create_connected:feature_enabled",
+      "tag": "create_connected:inverted_clutch"
+    }
+  ]
 }

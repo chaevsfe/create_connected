@@ -1,32 +1,4 @@
 {
-  "neoforge:conditions": [
-    {
-      "type": "neoforge:and",
-      "values": [
-        {
-          "type": "neoforge:or",
-          "values": [
-            {
-              "type": "neoforge:mod_loaded",
-              "modid": "garnished"
-            },
-            {
-              "type": "neoforge:mod_loaded",
-              "modid": "create_dragons_plus"
-            }
-          ]
-        },
-        {
-          "type": "neoforge:mod_loaded",
-          "modid": "dye_depot"
-        }
-      ]
-    },
-    {
-      "type": "create_connected:feature_enabled",
-      "tag": "create_connected:empty_fan_catalyst"
-    }
-  ],
   "parent": "minecraft:recipes/root",
   "criteria": {
     "has_item": {
@@ -56,5 +28,39 @@
     "recipes": [
       "create_connected:crafting/kinetics/empty_fan_catalyst_from_dye_depot_amber_dye"
     ]
-  }
+  },
+  "fabric:load_conditions": [
+    {
+      "condition": "fabric:and",
+      "values": [
+        {
+          "condition": "fabric:or",
+          "values": [
+            {
+              "condition": "fabric:all_mods_loaded",
+              "values": [
+                "garnished"
+              ]
+            },
+            {
+              "condition": "fabric:all_mods_loaded",
+              "values": [
+                "create_dragons_plus"
+              ]
+            }
+          ]
+        },
+        {
+          "condition": "fabric:all_mods_loaded",
+          "values": [
+            "dye_depot"
+          ]
+        }
+      ]
+    },
+    {
+      "condition": "create_connected:feature_enabled",
+      "tag": "create_connected:empty_fan_catalyst"
+    }
+  ]
 }

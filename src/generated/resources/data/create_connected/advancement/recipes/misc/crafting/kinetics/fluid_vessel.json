@@ -1,10 +1,4 @@
 {
-  "neoforge:conditions": [
-    {
-      "type": "create_connected:feature_enabled",
-      "tag": "create_connected:fluid_vessel"
-    }
-  ],
   "parent": "minecraft:recipes/root",
   "criteria": {
     "has_item": {
@@ -34,5 +28,11 @@
     "recipes": [
       "create_connected:crafting/kinetics/fluid_vessel"
     ]
-  }
+  },
+  "fabric:load_conditions": [
+    {
+      "condition": "create_connected:feature_enabled",
+      "tag": "create_connected:fluid_vessel"
+    }
+  ]
 }
