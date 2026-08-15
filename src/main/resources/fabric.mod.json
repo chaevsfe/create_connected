@@ -5,13 +5,14 @@
   "name": "Create: Connected",
   "description": "Create: Connected port for Create Fly 26.2. Quality-of-life blocks that you wish existed in Create.",
   "authors": [
-    "hlysine"
+    "hlysine",
+    "chaevsfe"
   ],
   "contributors": [
     "chaevsfe"
   ],
   "contact": {
-    "homepage": "https://github.com/chaevsfe/create_connected",
+    "homepage": "https://modrinth.com/mod/create-connected",
     "sources": "https://github.com/chaevsfe/create_connected",
     "issues": "https://github.com/chaevsfe/create_connected/issues"
   },
