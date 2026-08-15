@@ -35,6 +35,7 @@ import com.hlysine.create_connected.registries.CCBlockEntityTypes;
 import com.hlysine.create_connected.registries.CCColorHandlers;
 import com.hlysine.create_connected.registries.CCModels;
 import com.hlysine.create_connected.registries.CCPartialModels;
+import com.hlysine.create_connected.registries.CCPonderPlugin;
 import com.zurrtum.create.client.AllBlockEntityBehaviours;
 import com.zurrtum.create.client.AllBlockEntityRenders;
 import com.zurrtum.create.client.AllItemTooltips;
@@ -56,6 +57,7 @@ import com.zurrtum.create.client.foundation.blockEntity.behaviour.tooltip.Genera
 import com.zurrtum.create.client.foundation.blockEntity.behaviour.tooltip.KineticTooltipBehaviour;
 import com.zurrtum.create.client.foundation.blockEntity.renderer.SmartBlockEntityRenderer;
 import com.zurrtum.create.client.foundation.utility.CreateLang;
+import com.zurrtum.create.client.ponder.foundation.PonderIndex;
 import net.fabricmc.api.ClientModInitializer;
 import net.minecraft.core.registries.BuiltInRegistries;
 import net.minecraft.resources.ResourceKey;
@@ -77,6 +79,7 @@ public class CreateConnectedClient implements ClientModInitializer {
         KineticBatteryOverrides.register();
         KineticBridgePlacementPreview.register();
         CCClientNetwork.register();
+        PonderIndex.addPlugin(new CCPonderPlugin());
         SequencedPulseGeneratorBlock.setScreenOpener(be -> ScreenOpener.open(new SequencedPulseGeneratorScreen(be)));
         FeatureToggle.addVisibilityListener(CreateConnectedClient::rebuildCreativeTabs);
     }

@@ -21,6 +21,7 @@ public class CCPonderPlugin implements PonderPlugin {
         return CreateConnected.MODID;
     }
 
+    @SuppressWarnings("removal")
     @Override
     public void registerScenes(PonderSceneRegistrationHelper<Identifier> helper) {
         PonderSceneRegistrationHelper<Item> SCENE_HELPER = helper.withKeyFunction(BuiltInRegistries.ITEM::getKey);
