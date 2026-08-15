@@ -35,6 +35,7 @@ public class CCConfigs {
 
     public static void register() {
         FeatureToggle.assertAllRegistered();
+        CStress.registerDefaults();
 
         common = Builder.create(CCommon::new, CreateConnected.MODID, "common", true);
         server = Builder.create(CServer::new, CreateConnected.MODID, "server", true);

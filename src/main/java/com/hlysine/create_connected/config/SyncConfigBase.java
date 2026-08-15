@@ -42,6 +42,18 @@ public abstract class SyncConfigBase extends ConfigBase {
     protected void readSyncConfig(CompoundTag nbt) {
     }
 
+    public final void clearSyncConfig() {
+        for (ConfigBase child : children) {
+            if (child instanceof SyncConfigBase syncChild) {
+                syncChild.clearSyncConfig();
+            }
+        }
+        clearSyncOverlay();
+    }
+
+    protected void clearSyncOverlay() {
+    }
+
     public void syncToPlayer(ServerPlayer player) {
         if (player == null || sender == null) return;
         sender.accept(player, getSyncConfig());

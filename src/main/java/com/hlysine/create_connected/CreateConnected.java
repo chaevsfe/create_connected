@@ -1,9 +1,9 @@
 package com.hlysine.create_connected;
 
 import com.hlysine.create_connected.config.CCConfigs;
-import com.hlysine.create_connected.config.FeatureToggle;
 import com.hlysine.create_connected.foundation.advancement.CCAdvancements;
 import com.hlysine.create_connected.foundation.advancement.CCTriggers;
+import com.hlysine.create_connected.foundation.condition.CCCraftingConditions;
 import com.hlysine.create_connected.registries.CCBlockEntityTypes;
 import com.hlysine.create_connected.registries.CCCreativeTabs;
 import com.hlysine.create_connected.registries.CCItems;
@@ -30,16 +30,8 @@ public class CreateConnected implements ModInitializer {
         CCAdvancements.register();
         CCTriggers.register();
         CCRegistration.register();
-        verifyFeatureTogglesPopulated();
+        CCCraftingConditions.register();
         CCConfigs.register();
-    }
-
-    private static void verifyFeatureTogglesPopulated() {
-        if (FeatureToggle.TOGGLEABLE_FEATURES.isEmpty() || FeatureToggle.DEPENDENT_FEATURES.isEmpty())
-            throw new IllegalStateException(
-                    "Create: Connected feature toggles must be registered before the config is built (toggleable="
-                            + FeatureToggle.TOGGLEABLE_FEATURES.size() + ", dependent="
-                            + FeatureToggle.DEPENDENT_FEATURES.size() + ")");
     }
 
     public static Identifier asResource(String path) {

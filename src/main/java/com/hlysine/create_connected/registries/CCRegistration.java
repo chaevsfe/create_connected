@@ -38,40 +38,96 @@ import com.zurrtum.create.api.registry.CreateRegistries;
 import com.zurrtum.create.api.stress.BlockStressValues;
 import com.zurrtum.create.content.decoration.encasing.EncasingRegistry;
 import com.zurrtum.create.content.fluids.tank.FluidTankMovementBehavior;
-import com.zurrtum.create.content.kinetics.mechanicalArm.ArmInteractionPointType;
-import com.zurrtum.create.content.logistics.item.filter.attribute.ItemAttributeType;
 import com.zurrtum.create.content.redstone.displayLink.source.BoilerDisplaySource;
 import net.minecraft.core.Registry;
 import net.minecraft.world.level.block.Blocks;
 
 public class CCRegistration {
 
+    public static ItemSiloMountedStorageType SILO;
+    public static FluidVesselMountedStorageType FLUID_VESSEL;
+
     public static BoilerDisplaySource BOILER_STATUS;
     public static KineticBatteryDisplaySource KINETIC_BATTERY_SOURCE;
 
     public static DashboardDisplayTarget DASHBOARD;
 
-    public static ItemSiloMountedStorageType SILO;
-    public static FluidVesselMountedStorageType FLUID_VESSEL;
+    public static KineticBatteryInteractionPoint.Type KINETIC_BATTERY_POINT;
 
-    public static ArmInteractionPointType KINETIC_BATTERY_POINT;
-
-    public static ItemAttributeType MAX_DAMAGE;
-    public static ItemAttributeType ID_CONTAINS;
-    public static ItemAttributeType STACK_SIZE;
+    public static ItemDamageAttribute.Type MAX_DAMAGE;
+    public static ItemIdAttribute.Type ID_CONTAINS;
+    public static ItemStackCountAttribute.Type STACK_SIZE;
 
     public static void register() {
+        registerMountedStorageTypes();
+        registerDisplaySources();
+        registerDisplayTargets();
+        registerArmInteractionPointTypes();
+        registerItemAttributeTypes();
         registerStressValues();
         registerMovementBehaviours();
         registerInteractionBehaviours();
-        registerDisplaySources();
-        registerDisplayTargets();
-        registerMountedStorageTypes();
-        registerArmInteractionPointTypes();
-        registerItemAttributeTypes();
         registerEncasedVariants();
         registerMovementChecks();
         registerWrappedCopycats();
+    }
+
+    private static void registerMountedStorageTypes() {
+        SILO = Registry.register(
+                CreateRegistries.MOUNTED_ITEM_STORAGE_TYPE,
+                CreateConnected.asResource("silo"),
+                new ItemSiloMountedStorageType());
+        MountedItemStorageType.REGISTRY.register(CCBlocks.ITEM_SILO, SILO);
+
+        FLUID_VESSEL = Registry.register(
+                CreateRegistries.MOUNTED_FLUID_STORAGE_TYPE,
+                CreateConnected.asResource("fluid_vessel"),
+                new FluidVesselMountedStorageType());
+        MountedFluidStorageType.REGISTRY.register(CCBlocks.FLUID_VESSEL, FLUID_VESSEL);
+    }
+
+    private static void registerDisplaySources() {
+        BOILER_STATUS = Registry.register(
+                CreateRegistries.DISPLAY_SOURCE,
+                CreateConnected.asResource("boiler_status"),
+                new BoilerDisplaySource());
+        DisplaySource.BY_BLOCK.add(CCBlocks.FLUID_VESSEL, BOILER_STATUS);
+
+        KINETIC_BATTERY_SOURCE = Registry.register(
+                CreateRegistries.DISPLAY_SOURCE,
+                CreateConnected.asResource("kinetic_battery"),
+                new KineticBatteryDisplaySource());
+        DisplaySource.BY_BLOCK.add(CCBlocks.KINETIC_BATTERY, KINETIC_BATTERY_SOURCE);
+    }
+
+    private static void registerDisplayTargets() {
+        DASHBOARD = Registry.register(
+                CreateRegistries.DISPLAY_TARGET,
+                CreateConnected.asResource("dashboard"),
+                new DashboardDisplayTarget());
+        DisplayTarget.BY_BLOCK.register(CCBlocks.DASHBOARD, DASHBOARD);
+    }
+
+    private static void registerArmInteractionPointTypes() {
+        KINETIC_BATTERY_POINT = Registry.register(
+                CreateRegistries.ARM_INTERACTION_POINT_TYPE,
+                CreateConnected.asResource("kinetic_battery"),
+                new KineticBatteryInteractionPoint.Type());
+    }
+
+    private static void registerItemAttributeTypes() {
+        MAX_DAMAGE = Registry.register(
+                CreateRegistries.ITEM_ATTRIBUTE_TYPE,
+                CreateConnected.asResource("max_damage"),
+                new ItemDamageAttribute.Type());
+        ID_CONTAINS = Registry.register(
+                CreateRegistries.ITEM_ATTRIBUTE_TYPE,
+                CreateConnected.asResource("id_contains"),
+                new ItemIdAttribute.Type());
+        STACK_SIZE = Registry.register(
+                CreateRegistries.ITEM_ATTRIBUTE_TYPE,
+                CreateConnected.asResource("stack_size"),
+                new ItemStackCountAttribute.Type());
     }
 
     private static void registerStressValues() {
@@ -104,64 +160,6 @@ public class CCRegistration {
             MovingInteractionBehaviour.REGISTRY.register(Blocks.LOOM, new MenuBlockInteractionBehaviour());
             MovingInteractionBehaviour.REGISTRY.register(Blocks.CARTOGRAPHY_TABLE, new MenuBlockInteractionBehaviour());
         }
-    }
-
-    private static void registerDisplaySources() {
-        BOILER_STATUS = Registry.register(
-                CreateRegistries.DISPLAY_SOURCE,
-                CreateConnected.asResource("boiler_status"),
-                new BoilerDisplaySource());
-        DisplaySource.BY_BLOCK.add(CCBlocks.FLUID_VESSEL, BOILER_STATUS);
-
-        KINETIC_BATTERY_SOURCE = Registry.register(
-                CreateRegistries.DISPLAY_SOURCE,
-                CreateConnected.asResource("kinetic_battery"),
-                new KineticBatteryDisplaySource());
-        DisplaySource.BY_BLOCK.add(CCBlocks.KINETIC_BATTERY, KINETIC_BATTERY_SOURCE);
-    }
-
-    private static void registerDisplayTargets() {
-        DASHBOARD = Registry.register(
-                CreateRegistries.DISPLAY_TARGET,
-                CreateConnected.asResource("dashboard"),
-                new DashboardDisplayTarget());
-        DisplayTarget.BY_BLOCK.register(CCBlocks.DASHBOARD, DASHBOARD);
-    }
-
-    private static void registerMountedStorageTypes() {
-        SILO = Registry.register(
-                CreateRegistries.MOUNTED_ITEM_STORAGE_TYPE,
-                CreateConnected.asResource("silo"),
-                new ItemSiloMountedStorageType());
-        MountedItemStorageType.REGISTRY.register(CCBlocks.ITEM_SILO, SILO);
-
-        FLUID_VESSEL = Registry.register(
-                CreateRegistries.MOUNTED_FLUID_STORAGE_TYPE,
-                CreateConnected.asResource("fluid_vessel"),
-                new FluidVesselMountedStorageType());
-        MountedFluidStorageType.REGISTRY.register(CCBlocks.FLUID_VESSEL, FLUID_VESSEL);
-    }
-
-    private static void registerArmInteractionPointTypes() {
-        KINETIC_BATTERY_POINT = Registry.register(
-                CreateRegistries.ARM_INTERACTION_POINT_TYPE,
-                CreateConnected.asResource("kinetic_battery"),
-                new KineticBatteryInteractionPoint.Type());
-    }
-
-    private static void registerItemAttributeTypes() {
-        MAX_DAMAGE = Registry.register(
-                CreateRegistries.ITEM_ATTRIBUTE_TYPE,
-                CreateConnected.asResource("max_damage"),
-                new ItemDamageAttribute.Type());
-        ID_CONTAINS = Registry.register(
-                CreateRegistries.ITEM_ATTRIBUTE_TYPE,
-                CreateConnected.asResource("id_contains"),
-                new ItemIdAttribute.Type());
-        STACK_SIZE = Registry.register(
-                CreateRegistries.ITEM_ATTRIBUTE_TYPE,
-                CreateConnected.asResource("stack_size"),
-                new ItemStackCountAttribute.Type());
     }
 
     private static void registerEncasedVariants() {

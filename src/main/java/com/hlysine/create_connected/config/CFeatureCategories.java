@@ -53,6 +53,12 @@ public class CFeatureCategories extends SyncConfigBase {
     }
 
     @Override
+    protected void clearSyncOverlay() {
+        synchronizedToggles = null;
+        FeatureToggle.refreshItemVisibility();
+    }
+
+    @Override
     protected void writeSyncConfig(CompoundTag nbt) {
         toggles.forEach((key, value) -> nbt.putBoolean(key.toString(), value.get()));
     }

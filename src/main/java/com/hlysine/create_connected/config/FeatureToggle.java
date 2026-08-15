@@ -63,17 +63,18 @@ public class FeatureToggle {
      * @return Whether the feature is enabled.
      */
     public static boolean isEnabled(Identifier key) {
-        if (FEATURE_CATEGORIES.containsKey(key)) {
+        CCommon common = CCConfigs.common();
+        if (common != null && FEATURE_CATEGORIES.containsKey(key)) {
             Set<FeatureCategory> categories = FEATURE_CATEGORIES.get(key);
             for (FeatureCategory category : categories) {
-                if (!getCategories().isEnabled(category)) return false;
+                if (!common.categories.isEnabled(category)) return false;
             }
         }
         if (FEATURE_CONDITIONS.containsKey(key)) {
             if (!FEATURE_CONDITIONS.get(key).get()) return false;
         }
-        if (getToggles().hasToggle(key)) {
-            return getToggles().isEnabled(key);
+        if (common != null && common.toggle.hasToggle(key)) {
+            return common.toggle.isEnabled(key);
         } else {
             Identifier dependency = DEPENDENT_FEATURES.get(key);
             if (dependency != null) return isEnabled(dependency);
@@ -116,13 +117,5 @@ public class FeatureToggle {
     private static void assertOpen(Identifier key) {
         if (sealed)
             throw new IllegalStateException("Feature " + key + " was registered after the config was built");
-    }
-
-    private static CFeatures getToggles() {
-        return CCConfigs.common().toggle;
-    }
-
-    private static CFeatureCategories getCategories() {
-        return CCConfigs.common().categories;
     }
 }

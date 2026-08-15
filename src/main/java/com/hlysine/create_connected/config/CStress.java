@@ -23,6 +23,24 @@ public class CStress extends ConfigBase {
     protected final Map<Identifier, DoubleRawValue> capacities = new HashMap<>();
     protected final Map<Identifier, DoubleRawValue> impacts = new HashMap<>();
 
+    public static void registerDefaults() {
+        setNoImpact(CreateConnected.asResource("encased_chain_cogwheel"));
+        setCapacity(CreateConnected.asResource("crank_wheel"), 8.0);
+        setCapacity(CreateConnected.asResource("large_crank_wheel"), 8.0);
+        setNoImpact(CreateConnected.asResource("parallel_gearbox"));
+        setNoImpact(CreateConnected.asResource("six_way_gearbox"));
+        setNoImpact(CreateConnected.asResource("overstress_clutch"));
+        setNoImpact(CreateConnected.asResource("shear_pin"));
+        setNoImpact(CreateConnected.asResource("inverted_clutch"));
+        setNoImpact(CreateConnected.asResource("inverted_gearshift"));
+        setNoImpact(CreateConnected.asResource("centrifugal_clutch"));
+        setNoImpact(CreateConnected.asResource("freewheel_clutch"));
+        setNoImpact(CreateConnected.asResource("brass_gearbox"));
+        setNoImpact(CreateConnected.asResource("brake"));
+        setCapacity(CreateConnected.asResource("kinetic_battery"), 32.0);
+        setImpact(CreateConnected.asResource("kinetic_battery"), 64.0);
+    }
+
     @Override
     public void registerAll(Builder builder) {
         builder.comment(Comments.su, Comments.impact).push("impact");
