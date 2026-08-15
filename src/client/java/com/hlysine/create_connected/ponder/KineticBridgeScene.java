@@ -1,16 +1,16 @@
 package com.hlysine.create_connected.ponder;
 
-import com.hlysine.create_connected.registries.CCBlocks;
 import com.hlysine.create_connected.content.overstressclutch.OverstressClutchBlock;
-import com.simibubi.create.AllBlocks;
-import com.simibubi.create.content.kinetics.saw.SawBlock;
-import com.simibubi.create.foundation.ponder.CreateSceneBuilder;
-import net.createmod.catnip.math.Pointing;
-import net.createmod.ponder.api.ParticleEmitter;
-import net.createmod.ponder.api.PonderPalette;
-import net.createmod.ponder.api.scene.SceneBuilder;
-import net.createmod.ponder.api.scene.SceneBuildingUtil;
-import net.createmod.ponder.api.scene.Selection;
+import com.hlysine.create_connected.registries.CCBlocks;
+import com.zurrtum.create.AllBlocks;
+import com.zurrtum.create.catnip.math.Pointing;
+import com.zurrtum.create.client.foundation.ponder.CreateSceneBuilder;
+import com.zurrtum.create.client.ponder.api.ParticleEmitter;
+import com.zurrtum.create.client.ponder.api.PonderPalette;
+import com.zurrtum.create.client.ponder.api.scene.SceneBuilder;
+import com.zurrtum.create.client.ponder.api.scene.SceneBuildingUtil;
+import com.zurrtum.create.client.ponder.api.scene.Selection;
+import com.zurrtum.create.content.kinetics.saw.SawBlock;
 import net.minecraft.core.BlockPos;
 import net.minecraft.core.Direction;
 import net.minecraft.core.particles.ParticleTypes;
@@ -82,7 +82,7 @@ public class KineticBridgeScene {
                 .pointAt(util.vector().topOf(bridgeSource));
         scene.idle(110);
 
-        scene.world().setBlock(extraSaw, AllBlocks.MECHANICAL_SAW.getDefaultState().setValue(SawBlock.FACING, Direction.UP), false);
+        scene.world().setBlock(extraSaw, AllBlocks.MECHANICAL_SAW.defaultBlockState().setValue(SawBlock.FACING, Direction.UP), false);
         scene.world().showSection(util.select().position(extraSaw), Direction.DOWN);
         scene.idle(10);
         ParticleEmitter smoke = scene.effects().particleEmitterWithinBlockSpace(ParticleTypes.SMOKE, util.vector().of(0, 0, 0));
@@ -107,7 +107,7 @@ public class KineticBridgeScene {
 
         scene.world().hideSection(util.select().position(sourceExtraSaw), Direction.UP);
         scene.idle(20);
-        scene.world().setBlock(sourceExtraSaw, AllBlocks.MECHANICAL_SAW.getDefaultState().setValue(SawBlock.FACING, Direction.UP), false);
+        scene.world().setBlock(sourceExtraSaw, AllBlocks.MECHANICAL_SAW.defaultBlockState().setValue(SawBlock.FACING, Direction.UP), false);
         scene.world().showSection(util.select().position(sourceExtraSaw), Direction.DOWN);
         scene.idle(10);
         scene.effects().emitParticles(Vec3.atCenterOf(sourceExtraSaw), smoke, 15, 1);
@@ -169,7 +169,7 @@ public class KineticBridgeScene {
 
         scene.world().hideSection(util.select().position(sourceShaft), Direction.UP);
         scene.idle(20);
-        scene.world().setBlock(sourceShaft, CCBlocks.OVERSTRESS_CLUTCH.getDefaultState().setValue(OverstressClutchBlock.AXIS, Direction.Axis.Z), false);
+        scene.world().setBlock(sourceShaft, CCBlocks.OVERSTRESS_CLUTCH.defaultBlockState().setValue(OverstressClutchBlock.AXIS, Direction.Axis.Z), false);
         scene.world().showSection(util.select().position(sourceShaft), Direction.DOWN);
         scene.idle(20);
         scene.world().modifyBlock(sourceShaft, state -> state.setValue(OverstressClutchBlock.STATE, OverstressClutchBlock.ClutchState.UNCOUPLED), false);

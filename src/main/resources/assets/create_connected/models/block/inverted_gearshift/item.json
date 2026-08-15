@@ -1,5 +1,5 @@
 {
-  "parent": "create:item/gearshift",
+  "parent": "create:block/gearshift/item",
   "textures": {
     "0": "create_connected:block/inverted_gearshift_off"
   }

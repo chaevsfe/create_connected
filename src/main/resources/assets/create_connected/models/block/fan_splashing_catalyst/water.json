@@ -1,0 +1,83 @@
+{
+  "parent": "minecraft:block/block",
+  "textures": {
+    "content": "block/water_still",
+    "particle": "create:block/funnel/brass_funnel_frame"
+  },
+  "elements": [
+    {
+      "from": [
+        2.1,
+        2.1,
+        2.1
+      ],
+      "to": [
+        13.9,
+        13.9,
+        13.9
+      ],
+      "faces": {
+        "north": {
+          "uv": [
+            2.1,
+            2.1,
+            13.9,
+            13.9
+          ],
+          "texture": "#content",
+          "tintindex": 0
+        },
+        "east": {
+          "uv": [
+            2.1,
+            2.1,
+            13.9,
+            13.9
+          ],
+          "texture": "#content",
+          "tintindex": 0
+        },
+        "south": {
+          "uv": [
+            2.1,
+            2.1,
+            13.9,
+            13.9
+          ],
+          "texture": "#content",
+          "tintindex": 0
+        },
+        "west": {
+          "uv": [
+            2.1,
+            2.1,
+            13.9,
+            13.9
+          ],
+          "texture": "#content",
+          "tintindex": 0
+        },
+        "up": {
+          "uv": [
+            2.1,
+            2.1,
+            13.9,
+            13.9
+          ],
+          "texture": "#content",
+          "tintindex": 0
+        },
+        "down": {
+          "uv": [
+            2.1,
+            2.1,
+            13.9,
+            13.9
+          ],
+          "texture": "#content",
+          "tintindex": 0
+        }
+      }
+    }
+  ]
+}

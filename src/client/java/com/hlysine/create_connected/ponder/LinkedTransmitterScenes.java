@@ -1,18 +1,21 @@
 package com.hlysine.create_connected.ponder;
 
+import com.hlysine.create_connected.content.linkedtransmitter.LinkedTransmitterBlockEntity;
 import com.hlysine.create_connected.registries.CCBlocks;
 import com.hlysine.create_connected.registries.CCItems;
-import com.hlysine.create_connected.content.linkedtransmitter.LinkedTransmitterBlockEntity;
-import com.simibubi.create.AllItems;
-import com.simibubi.create.content.redstone.link.RedstoneLinkBlockEntity;
-import com.simibubi.create.foundation.ponder.CreateSceneBuilder;
-import net.createmod.catnip.math.Pointing;
-import net.createmod.ponder.api.PonderPalette;
-import net.createmod.ponder.api.scene.SceneBuilder;
-import net.createmod.ponder.api.scene.SceneBuildingUtil;
-import net.createmod.ponder.api.scene.Selection;
+import com.zurrtum.create.AllItems;
+import com.zurrtum.create.catnip.math.Pointing;
+import com.zurrtum.create.client.foundation.ponder.CreateSceneBuilder;
+import com.zurrtum.create.client.ponder.api.PonderPalette;
+import com.zurrtum.create.client.ponder.api.scene.SceneBuilder;
+import com.zurrtum.create.client.ponder.api.scene.SceneBuildingUtil;
+import com.zurrtum.create.client.ponder.api.scene.Selection;
+import com.zurrtum.create.content.redstone.link.RedstoneLinkBlockEntity;
 import net.minecraft.core.BlockPos;
 import net.minecraft.core.Direction;
+import net.minecraft.nbt.NbtOps;
+import net.minecraft.nbt.Tag;
+import net.minecraft.resources.RegistryOps;
 import net.minecraft.world.item.ItemStack;
 import net.minecraft.world.item.Items;
 import net.minecraft.world.level.block.Blocks;
@@ -59,9 +62,9 @@ public class LinkedTransmitterScenes {
 
         scene.overlay().showControls(transmitVec, Pointing.UP, 40)
                 .rightClick()
-                .withItem(new ItemStack(CCItems.LINKED_TRANSMITTER.get()));
+                .withItem(new ItemStack(CCItems.LINKED_TRANSMITTER));
         scene.idle(10);
-        scene.world().modifyBlock(lever, s -> CCBlocks.LINKED_LEVER.getDefaultState()
+        scene.world().modifyBlock(lever, s -> CCBlocks.LINKED_LEVER.defaultBlockState()
                         .setValue(ATTACH_FACE, s.getValue(ATTACH_FACE))
                         .setValue(HORIZONTAL_FACING, s.getValue(HORIZONTAL_FACING))
                         .setValue(POWERED, s.getValue(POWERED))
@@ -128,31 +131,43 @@ public class LinkedTransmitterScenes {
         scene.overlay().showControls(frontSlot, Pointing.UP, 30).withItem(iron);
         scene.idle(7);
         scene.overlay().showControls(backSlot, Pointing.DOWN, 30).withItem(sapling);
-        scene.world().modifyBlockEntityNBT(leverSelect, LinkedTransmitterBlockEntity.class,
-                nbt -> nbt.put("FrequencyLast", iron.saveOptional(scene.world().getHolderLookupProvider())));
+        scene.world().modifyBlockEntityNBT(leverSelect, LinkedTransmitterBlockEntity.class, nbt -> {
+            RegistryOps<Tag> ops = scene.world().getHolderLookupProvider().createSerializationContext(NbtOps.INSTANCE);
+            nbt.store("FrequencyLast", ItemStack.CODEC, ops, iron);
+        });
         scene.idle(7);
-        scene.world().modifyBlockEntityNBT(leverSelect, LinkedTransmitterBlockEntity.class,
-                nbt -> nbt.put("FrequencyFirst", sapling.saveOptional(scene.world().getHolderLookupProvider())));
+        scene.world().modifyBlockEntityNBT(leverSelect, LinkedTransmitterBlockEntity.class, nbt -> {
+            RegistryOps<Tag> ops = scene.world().getHolderLookupProvider().createSerializationContext(NbtOps.INSTANCE);
+            nbt.store("FrequencyFirst", ItemStack.CODEC, ops, sapling);
+        });
         scene.idle(20);
 
         scene.overlay().showControls(bottom2Slot, Pointing.UP, 30).withItem(iron);
         scene.idle(7);
         scene.overlay().showControls(top2Slot, Pointing.DOWN, 30).withItem(sapling);
-        scene.world().modifyBlockEntityNBT(linkRightSelect, RedstoneLinkBlockEntity.class,
-                nbt -> nbt.put("FrequencyLast", iron.saveOptional(scene.world().getHolderLookupProvider())));
+        scene.world().modifyBlockEntityNBT(linkRightSelect, RedstoneLinkBlockEntity.class, nbt -> {
+            RegistryOps<Tag> ops = scene.world().getHolderLookupProvider().createSerializationContext(NbtOps.INSTANCE);
+            nbt.store("FrequencyLast", ItemStack.CODEC, ops, iron);
+        });
         scene.idle(7);
-        scene.world().modifyBlockEntityNBT(linkRightSelect, RedstoneLinkBlockEntity.class,
-                nbt -> nbt.put("FrequencyFirst", sapling.saveOptional(scene.world().getHolderLookupProvider())));
+        scene.world().modifyBlockEntityNBT(linkRightSelect, RedstoneLinkBlockEntity.class, nbt -> {
+            RegistryOps<Tag> ops = scene.world().getHolderLookupProvider().createSerializationContext(NbtOps.INSTANCE);
+            nbt.store("FrequencyFirst", ItemStack.CODEC, ops, sapling);
+        });
         scene.idle(20);
 
         scene.overlay().showControls(bottom3Slot, Pointing.UP, 30).withItem(gold);
         scene.idle(7);
         scene.overlay().showControls(top3Slot, Pointing.DOWN, 30).withItem(sapling);
-        scene.world().modifyBlockEntityNBT(linkLeftSelect, RedstoneLinkBlockEntity.class,
-                nbt -> nbt.put("FrequencyLast", gold.saveOptional(scene.world().getHolderLookupProvider())));
+        scene.world().modifyBlockEntityNBT(linkLeftSelect, RedstoneLinkBlockEntity.class, nbt -> {
+            RegistryOps<Tag> ops = scene.world().getHolderLookupProvider().createSerializationContext(NbtOps.INSTANCE);
+            nbt.store("FrequencyLast", ItemStack.CODEC, ops, gold);
+        });
         scene.idle(7);
-        scene.world().modifyBlockEntityNBT(linkLeftSelect, RedstoneLinkBlockEntity.class,
-                nbt -> nbt.put("FrequencyFirst", sapling.saveOptional(scene.world().getHolderLookupProvider())));
+        scene.world().modifyBlockEntityNBT(linkLeftSelect, RedstoneLinkBlockEntity.class, nbt -> {
+            RegistryOps<Tag> ops = scene.world().getHolderLookupProvider().createSerializationContext(NbtOps.INSTANCE);
+            nbt.store("FrequencyFirst", ItemStack.CODEC, ops, sapling);
+        });
         scene.idle(20);
 
         scene.world().toggleRedstonePower(leverSelect);
@@ -215,18 +230,18 @@ public class LinkedTransmitterScenes {
         scene.idle(20);
         scene.overlay().showControls(util.vector().blockSurface(analogLever, Direction.DOWN).add(0, 4 / 16.0, 0), Pointing.UP, 40)
                 .rightClick()
-                .withItem(new ItemStack(CCItems.LINKED_TRANSMITTER.get()));
+                .withItem(new ItemStack(CCItems.LINKED_TRANSMITTER));
         scene.idle(5);
         scene.overlay().showControls(util.vector().blockSurface(button, Direction.DOWN).add(0, 2 / 16.0, 0), Pointing.DOWN, 40)
                 .rightClick()
-                .withItem(new ItemStack(CCItems.LINKED_TRANSMITTER.get()));
+                .withItem(new ItemStack(CCItems.LINKED_TRANSMITTER));
         scene.idle(20);
-        scene.world().modifyBlock(analogLever, s -> CCBlocks.LINKED_ANALOG_LEVER.getDefaultState()
+        scene.world().modifyBlock(analogLever, s -> CCBlocks.LINKED_ANALOG_LEVER.defaultBlockState()
                         .setValue(ATTACH_FACE, s.getValue(ATTACH_FACE))
                         .setValue(HORIZONTAL_FACING, s.getValue(HORIZONTAL_FACING))
                 , true);
         scene.idle(5);
-        scene.world().modifyBlock(button, s -> CCBlocks.LINKED_BUTTONS.get(BlockSetType.STONE).getDefaultState()
+        scene.world().modifyBlock(button, s -> CCBlocks.LINKED_BUTTONS.get(BlockSetType.STONE).defaultBlockState()
                         .setValue(ATTACH_FACE, s.getValue(ATTACH_FACE))
                         .setValue(HORIZONTAL_FACING, s.getValue(HORIZONTAL_FACING))
                         .setValue(POWERED, s.getValue(POWERED))
@@ -245,7 +260,7 @@ public class LinkedTransmitterScenes {
 
         scene.overlay().showControls(transmitVec, Pointing.DOWN, 40)
                 .rightClick()
-                .withItem(new ItemStack(AllItems.WRENCH.get()));
+                .withItem(new ItemStack(AllItems.WRENCH));
         scene.idle(20);
         scene.world().modifyBlock(lever, s -> Blocks.LEVER.defaultBlockState()
                         .setValue(ATTACH_FACE, s.getValue(ATTACH_FACE))

@@ -16,7 +16,7 @@
   "fluid_ingredient": {
     "type": "fluid_stack",
     "amount": 81000,
-    "fluid": "minecraft:"
+    "fluid": "garnished:lime_mastic_resin"
   },
   "result": {
     "id": "create_connected:lime_fan_dyeing_catalyst"

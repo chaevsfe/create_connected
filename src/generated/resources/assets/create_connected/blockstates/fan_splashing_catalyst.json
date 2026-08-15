@@ -1,7 +1,14 @@
 {
-  "variants": {
-    "": {
-      "model": "create_connected:block/fan_splashing_catalyst/block"
+  "multipart": [
+    {
+      "apply": {
+        "model": "create_connected:block/fan_catalyst/empty"
+      }
+    },
+    {
+      "apply": {
+        "model": "create_connected:block/fan_splashing_catalyst/water"
+      }
     }
-  }
+  ]
 }

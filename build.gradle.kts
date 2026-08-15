@@ -16,6 +16,9 @@ repositories {
     maven("https://api.modrinth.com/maven") {
         content { includeGroup("maven.modrinth") }
     }
+    maven("https://maven.blamejared.com/") {
+        content { includeGroup("mezz.jei") }
+    }
 }
 
 loom {
@@ -32,13 +35,14 @@ sourceSets {
     main {
         resources.srcDir("src/generated/resources")
         java.exclude(
-            "com/hlysine/create_connected/compat/CreateConnectedJEI.java",
             "com/hlysine/create_connected/registries/CCPonderPlugin.java",
+            "com/hlysine/create_connected/ponder/**",
         )
     }
     named("client") {
         java.exclude(
             "com/hlysine/create_connected/ponder/**",
+            "com/hlysine/create_connected/registries/CCPonderPlugin.java",
         )
     }
 }
@@ -50,6 +54,7 @@ dependencies {
     implementation("maven.modrinth:create-fly:${property("create_fabric_version")}")
 
     compileOnly("com.google.code.findbugs:jsr305:3.0.2")
+    "clientCompileOnly"("mezz.jei:jei-26.2-fabric:30.24.0.165")
 }
 
 java {

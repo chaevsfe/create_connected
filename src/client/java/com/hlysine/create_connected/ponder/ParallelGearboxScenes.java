@@ -1,14 +1,14 @@
 package com.hlysine.create_connected.ponder;
 
-import com.simibubi.create.AllBlocks;
-import com.simibubi.create.content.kinetics.simpleRelays.CogWheelBlock;
-import com.simibubi.create.foundation.ponder.CreateSceneBuilder;
-import net.createmod.ponder.api.PonderPalette;
-import net.createmod.ponder.api.element.ElementLink;
-import net.createmod.ponder.api.element.WorldSectionElement;
-import net.createmod.ponder.api.scene.SceneBuilder;
-import net.createmod.ponder.api.scene.SceneBuildingUtil;
-import net.createmod.ponder.api.scene.Selection;
+import com.zurrtum.create.AllBlocks;
+import com.zurrtum.create.client.foundation.ponder.CreateSceneBuilder;
+import com.zurrtum.create.client.ponder.api.PonderPalette;
+import com.zurrtum.create.client.ponder.api.element.ElementLink;
+import com.zurrtum.create.client.ponder.api.element.WorldSectionElement;
+import com.zurrtum.create.client.ponder.api.scene.SceneBuilder;
+import com.zurrtum.create.client.ponder.api.scene.SceneBuildingUtil;
+import com.zurrtum.create.client.ponder.api.scene.Selection;
+import com.zurrtum.create.content.kinetics.simpleRelays.CogWheelBlock;
 import net.minecraft.core.BlockPos;
 import net.minecraft.core.Direction;
 import net.minecraft.world.level.block.state.BlockState;
@@ -57,8 +57,8 @@ public class ParallelGearboxScenes {
         scene.world().hideIndependentSection(topMovableCog, Direction.UP);
         scene.idle(20);
 
-        BlockState defaultState = AllBlocks.SHAFT.getDefaultState();
-        BlockState cogState = AllBlocks.COGWHEEL.getDefaultState();
+        BlockState defaultState = AllBlocks.SHAFT.defaultBlockState();
+        BlockState cogState = AllBlocks.COGWHEEL.defaultBlockState();
         scene.world().setBlock(cogBack, defaultState.setValue(CogWheelBlock.AXIS, Direction.Axis.Z), false);
         scene.world().setBlock(cogFront, defaultState.setValue(CogWheelBlock.AXIS, Direction.Axis.Z), false);
         scene.world().setBlock(cogRight, defaultState.setValue(CogWheelBlock.AXIS, Direction.Axis.X), false);

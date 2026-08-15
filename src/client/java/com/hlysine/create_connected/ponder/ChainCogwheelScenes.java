@@ -1,12 +1,12 @@
 package com.hlysine.create_connected.ponder;
 
-import com.simibubi.create.AllItems;
-import com.simibubi.create.content.kinetics.chainDrive.ChainDriveBlock;
-import com.simibubi.create.foundation.ponder.CreateSceneBuilder;
-import net.createmod.catnip.math.Pointing;
-import net.createmod.ponder.api.scene.SceneBuilder;
-import net.createmod.ponder.api.scene.SceneBuildingUtil;
-import net.createmod.ponder.api.scene.Selection;
+import com.zurrtum.create.AllItems;
+import com.zurrtum.create.catnip.math.Pointing;
+import com.zurrtum.create.client.foundation.ponder.CreateSceneBuilder;
+import com.zurrtum.create.client.ponder.api.scene.SceneBuilder;
+import com.zurrtum.create.client.ponder.api.scene.SceneBuildingUtil;
+import com.zurrtum.create.client.ponder.api.scene.Selection;
+import com.zurrtum.create.content.kinetics.chainDrive.ChainDriveBlock;
 import net.minecraft.core.BlockPos;
 import net.minecraft.core.Direction;
 
@@ -84,7 +84,7 @@ public class ChainCogwheelScenes {
 
         scene.addKeyframe();
         scene.overlay().showControls(util.vector().topOf(rotatedECD), Pointing.DOWN, 30).rightClick()
-                .withItem(AllItems.WRENCH.asStack());
+                .withItem(AllItems.WRENCH.getDefaultInstance());
         scene.idle(7);
         scene.world().modifyBlock(rotatedECD, s -> s.setValue(ChainDriveBlock.AXIS, Direction.Axis.Y), true);
         scene.idle(40);

@@ -1,15 +1,15 @@
 package com.hlysine.create_connected.ponder;
 
-import com.hlysine.create_connected.registries.CCBlocks;
 import com.hlysine.create_connected.content.inventoryaccessport.InventoryAccessPortBlock;
-import com.simibubi.create.AllBlocks;
-import com.simibubi.create.content.redstone.thresholdSwitch.ThresholdSwitchBlock;
-import com.simibubi.create.foundation.ponder.CreateSceneBuilder;
-import net.createmod.ponder.api.element.ElementLink;
-import net.createmod.ponder.api.element.EntityElement;
-import net.createmod.ponder.api.scene.SceneBuilder;
-import net.createmod.ponder.api.scene.SceneBuildingUtil;
-import net.createmod.ponder.api.scene.Selection;
+import com.hlysine.create_connected.registries.CCBlocks;
+import com.zurrtum.create.AllBlocks;
+import com.zurrtum.create.client.foundation.ponder.CreateSceneBuilder;
+import com.zurrtum.create.client.ponder.api.element.ElementLink;
+import com.zurrtum.create.client.ponder.api.element.EntityElement;
+import com.zurrtum.create.client.ponder.api.scene.SceneBuilder;
+import com.zurrtum.create.client.ponder.api.scene.SceneBuildingUtil;
+import com.zurrtum.create.client.ponder.api.scene.Selection;
+import com.zurrtum.create.content.redstone.thresholdSwitch.ThresholdSwitchBlock;
 import net.minecraft.core.BlockPos;
 import net.minecraft.core.Direction;
 import net.minecraft.world.entity.Entity;
@@ -109,7 +109,7 @@ public class InventoryAccessPortScenes {
         scene.idle(5);
         scene.world().setBlock(
                 daisyThresholdSwitch,
-                AllBlocks.THRESHOLD_SWITCH.getDefaultState()
+                AllBlocks.THRESHOLD_SWITCH.defaultBlockState()
                         .setValue(ThresholdSwitchBlock.FACING, Direction.EAST)
                         .setValue(ThresholdSwitchBlock.LEVEL, 4),
                 false
@@ -142,7 +142,7 @@ public class InventoryAccessPortScenes {
 
         scene.world().setBlock(
                 daisyThresholdSwitch,
-                CCBlocks.INVENTORY_ACCESS_PORT.getDefaultState()
+                CCBlocks.INVENTORY_ACCESS_PORT.defaultBlockState()
                         .setValue(InventoryAccessPortBlock.FACING, Direction.EAST)
                         .setValue(InventoryAccessPortBlock.ATTACHED, false),
                 false

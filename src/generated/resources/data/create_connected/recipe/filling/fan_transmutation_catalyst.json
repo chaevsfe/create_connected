@@ -16,7 +16,7 @@
   "fluid_ingredient": {
     "type": "fluid_stack",
     "amount": 81000,
-    "fluid": "minecraft:"
+    "fluid": "create_shimmer:shimmer"
   },
   "result": {
     "id": "create_connected:fan_transmutation_catalyst"

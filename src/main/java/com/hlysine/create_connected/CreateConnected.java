@@ -9,6 +9,7 @@ import com.hlysine.create_connected.registries.CCBlockEntityTypes;
 import com.hlysine.create_connected.registries.CCCreativeTabs;
 import com.hlysine.create_connected.registries.CCItems;
 import com.hlysine.create_connected.registries.CCRegistration;
+import com.hlysine.create_connected.registries.CCSequencerInstructions;
 import com.hlysine.create_connected.registries.CCSoundEvents;
 import com.mojang.logging.LogUtils;
 import net.fabricmc.api.ModInitializer;
@@ -31,6 +32,7 @@ public class CreateConnected implements ModInitializer {
         CCAdvancements.register();
         CCTriggers.register();
         CCRegistration.register();
+        CCSequencerInstructions.register();
         CCCraftingConditions.register();
         CCConfigs.register();
         CCNetwork.register();

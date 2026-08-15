@@ -30,6 +30,9 @@
     ],
     "create_plugin": [
       "com.hlysine.create_connected.CreateConnectedPlugin"
+    ],
+    "jei_mod_plugin": [
+      "com.hlysine.create_connected.compat.jei.CreateConnectedJEI"
     ]
   },
   "mixins": [
@@ -45,5 +48,8 @@
     "fabric-api": "*",
     "create": "${create_fabric_version_range}",
     "java": ">=25"
+  },
+  "suggests": {
+    "jei": "*"
   }
 }

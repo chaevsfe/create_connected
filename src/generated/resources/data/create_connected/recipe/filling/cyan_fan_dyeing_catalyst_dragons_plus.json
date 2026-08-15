@@ -16,7 +16,7 @@
   "fluid_ingredient": {
     "type": "fluid_stack",
     "amount": 81000,
-    "fluid": "minecraft:"
+    "fluid": "create_dragons_plus:cyan_dye"
   },
   "result": {
     "id": "create_connected:cyan_fan_dyeing_catalyst"

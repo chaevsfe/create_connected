@@ -1,7 +1,14 @@
 {
-  "variants": {
-    "": {
-      "model": "create_connected:block/empty_fan_catalyst/block"
+  "multipart": [
+    {
+      "apply": {
+        "model": "create_connected:block/fan_catalyst/empty"
+      }
+    },
+    {
+      "apply": {
+        "model": "create_connected:block/fan_exploding_catalyst/creeper_head"
+      }
     }
-  }
+  ]
 }

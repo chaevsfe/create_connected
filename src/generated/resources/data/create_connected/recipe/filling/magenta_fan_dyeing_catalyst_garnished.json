@@ -16,7 +16,7 @@
   "fluid_ingredient": {
     "type": "fluid_stack",
     "amount": 81000,
-    "fluid": "minecraft:"
+    "fluid": "garnished:magenta_mastic_resin"
   },
   "result": {
     "id": "create_connected:magenta_fan_dyeing_catalyst"
