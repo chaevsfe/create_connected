@@ -1,139 +1,68 @@
 package com.hlysine.create_connected.config;
 
-import com.hlysine.create_connected.compat.CreateConnectedJEI;
-import com.hlysine.create_connected.compat.Mods;
-import com.hlysine.create_connected.mixin.featuretoggle.CreativeModeTabsAccessor;
-import com.tterrag.registrate.builders.Builder;
-import com.tterrag.registrate.util.entry.BlockEntry;
-import com.tterrag.registrate.util.nullness.NonNullUnaryOperator;
-import net.createmod.catnip.platform.CatnipServices;
-import net.minecraft.resources.ResourceLocation;
-import net.minecraft.world.item.CreativeModeTab;
+import net.minecraft.core.registries.BuiltInRegistries;
+import net.minecraft.resources.Identifier;
+import net.minecraft.world.level.block.Block;
 
+import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.HashSet;
+import java.util.List;
 import java.util.Map;
 import java.util.Set;
 import java.util.function.Supplier;
 
 public class FeatureToggle {
-    public static final Set<ResourceLocation> TOGGLEABLE_FEATURES = new HashSet<>();
-    public static final Map<ResourceLocation, ResourceLocation> DEPENDENT_FEATURES = new HashMap<>();
-    public static final Map<ResourceLocation, Set<FeatureCategory>> FEATURE_CATEGORIES = new HashMap<>();
-    public static final Map<ResourceLocation, Supplier<Boolean>> FEATURE_CONDITIONS = new HashMap<>();
+    public static final Set<Identifier> TOGGLEABLE_FEATURES = new HashSet<>();
+    public static final Map<Identifier, Identifier> DEPENDENT_FEATURES = new HashMap<>();
+    public static final Map<Identifier, Set<FeatureCategory>> FEATURE_CATEGORIES = new HashMap<>();
+    public static final Map<Identifier, Supplier<Boolean>> FEATURE_CONDITIONS = new HashMap<>();
 
-    public static void register(ResourceLocation key) {
+    private static final List<Runnable> VISIBILITY_LISTENERS = new ArrayList<>();
+
+    private static boolean sealed;
+
+    public static void register(Identifier key) {
+        assertOpen(key);
         TOGGLEABLE_FEATURES.add(key);
     }
 
-    public static void register(ResourceLocation key, FeatureCategory... categories) {
+    public static void register(Identifier key, FeatureCategory... categories) {
         register(key);
         FEATURE_CATEGORIES.put(key, Set.of(categories));
     }
 
-    public static void registerDependent(ResourceLocation key, ResourceLocation dependency) {
+    public static void registerDependent(Identifier key, Identifier dependency) {
+        assertOpen(key);
         DEPENDENT_FEATURES.put(key, dependency);
     }
 
-    public static void registerDependent(ResourceLocation key, ResourceLocation dependency, FeatureCategory... categories) {
+    public static void registerDependent(Identifier key, Identifier dependency, FeatureCategory... categories) {
         registerDependent(key, dependency);
         FEATURE_CATEGORIES.put(key, Set.of(categories));
     }
 
-    public static void addCondition(ResourceLocation key, Supplier<Boolean> condition) {
+    public static void registerDependent(Identifier key, Block dependency) {
+        registerDependent(key, BuiltInRegistries.BLOCK.getKey(dependency));
+    }
+
+    public static void registerDependent(Identifier key, Block dependency, FeatureCategory... categories) {
+        registerDependent(key, BuiltInRegistries.BLOCK.getKey(dependency), categories);
+    }
+
+    public static void addCondition(Identifier key, Supplier<Boolean> condition) {
+        assertOpen(key);
         FEATURE_CONDITIONS.put(key, condition);
     }
 
     /**
-     * Register this object to be a feature that is toggleable by the user
-     */
-    public static <R, T extends R, P, S extends Builder<R, T, P, S>> NonNullUnaryOperator<S> register() {
-        return b -> {
-            register(ResourceLocation.fromNamespaceAndPath(b.getOwner().getModid(), b.getName()));
-            return b;
-        };
-    }
-
-    /**
-     * Register this object to be a feature that is toggleable by the user
-     */
-    public static <R, T extends R, P, S extends Builder<R, T, P, S>> NonNullUnaryOperator<S> register(FeatureCategory... categories) {
-        return b -> {
-            register(ResourceLocation.fromNamespaceAndPath(b.getOwner().getModid(), b.getName()), categories);
-            return b;
-        };
-    }
-
-    /**
-     * Register this object to be dependent on another feature.
-     * This object cannot be toggled directly, and will only be enabled if the dependency is enabled.
-     */
-    public static <R, T extends R, P, S extends Builder<R, T, P, S>> NonNullUnaryOperator<S> registerDependent(ResourceLocation dependency) {
-        return b -> {
-            registerDependent(ResourceLocation.fromNamespaceAndPath(b.getOwner().getModid(), b.getName()), dependency);
-            return b;
-        };
-    }
-
-    /**
-     * Register this object to be dependent on another feature.
-     * This object cannot be toggled directly, and will only be enabled if the dependency is enabled.
-     */
-    public static <R, T extends R, P, S extends Builder<R, T, P, S>> NonNullUnaryOperator<S> registerDependent(ResourceLocation dependency, FeatureCategory... categories) {
-        return b -> {
-            registerDependent(ResourceLocation.fromNamespaceAndPath(b.getOwner().getModid(), b.getName()), dependency, categories);
-            return b;
-        };
-    }
-
-    /**
-     * Register this object to be dependent on another feature.
-     * This object cannot be toggled directly, and will only be enabled if the dependency is enabled.
-     */
-    public static <R, T extends R, P, S extends Builder<R, T, P, S>> NonNullUnaryOperator<S> registerDependent(BlockEntry<?> dependency) {
-        return b -> {
-            registerDependent(ResourceLocation.fromNamespaceAndPath(b.getOwner().getModid(), b.getName()), dependency.getId());
-            return b;
-        };
-    }
-
-    /**
-     * Register this object to be dependent on another feature.
-     * This object cannot be toggled directly, and will only be enabled if the dependency is enabled.
-     */
-    public static <R, T extends R, P, S extends Builder<R, T, P, S>> NonNullUnaryOperator<S> registerDependent(BlockEntry<?> dependency, FeatureCategory... categories) {
-        return b -> {
-            registerDependent(ResourceLocation.fromNamespaceAndPath(b.getOwner().getModid(), b.getName()), dependency.getId(), categories);
-            return b;
-        };
-    }
-
-    /**
-     * Add a condition to this feature.
-     */
-    public static <R, T extends R, P, S extends Builder<R, T, P, S>> NonNullUnaryOperator<S> addCondition(Supplier<Boolean> condition) {
-        return b -> {
-            addCondition(ResourceLocation.fromNamespaceAndPath(b.getOwner().getModid(), b.getName()), condition);
-            return b;
-        };
-    }
-
-    private static CFeatures getToggles() {
-        return CCConfigs.common().toggle;
-    }
-
-    private static CFeatureCategories getCategories() {
-        return CCConfigs.common().categories;
-    }
-
-    /**
      * Check whether a feature is enabled.
-     * If the provided {@link ResourceLocation} is not registered with this feature toggle, it is assumed to be enabled.
+     * If the provided {@link Identifier} is not registered with this feature toggle, it is assumed to be enabled.
      *
-     * @param key The {@link ResourceLocation} of the feature.
+     * @param key The {@link Identifier} of the feature.
      * @return Whether the feature is enabled.
      */
-    public static boolean isEnabled(ResourceLocation key) {
+    public static boolean isEnabled(Identifier key) {
         if (FEATURE_CATEGORIES.containsKey(key)) {
             Set<FeatureCategory> categories = FEATURE_CATEGORIES.get(key);
             for (FeatureCategory category : categories) {
@@ -146,19 +75,54 @@ public class FeatureToggle {
         if (getToggles().hasToggle(key)) {
             return getToggles().isEnabled(key);
         } else {
-            ResourceLocation dependency = DEPENDENT_FEATURES.get(key);
+            Identifier dependency = DEPENDENT_FEATURES.get(key);
             if (dependency != null) return isEnabled(dependency);
         }
         return true;
     }
 
-    static void refreshItemVisibility() {
-        CatnipServices.PLATFORM.executeOnClientOnly(() -> () -> {
-            CreativeModeTab.ItemDisplayParameters cachedParameters = CreativeModeTabsAccessor.getCACHED_PARAMETERS();
-            if (cachedParameters != null) {
-                CreativeModeTabsAccessor.callBuildAllTabContents(cachedParameters);
-            }
-            Mods.JEI.executeIfInstalled(() -> CreateConnectedJEI::refreshItemList);
-        });
+    public static void assertAllRegistered() {
+        if (TOGGLEABLE_FEATURES.isEmpty())
+            throw new IllegalStateException("Feature toggles must be registered before the config is built");
+
+        for (Map.Entry<Identifier, Identifier> entry : DEPENDENT_FEATURES.entrySet())
+            if (!isKnown(entry.getValue()))
+                throw new IllegalStateException("Feature " + entry.getKey() + " depends on unregistered feature " + entry.getValue());
+
+        for (Identifier key : FEATURE_CONDITIONS.keySet())
+            if (!isKnown(key))
+                throw new IllegalStateException("Condition registered for unregistered feature " + key);
+
+        for (Identifier key : FEATURE_CATEGORIES.keySet())
+            if (!isKnown(key))
+                throw new IllegalStateException("Categories registered for unregistered feature " + key);
+
+        sealed = true;
+    }
+
+    public static void addVisibilityListener(Runnable listener) {
+        VISIBILITY_LISTENERS.add(listener);
+    }
+
+    public static void refreshItemVisibility() {
+        for (Runnable listener : VISIBILITY_LISTENERS)
+            listener.run();
+    }
+
+    private static boolean isKnown(Identifier key) {
+        return TOGGLEABLE_FEATURES.contains(key) || DEPENDENT_FEATURES.containsKey(key);
+    }
+
+    private static void assertOpen(Identifier key) {
+        if (sealed)
+            throw new IllegalStateException("Feature " + key + " was registered after the config was built");
+    }
+
+    private static CFeatures getToggles() {
+        return CCConfigs.common().toggle;
+    }
+
+    private static CFeatureCategories getCategories() {
+        return CCConfigs.common().categories;
     }
 }

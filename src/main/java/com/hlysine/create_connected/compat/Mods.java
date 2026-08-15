@@ -1,9 +1,9 @@
 package com.hlysine.create_connected.compat;
 
+import net.fabricmc.loader.api.FabricLoader;
 import net.minecraft.core.registries.BuiltInRegistries;
-import net.minecraft.resources.ResourceLocation;
+import net.minecraft.resources.Identifier;
 import net.minecraft.world.item.Item;
-import net.neoforged.fml.ModList;
 
 import java.util.Optional;
 import java.util.function.Supplier;
@@ -41,23 +41,23 @@ public enum Mods {
         return id;
     }
 
-    public ResourceLocation rl(String path) {
-        return ResourceLocation.fromNamespaceAndPath(id, path);
+    public Identifier rl(String path) {
+        return Identifier.fromNamespaceAndPath(id, path);
     }
 
     public Item getItem(String id) {
-        return BuiltInRegistries.ITEM.get(rl(id));
+        return BuiltInRegistries.ITEM.getValue(rl(id));
     }
 
-    public Item getItem(ResourceLocation id) {
-        return BuiltInRegistries.ITEM.get(id);
+    public Item getItem(Identifier id) {
+        return BuiltInRegistries.ITEM.getValue(id);
     }
 
     /**
      * @return a boolean of whether the mod is loaded or not based on mod id
      */
     public boolean isLoaded() {
-        return ModList.get().isLoaded(id);
+        return FabricLoader.getInstance().isModLoaded(id);
     }
 
     /**
@@ -83,4 +83,3 @@ public enum Mods {
         }
     }
 }
-

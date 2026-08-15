@@ -1,7 +1,6 @@
 package com.hlysine.create_connected.config;
 
 import net.minecraft.util.StringRepresentable;
-import org.jetbrains.annotations.NotNull;
 
 import java.util.Locale;
 
@@ -24,7 +23,7 @@ public enum FeatureCategory implements StringRepresentable {
     }
 
     @Override
-    public @NotNull String getSerializedName() {
+    public String getSerializedName() {
         return this.name().toLowerCase(Locale.ROOT);
     }
 
@@ -37,4 +36,3 @@ public enum FeatureCategory implements StringRepresentable {
         return null;
     }
 }
-

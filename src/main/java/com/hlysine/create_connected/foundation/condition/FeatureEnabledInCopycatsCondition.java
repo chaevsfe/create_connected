@@ -1,27 +1,26 @@
 package com.hlysine.create_connected.foundation.condition;
 
-import com.hlysine.create_connected.compat.CopycatsManager;
-import com.hlysine.create_connected.compat.Mods;
 import com.mojang.serialization.MapCodec;
 import com.mojang.serialization.codecs.RecordCodecBuilder;
-import net.minecraft.resources.ResourceLocation;
-import net.neoforged.neoforge.common.conditions.ICondition;
-import org.jetbrains.annotations.NotNull;
+import net.fabricmc.fabric.api.resource.conditions.v1.ResourceCondition;
+import net.fabricmc.fabric.api.resource.conditions.v1.ResourceConditionType;
+import net.minecraft.resources.Identifier;
+import net.minecraft.resources.RegistryOps;
 
-public record FeatureEnabledInCopycatsCondition(ResourceLocation feature) implements ICondition {
+public record FeatureEnabledInCopycatsCondition(Identifier feature) implements ResourceCondition {
     public static final MapCodec<FeatureEnabledInCopycatsCondition> CODEC = RecordCodecBuilder.mapCodec((builder) -> builder
-            .group(ResourceLocation.CODEC.fieldOf("tag").forGetter(FeatureEnabledInCopycatsCondition::feature))
+            .group(Identifier.CODEC.fieldOf("tag").forGetter(FeatureEnabledInCopycatsCondition::feature))
             .apply(builder, FeatureEnabledInCopycatsCondition::new)
     );
 
     @Override
-    public boolean test(@NotNull IContext context) {
-        return Mods.COPYCATS.runIfInstalled(() -> () -> CopycatsManager.isFeatureEnabled(feature)).orElse(false);
+    public ResourceConditionType<?> getType() {
+        return CCCraftingConditions.FEATURE_ENABLED_IN_COPYCATS;
     }
 
     @Override
-    public @NotNull MapCodec<? extends ICondition> codec() {
-        return CODEC;
+    public boolean test(RegistryOps.RegistryInfoLookup registryLookup) {
+        return false;
     }
 
     @Override

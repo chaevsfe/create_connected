@@ -1,8 +1,7 @@
 package com.hlysine.create_connected.mixin;
 
 import com.hlysine.create_connected.compat.ModMixin;
-import com.llamalad7.mixinextras.MixinExtrasBootstrap;
-import net.neoforged.fml.loading.FMLLoader;
+import net.fabricmc.loader.api.FabricLoader;
 import org.objectweb.asm.Type;
 import org.objectweb.asm.tree.AnnotationNode;
 import org.objectweb.asm.tree.ClassNode;
@@ -16,17 +15,9 @@ import java.util.List;
 import java.util.Set;
 
 public class MixinPlugin implements IMixinConfigPlugin {
-    private boolean isFrameworkInstalled;
 
     @Override
     public void onLoad(String mixinPackage) {
-        MixinExtrasBootstrap.init();
-        try {
-            Class.forName("com.hlysine.create_connected.CreateConnected", false, this.getClass().getClassLoader());
-            isFrameworkInstalled = true;
-        } catch (Exception e) {
-            isFrameworkInstalled = false;
-        }
     }
 
     @Override
@@ -52,12 +43,12 @@ public class MixinPlugin implements IMixinConfigPlugin {
             return shouldApply;
         } catch (ClassNotFoundException | IOException ignored) {
         }
-        return isFrameworkInstalled; // this makes sure that forge's helpful mods not found screen shows up
+        return true;
     }
 
     private static boolean anyModsLoaded(List<String> mods) {
         for (String mod : mods) {
-            if (FMLLoader.getLoadingModList().getMods().stream().anyMatch(m -> m.getModId().equals(mod))) return true;
+            if (FabricLoader.getInstance().isModLoaded(mod)) return true;
         }
         return false;
     }

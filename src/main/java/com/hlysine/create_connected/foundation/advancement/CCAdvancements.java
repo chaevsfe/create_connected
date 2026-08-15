@@ -1,142 +1,38 @@
 package com.hlysine.create_connected.foundation.advancement;
 
-import com.google.common.collect.Sets;
-import com.hlysine.create_connected.registries.CCBlocks;
-import com.hlysine.create_connected.registries.CCItems;
-import net.minecraft.advancements.Advancement;
-import net.minecraft.advancements.AdvancementHolder;
-import net.minecraft.core.HolderLookup;
-import net.minecraft.data.CachedOutput;
-import net.minecraft.data.DataProvider;
-import net.minecraft.data.PackOutput;
-import net.minecraft.data.PackOutput.PathProvider;
-import net.minecraft.resources.ResourceLocation;
-import org.jetbrains.annotations.NotNull;
-
-import java.nio.file.Path;
 import java.util.ArrayList;
 import java.util.List;
-import java.util.Set;
-import java.util.concurrent.CompletableFuture;
-import java.util.function.BiConsumer;
-import java.util.function.Consumer;
-import java.util.function.UnaryOperator;
 
-import static com.hlysine.create_connected.foundation.advancement.CCAdvancement.TaskType.*;
-
-@SuppressWarnings("unused")
-public class CCAdvancements implements DataProvider {
+public class CCAdvancements {
 
     public static final List<CCAdvancement> ENTRIES = new ArrayList<>();
-    public static final CCAdvancement START = null,
 
-    /*
-     * Some ids have trailing 0's to modify their vertical position on the tree
-     * (Advancement ordering seems to be deterministic but hash based)
-     */
+    public static final CCAdvancement ROOT = external("root");
 
-    ROOT = create("root", b -> b.icon(CCBlocks.PARALLEL_GEARBOX)
-            .title("Welcome to Create: Connected")
-            .description("Gadgets for all situations")
-            .awardedForFree()
-            .special(SILENT)),
+    public static final CCAdvancement SHEAR_PIN = triggered("shear_pin");
 
-    SHEAR_PIN = create("shear_pin", b -> b.icon(CCBlocks.SHEAR_PIN)
-            .title("Snap!")
-            .description("Blow a Shear Pin")
-            .after(ROOT)),
+    public static final CCAdvancement OVERSTRESS_CLUTCH = triggered("overstress_clutch");
 
-    OVERSTRESS_CLUTCH = create("overstress_clutch", b -> b.icon(CCBlocks.OVERSTRESS_CLUTCH)
-            .title("Circuit Breaker")
-            .description("Trigger an Overstress Clutch")
-            .after(SHEAR_PIN)),
+    public static final CCAdvancement BRASS_GEARBOX = external("brass_gearbox");
 
-    BRASS_GEARBOX = create("brass_gearbox", b -> b.icon(CCBlocks.BRASS_GEARBOX)
-            .title("Serious Organization")
-            .description("Place down a Brass Gearbox")
-            .whenBlockPlaced(CCBlocks.BRASS_GEARBOX.get())
-            .after(ROOT)),
+    public static final CCAdvancement OVERPOWERED_BRAKE = triggered("overpowered_brake_0");
 
-    OVERPOWERED_BRAKE = create("overpowered_brake_0", b -> b.icon(CCBlocks.BRAKE)
-            .title("Overpowered")
-            .description("Keep a network running at speed with a powered brake attached")
-            .after(ROOT)
-            .special(SECRET)),
+    public static final CCAdvancement KINETIC_BATTERY = triggered("kinetic_battery");
 
-    KINETIC_BATTERY = create("kinetic_battery", b -> b.icon(CCBlocks.KINETIC_BATTERY)
-            .title("Fully Charged")
-            .description("Charge a Kinetic Battery to full")
-            .after(ROOT)),
+    public static final CCAdvancement CONTROL_CHIP = external("control_chip");
 
-    CONTROL_CHIP = create("control_chip", b -> b.icon(CCItems.CONTROL_CHIP)
-            .title("Precise Fabrication")
-            .description("Assemble a Control Chip")
-            .whenIconCollected()
-            .after(ROOT)
-            .special(NOISY)),
+    public static final CCAdvancement SEQUENCED_PULSE_GENERATOR = external("sequenced_pulse_generator");
 
-    SEQUENCED_PULSE_GENERATOR = create("sequenced_pulse_generator", b -> b.icon(CCBlocks.SEQUENCED_PULSE_GENERATOR)
-            .title("Computational Supremacy")
-            .description("Place down a Sequenced Pulse Generator")
-            .whenBlockPlaced(CCBlocks.SEQUENCED_PULSE_GENERATOR.get())
-            .after(CONTROL_CHIP)),
+    public static final CCAdvancement PULSE_GEN_INFINITE_LOOP = triggered("pulse_generator_infinite_loop");
 
-    PULSE_GEN_INFINITE_LOOP = create("pulse_generator_infinite_loop", b -> b.icon(CCItems.INCOMPLETE_CONTROL_CHIP)
-            .title("Infinite Loop")
-            .description("Overload a Sequenced Pulse Generator with a buggy program")
-            .after(SEQUENCED_PULSE_GENERATOR)
-            .special(SECRET)),
-
-    //
-    END = null;
-
-    private static CCAdvancement create(String id, UnaryOperator<CCAdvancement.Builder> b) {
-        return new CCAdvancement(id, b);
+    private static CCAdvancement triggered(String id) {
+        return new CCAdvancement(id, false);
     }
 
-    // Datagen
-
-    private final PackOutput output;
-    private final CompletableFuture<HolderLookup.Provider> registries;
-
-    public CCAdvancements(PackOutput output, CompletableFuture<HolderLookup.Provider> registries) {
-        this.output = output;
-        this.registries = registries;
-    }
-
-    @Override
-    public @NotNull CompletableFuture<?> run(@NotNull CachedOutput cache) {
-        return this.registries.thenCompose(provider -> {
-            PathProvider pathProvider = output.createPathProvider(PackOutput.Target.DATA_PACK, "advancement");
-            List<CompletableFuture<?>> futures = new ArrayList<>();
-
-            Set<ResourceLocation> set = Sets.newHashSet();
-            Consumer<AdvancementHolder> consumer = (advancement) -> {
-                ResourceLocation id = advancement.id();
-                if (!set.add(id))
-                    throw new IllegalStateException("Duplicate advancement " + id);
-                Path path = pathProvider.json(id);
-                futures.add(DataProvider.saveStable(cache, provider, Advancement.CODEC, advancement.value(), path));
-            };
-
-            for (CCAdvancement advancement : ENTRIES)
-                advancement.save(consumer, provider);
-
-            return CompletableFuture.allOf(futures.toArray(CompletableFuture[]::new));
-        });
-    }
-
-    @Override
-    public @NotNull String getName() {
-        return "Advancements for Create: Connected";
-    }
-
-    public static void provideLang(BiConsumer<String, String> consumer) {
-        for (CCAdvancement advancement : ENTRIES)
-            advancement.provideLang(consumer);
+    private static CCAdvancement external(String id) {
+        return new CCAdvancement(id, true);
     }
 
     public static void register() {
     }
-
 }

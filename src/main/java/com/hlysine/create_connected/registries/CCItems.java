@@ -11,94 +11,77 @@ import com.hlysine.create_connected.content.linkedtransmitter.LinkedTransmitterI
 import com.hlysine.create_connected.content.parallelgearbox.VerticalParallelGearboxItem;
 import com.hlysine.create_connected.content.redstonelinkwildcard.RedstoneLinkWildcardItem;
 import com.hlysine.create_connected.content.sixwaygearbox.VerticalSixWayGearboxItem;
-import com.simibubi.create.content.processing.sequenced.SequencedAssemblyItem;
-import com.simibubi.create.foundation.data.AssetLookup;
-import com.simibubi.create.foundation.data.CreateRegistrate;
-import com.tterrag.registrate.util.entry.ItemEntry;
-import net.minecraft.tags.ItemTags;
+import com.zurrtum.create.content.processing.sequenced.SequencedAssemblyItem;
+import net.minecraft.core.Registry;
+import net.minecraft.core.registries.BuiltInRegistries;
+import net.minecraft.core.registries.Registries;
+import net.minecraft.resources.Identifier;
+import net.minecraft.resources.ResourceKey;
 import net.minecraft.world.item.Item;
 import net.minecraft.world.item.Rarity;
-import net.neoforged.neoforge.common.Tags;
+
+import java.util.function.Function;
 
 public class CCItems {
 
-    private static final CreateRegistrate REGISTRATE = CreateConnected.getRegistrate();
+    public static final Item CONTROL_CHIP = register("control_chip", Item::new);
 
-    static {
-        REGISTRATE.setCreativeTab(CCCreativeTabs.MAIN);
-    }
+    public static final SequencedAssemblyItem INCOMPLETE_CONTROL_CHIP =
+            register("incomplete_control_chip", SequencedAssemblyItem::new);
 
-    public static final ItemEntry<Item> CONTROL_CHIP =
-            REGISTRATE.item("control_chip", Item::new)
-                    .register();
+    public static final RedstoneLinkWildcardItem REDSTONE_LINK_WILDCARD =
+            toggleable(register("redstone_link_wildcard", RedstoneLinkWildcardItem::new), FeatureCategory.REDSTONE);
 
-    public static final ItemEntry<SequencedAssemblyItem> INCOMPLETE_CONTROL_CHIP =
-            REGISTRATE.item("incomplete_control_chip", SequencedAssemblyItem::new)
-                    .register();
+    public static final VerticalParallelGearboxItem VERTICAL_PARALLEL_GEARBOX =
+            dependent(register("vertical_parallel_gearbox", VerticalParallelGearboxItem::new), "parallel_gearbox");
 
-    public static final ItemEntry<RedstoneLinkWildcardItem> REDSTONE_LINK_WILDCARD =
-            REGISTRATE.item("redstone_link_wildcard", RedstoneLinkWildcardItem::new)
-                    .transform(FeatureToggle.register(FeatureCategory.REDSTONE))
-                    .register();
+    public static final VerticalSixWayGearboxItem VERTICAL_SIX_WAY_GEARBOX =
+            dependent(register("vertical_six_way_gearbox", VerticalSixWayGearboxItem::new), "six_way_gearbox");
 
-    public static final ItemEntry<VerticalParallelGearboxItem> VERTICAL_PARALLEL_GEARBOX =
-            REGISTRATE.item("vertical_parallel_gearbox", VerticalParallelGearboxItem::new)
-                    .model(AssetLookup.customBlockItemModel("parallel_gearbox", "item_vertical"))
-                    .transform(FeatureToggle.registerDependent(CCBlocks.PARALLEL_GEARBOX))
-                    .register();
-
-    public static final ItemEntry<VerticalSixWayGearboxItem> VERTICAL_SIX_WAY_GEARBOX =
-            REGISTRATE.item("vertical_six_way_gearbox", VerticalSixWayGearboxItem::new)
-                    .model(AssetLookup.customBlockItemModel("six_way_gearbox", "item_vertical"))
-                    .transform(FeatureToggle.registerDependent(CCBlocks.SIX_WAY_GEARBOX))
-                    .lang("Vertical 6-way Gearbox")
-                    .register();
-
-    public static final ItemEntry<VerticalBrassGearboxItem> VERTICAL_BRASS_GEARBOX =
-            REGISTRATE.item("vertical_brass_gearbox", VerticalBrassGearboxItem::new)
-                    .model(AssetLookup.customBlockItemModel("brass_gearbox", "item_vertical"))
-                    .transform(FeatureToggle.registerDependent(CCBlocks.BRASS_GEARBOX))
-                    .register();
+    public static final VerticalBrassGearboxItem VERTICAL_BRASS_GEARBOX =
+            dependent(register("vertical_brass_gearbox", VerticalBrassGearboxItem::new), "brass_gearbox");
 
     @SuppressWarnings("removal")
     @Deprecated(forRemoval = true, since = "1.3.0")
-    public static final ItemEntry<ChargedKineticBatteryItem> CHARGED_KINETIC_BATTERY =
-            REGISTRATE.item("charged_kinetic_battery", ChargedKineticBatteryItem::new)
-                    .model(AssetLookup.customBlockItemModel("kinetic_battery", "item_charged"))
-                    .transform(FeatureToggle.registerDependent(CCBlocks.KINETIC_BATTERY))
-                    .register();
+    public static final ChargedKineticBatteryItem CHARGED_KINETIC_BATTERY =
+            dependent(register("charged_kinetic_battery", ChargedKineticBatteryItem::new), "kinetic_battery");
 
-    public static final ItemEntry<LinkedTransmitterItem> LINKED_TRANSMITTER =
-            REGISTRATE.item("linked_transmitter", LinkedTransmitterItem::new)
-                    .model(AssetLookup.customGenericItemModel("linked_transmitter", "item"))
-                    .transform(FeatureToggle.register(FeatureCategory.REDSTONE))
-                    .register();
+    public static final LinkedTransmitterItem LINKED_TRANSMITTER =
+            toggleable(register("linked_transmitter", LinkedTransmitterItem::new), FeatureCategory.REDSTONE);
 
-    public static final ItemEntry<CopycatBoxItem> COPYCAT_BOX =
-            REGISTRATE.item("copycat_box", CopycatBoxItem::new)
-                    .model(AssetLookup.customBlockItemModel("copycat_base", "box"))
-                    .transform(FeatureToggle.registerDependent(CCBlocks.COPYCAT_BOARD))
-                    .register();
+    public static final CopycatBoxItem COPYCAT_BOX =
+            dependent(register("copycat_box", CopycatBoxItem::new), "copycat_board");
 
-    public static final ItemEntry<CopycatCatwalkItem> COPYCAT_CATWALK =
-            REGISTRATE.item("copycat_catwalk", CopycatCatwalkItem::new)
-                    .model(AssetLookup.customBlockItemModel("copycat_base", "catwalk"))
-                    .transform(FeatureToggle.registerDependent(CCBlocks.COPYCAT_BOARD))
-                    .register();
+    public static final CopycatCatwalkItem COPYCAT_CATWALK =
+            dependent(register("copycat_catwalk", CopycatCatwalkItem::new), "copycat_board");
 
-    public static final ItemEntry<Item> MUSIC_DISC_ELEVATOR =
-            REGISTRATE.item("music_disc_elevator", Item::new)
-                    .properties(p -> p.stacksTo(1).rarity(Rarity.RARE).jukeboxPlayable(CCJukeboxSongs.ELEVATOR))
-                    .tag(Tags.Items.MUSIC_DISCS, ItemTags.CREEPER_DROP_MUSIC_DISCS)
-                    .lang("Music Disc")
-                    .register();
+    public static final Item MUSIC_DISC_ELEVATOR = register("music_disc_elevator", Item::new,
+            new Item.Properties().stacksTo(1).rarity(Rarity.RARE).jukeboxPlayable(CCJukeboxSongs.ELEVATOR));
 
-    public static final ItemEntry<Item> MUSIC_DISC_INTERLUDE =
-            REGISTRATE.item("music_disc_interlude", Item::new)
-                    .properties(p -> p.stacksTo(1).rarity(Rarity.RARE).jukeboxPlayable(CCJukeboxSongs.INTERLUDE))
-                    .tag(Tags.Items.MUSIC_DISCS, ItemTags.CREEPER_DROP_MUSIC_DISCS)
-                    .lang("Music Disc")
-                    .register();
+    public static final Item MUSIC_DISC_INTERLUDE = register("music_disc_interlude", Item::new,
+            new Item.Properties().stacksTo(1).rarity(Rarity.RARE).jukeboxPlayable(CCJukeboxSongs.INTERLUDE));
+
+    private static <T extends Item> T register(String name, Function<Item.Properties, T> factory) {
+        return register(name, factory, new Item.Properties());
+    }
+
+    private static <T extends Item> T register(String name, Function<Item.Properties, T> factory, Item.Properties properties) {
+        Identifier id = CreateConnected.asResource(name);
+        ResourceKey<Item> key = ResourceKey.create(Registries.ITEM, id);
+        T item = factory.apply(properties.setId(key));
+        Registry.register(BuiltInRegistries.ITEM, id, item);
+        return item;
+    }
+
+    private static <T extends Item> T toggleable(T item, FeatureCategory... categories) {
+        FeatureToggle.register(BuiltInRegistries.ITEM.getKey(item), categories);
+        return item;
+    }
+
+    private static <T extends Item> T dependent(T item, String dependency) {
+        FeatureToggle.registerDependent(BuiltInRegistries.ITEM.getKey(item), CreateConnected.asResource(dependency));
+        return item;
+    }
 
     public static void register() {
     }

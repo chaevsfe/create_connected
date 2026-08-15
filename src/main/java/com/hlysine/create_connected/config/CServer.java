@@ -1,7 +1,6 @@
 package com.hlysine.create_connected.config;
 
-import net.createmod.catnip.config.ConfigBase;
-import org.jetbrains.annotations.NotNull;
+import com.zurrtum.create.catnip.config.ConfigBase;
 
 import java.util.function.Supplier;
 
@@ -13,10 +12,10 @@ public class CServer extends ConfigBase {
     public static final Supplier<Boolean> ApplicationRemainingItemFix = CCConfigs.safeGetter(() -> CCConfigs.server().applicationRemainingItemFix.get(), true);
 
     private final ConfigFloat vesselBoilerStressMultiplier = f(0.8125f, 0.0f, "vesselBoilerStressMultiplier", Comments.vesselBoilerStressMultiplier);
-    public static final Supplier<Double> VesselBoilerStressMultiplier = CCConfigs.safeGetter(() -> CCConfigs.server().vesselBoilerStressMultiplier.get(), 0.8125);
+    public static final Supplier<Double> VesselBoilerStressMultiplier = CCConfigs.safeGetter(() -> (double) CCConfigs.server().vesselBoilerStressMultiplier.getF(), 0.8125);
 
     private final ConfigFloat vesselHeatMultiplier = f(0.5f, 0.0f, "vesselHeatMultiplier", Comments.vesselHeatMultiplier);
-    public static final Supplier<Double> VesselHeatMultiplier = CCConfigs.safeGetter(() -> CCConfigs.server().vesselHeatMultiplier.get(), 0.5);
+    public static final Supplier<Double> VesselHeatMultiplier = CCConfigs.safeGetter(() -> (double) CCConfigs.server().vesselHeatMultiplier.getF(), 0.5);
 
     private final ConfigInt vesselMaxLevel = i(18, 0, 18, "vesselMaxLevel", Comments.vesselMaxLevel);
     public static final Supplier<Integer> VesselMaxLevel = CCConfigs.safeGetter(() -> CCConfigs.server().vesselMaxLevel.get(), 0);
@@ -25,10 +24,10 @@ public class CServer extends ConfigBase {
     public static final Supplier<Integer> BatteryDischargeRPM = CCConfigs.safeGetter(() -> CCConfigs.server().batteryDischargeRPM.get(), 64);
 
     private final ConfigFloat batteryCapacity = f(512, 0, 8192, "batteryCapacity", Comments.batteryCapacity);
-    public static final Supplier<Double> BatteryCapacity = CCConfigs.safeGetter(() -> CCConfigs.server().batteryCapacity.get(), 512.0);
+    public static final Supplier<Double> BatteryCapacity = CCConfigs.safeGetter(() -> (double) CCConfigs.server().batteryCapacity.getF(), 512.0);
 
     private final ConfigFloat batteryMinDischarge = f(1, 0, 8192, "batteryMinDischarge", Comments.batteryMinDischarge);
-    public static final Supplier<Double> BatteryMinDischarge = CCConfigs.safeGetter(() -> CCConfigs.server().batteryMinDischarge.get(), 1.0);
+    public static final Supplier<Double> BatteryMinDischarge = CCConfigs.safeGetter(() -> (double) CCConfigs.server().batteryMinDischarge.getF(), 1.0);
 
     private final ConfigBool allowDualWildcardLink = b(false, "allowDualWildcardLink", Comments.allowDualWildcardLink);
     public static final Supplier<Boolean> AllowDualWildcardLink = CCConfigs.safeGetter(() -> CCConfigs.server().allowDualWildcardLink.get(), false);
@@ -36,9 +35,8 @@ public class CServer extends ConfigBase {
     public final CStress stressValues = nested(0, CStress::new, Comments.stress);
     public final ConfigFloat brakeActiveStress = f(16384, Float.NEGATIVE_INFINITY, Float.POSITIVE_INFINITY, "brakeActiveStress", Comments.brakeActiveStress);
 
-
     @Override
-    public @NotNull String getName() {
+    public String getName() {
         return "server";
     }
 

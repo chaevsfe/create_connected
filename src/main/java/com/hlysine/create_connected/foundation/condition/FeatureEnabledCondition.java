@@ -3,24 +3,25 @@ package com.hlysine.create_connected.foundation.condition;
 import com.hlysine.create_connected.config.FeatureToggle;
 import com.mojang.serialization.MapCodec;
 import com.mojang.serialization.codecs.RecordCodecBuilder;
-import net.minecraft.resources.ResourceLocation;
-import net.neoforged.neoforge.common.conditions.ICondition;
-import org.jetbrains.annotations.NotNull;
+import net.fabricmc.fabric.api.resource.conditions.v1.ResourceCondition;
+import net.fabricmc.fabric.api.resource.conditions.v1.ResourceConditionType;
+import net.minecraft.resources.Identifier;
+import net.minecraft.resources.RegistryOps;
 
-public record FeatureEnabledCondition(ResourceLocation feature) implements ICondition {
+public record FeatureEnabledCondition(Identifier feature) implements ResourceCondition {
     public static final MapCodec<FeatureEnabledCondition> CODEC = RecordCodecBuilder.mapCodec((builder) -> builder
-            .group(ResourceLocation.CODEC.fieldOf("tag").forGetter(FeatureEnabledCondition::feature))
+            .group(Identifier.CODEC.fieldOf("tag").forGetter(FeatureEnabledCondition::feature))
             .apply(builder, FeatureEnabledCondition::new)
     );
 
     @Override
-    public boolean test(@NotNull IContext context) {
-        return FeatureToggle.isEnabled(feature);
+    public ResourceConditionType<?> getType() {
+        return CCCraftingConditions.FEATURE_ENABLED;
     }
 
     @Override
-    public @NotNull MapCodec<? extends ICondition> codec() {
-        return CODEC;
+    public boolean test(RegistryOps.RegistryInfoLookup registryLookup) {
+        return FeatureToggle.isEnabled(feature);
     }
 
     @Override
