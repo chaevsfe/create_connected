@@ -4,6 +4,7 @@ import com.hlysine.create_connected.config.CCConfigs;
 import com.hlysine.create_connected.foundation.advancement.CCAdvancements;
 import com.hlysine.create_connected.foundation.advancement.CCTriggers;
 import com.hlysine.create_connected.foundation.condition.CCCraftingConditions;
+import com.hlysine.create_connected.network.CCNetwork;
 import com.hlysine.create_connected.registries.CCBlockEntityTypes;
 import com.hlysine.create_connected.registries.CCCreativeTabs;
 import com.hlysine.create_connected.registries.CCItems;
@@ -32,6 +33,7 @@ public class CreateConnected implements ModInitializer {
         CCRegistration.register();
         CCCraftingConditions.register();
         CCConfigs.register();
+        CCNetwork.register();
     }
 
     public static Identifier asResource(String path) {

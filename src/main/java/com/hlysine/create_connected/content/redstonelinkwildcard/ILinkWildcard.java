@@ -1,7 +1,6 @@
 package com.hlysine.create_connected.content.redstonelinkwildcard;
 
-import com.simibubi.create.content.redstone.link.RedstoneLinkNetworkHandler;
-import net.createmod.catnip.data.Couple;
+import com.zurrtum.create.content.redstone.link.RedstoneLinkNetworkHandler;
 
 public interface ILinkWildcard {
     boolean test(RedstoneLinkNetworkHandler.Frequency stack);

@@ -1,40 +1,23 @@
 package com.hlysine.create_connected.mixin;
 
 import com.hlysine.create_connected.config.CServer;
-import com.simibubi.create.content.kinetics.deployer.ManualApplicationRecipe;
-import net.minecraft.world.InteractionHand;
-import net.minecraft.world.entity.player.Player;
-import net.minecraft.world.item.ItemStack;
-import net.neoforged.neoforge.event.entity.player.PlayerInteractEvent;
+import com.llamalad7.mixinextras.injector.wrapoperation.Operation;
+import com.llamalad7.mixinextras.injector.wrapoperation.WrapOperation;
+import com.zurrtum.create.content.kinetics.deployer.ManualApplicationHelper;
+import net.minecraft.world.item.Item;
+import net.minecraft.world.item.ItemStackTemplate;
 import org.spongepowered.asm.mixin.Mixin;
 import org.spongepowered.asm.mixin.injection.At;
-import org.spongepowered.asm.mixin.injection.Inject;
-import org.spongepowered.asm.mixin.injection.callback.CallbackInfo;
 
-@Mixin(value = ManualApplicationRecipe.class, remap = false)
+@Mixin(ManualApplicationHelper.class)
 public class ManualApplicationRecipeMixin {
-    @Inject(
-            method = "manualApplicationRecipesApplyInWorld",
-            at = @At(value = "INVOKE", target = "Lnet/minecraft/world/item/ItemStack;shrink(I)V"),
-            remap = true
+    @WrapOperation(
+            method = "manualApplicationRecipesApplyInWorld(Lnet/minecraft/world/level/Level;Lnet/minecraft/world/entity/player/Player;Lnet/minecraft/world/item/ItemStack;Lnet/minecraft/world/InteractionHand;Lnet/minecraft/world/phys/BlockHitResult;Lnet/minecraft/core/BlockPos;)Lnet/minecraft/world/InteractionResult;",
+            at = @At(value = "INVOKE", target = "Lnet/minecraft/world/item/Item;getCraftingRemainder()Lnet/minecraft/world/item/ItemStackTemplate;")
     )
-    private static void craftingRemainingItemOnApplication(PlayerInteractEvent.RightClickBlock event, CallbackInfo ci) {
-        if (!CServer.ApplicationRemainingItemFix.get()) return;
-
-        ItemStack heldItem = event.getItemStack();
-        Player player = event.getEntity();
-        InteractionHand hand = event.getHand();
-        ItemStack leftover = heldItem.hasCraftingRemainingItem() ? heldItem.getCraftingRemainingItem() : ItemStack.EMPTY;
-
-        heldItem.shrink(1);
-
-        if (heldItem.isEmpty()) {
-            player.setItemInHand(hand, leftover);
-        } else {
-            heldItem.grow(1); // Create shrinks the stack again after this inject
-            if (!player.getInventory().add(leftover)) {
-                player.drop(leftover, false);
-            }
-        }
+    private static ItemStackTemplate craftingRemainingItemOnApplication(Item instance, Operation<ItemStackTemplate> original) {
+        if (!CServer.ApplicationRemainingItemFix.get())
+            return null;
+        return original.call(instance);
     }
 }

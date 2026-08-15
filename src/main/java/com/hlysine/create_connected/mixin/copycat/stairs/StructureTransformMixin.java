@@ -3,7 +3,7 @@ package com.hlysine.create_connected.mixin.copycat.stairs;
 import com.hlysine.create_connected.content.copycat.ICopycatWithWrappedBlock;
 import com.llamalad7.mixinextras.injector.wrapoperation.Operation;
 import com.llamalad7.mixinextras.injector.wrapoperation.WrapOperation;
-import com.simibubi.create.content.contraptions.StructureTransform;
+import com.zurrtum.create.content.contraptions.StructureTransform;
 import net.minecraft.world.level.block.Block;
 import net.minecraft.world.level.block.state.BlockState;
 import org.spongepowered.asm.mixin.Mixin;

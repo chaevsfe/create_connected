@@ -1,7 +1,6 @@
 package com.hlysine.create_connected.content.contraption.jukebox;
 
 import com.hlysine.create_connected.CreateConnected;
-import net.fabricmc.fabric.api.networking.v1.PayloadTypeRegistry;
 import net.minecraft.core.BlockPos;
 import net.minecraft.network.RegistryFriendlyByteBuf;
 import net.minecraft.network.codec.ByteBufCodecs;
@@ -32,10 +31,6 @@ public record PlayContraptionJukeboxPacket(
             ByteBufCodecs.BOOL, PlayContraptionJukeboxPacket::silent,
             PlayContraptionJukeboxPacket::new
     );
-
-    public static void register() {
-        PayloadTypeRegistry.clientboundPlay().register(TYPE, STREAM_CODEC);
-    }
 
     @Override
     public Type<? extends CustomPacketPayload> type() {

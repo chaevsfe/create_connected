@@ -1,50 +1,54 @@
 package com.hlysine.create_connected.content.redstonelinkwildcard;
 
-import com.hlysine.create_connected.registries.CCItems;
 import com.hlysine.create_connected.CreateConnected;
 import com.hlysine.create_connected.config.CServer;
 import com.hlysine.create_connected.config.FeatureToggle;
-import com.simibubi.create.content.redstone.link.IRedstoneLinkable;
-import com.simibubi.create.content.redstone.link.LinkBehaviour;
-import com.simibubi.create.content.redstone.link.RedstoneLinkNetworkHandler;
-import com.simibubi.create.content.redstone.link.RedstoneLinkNetworkHandler.Frequency;
-import com.simibubi.create.infrastructure.config.AllConfigs;
-import dev.ryanhcode.sable.companion.SableCompanion;
-import dev.ryanhcode.sable.companion.SubLevelAccess;
-import net.createmod.catnip.data.Couple;
-import net.createmod.catnip.levelWrappers.WorldHelper;
+import com.hlysine.create_connected.registries.CCItems;
+import com.zurrtum.create.catnip.data.Couple;
+import com.zurrtum.create.catnip.levelWrappers.WorldHelper;
+import com.zurrtum.create.content.redstone.link.IRedstoneLinkable;
+import com.zurrtum.create.content.redstone.link.RedstoneLinkNetworkHandler;
+import com.zurrtum.create.content.redstone.link.RedstoneLinkNetworkHandler.Frequency;
+import com.zurrtum.create.content.redstone.link.ServerLinkBehaviour;
+import net.fabricmc.fabric.api.event.lifecycle.v1.ServerLevelEvents;
 import net.minecraft.core.BlockPos;
 import net.minecraft.core.registries.BuiltInRegistries;
-import net.minecraft.world.level.Level;
+import net.minecraft.resources.Identifier;
 import net.minecraft.world.level.LevelAccessor;
-import net.neoforged.bus.api.SubscribeEvent;
-import net.neoforged.fml.common.EventBusSubscriber;
-import net.neoforged.neoforge.event.level.LevelEvent;
-import org.joml.Vector3d;
 
-import java.util.*;
+import java.util.HashMap;
+import java.util.HashSet;
+import java.util.IdentityHashMap;
+import java.util.Iterator;
+import java.util.LinkedHashSet;
+import java.util.Map;
+import java.util.Set;
 import java.util.concurrent.atomic.AtomicInteger;
 import java.util.function.Consumer;
 
-@EventBusSubscriber(modid = CreateConnected.MODID)
 public class LinkWildcardNetworkHandler {
     static final Map<LevelAccessor, Map<Couple<Frequency>, Set<Couple<Frequency>>>> transmitter_connections =
             new IdentityHashMap<>();
     static final Map<LevelAccessor, Map<Couple<Frequency>, Set<Couple<Frequency>>>> receiver_connections =
             new IdentityHashMap<>();
 
-    @SubscribeEvent
-    public static void onLoadWorld(LevelEvent.Load event) {
-        transmitter_connections.put(event.getLevel(), new HashMap<>());
-        receiver_connections.put(event.getLevel(), new HashMap<>());
-        CreateConnected.LOGGER.debug("Link-Wildcard: Prepared Redstone Network Wildcards for {}", WorldHelper.getDimensionID(event.getLevel()));
+    private static Identifier wildcardId;
+
+    public static void register() {
+        ServerLevelEvents.LOAD.register((server, level) -> onLoadWorld(level));
+        ServerLevelEvents.UNLOAD.register((server, level) -> onUnloadWorld(level));
     }
 
-    @SubscribeEvent
-    public static void onUnloadWorld(LevelEvent.Unload event) {
-        transmitter_connections.remove(event.getLevel());
-        receiver_connections.remove(event.getLevel());
-        CreateConnected.LOGGER.debug("Link-Wildcard: Removed Redstone Network Wildcards for {}", WorldHelper.getDimensionID(event.getLevel()));
+    public static void onLoadWorld(LevelAccessor world) {
+        transmitter_connections.put(world, new HashMap<>());
+        receiver_connections.put(world, new HashMap<>());
+        CreateConnected.LOGGER.debug("Link-Wildcard: Prepared Redstone Network Wildcards for {}", WorldHelper.getDimensionID(world));
+    }
+
+    public static void onUnloadWorld(LevelAccessor world) {
+        transmitter_connections.remove(world);
+        receiver_connections.remove(world);
+        CreateConnected.LOGGER.debug("Link-Wildcard: Removed Redstone Network Wildcards for {}", WorldHelper.getDimensionID(world));
     }
 
     public static Map<Couple<Frequency>, Set<Couple<Frequency>>> transmittersIn(LevelAccessor world) {
@@ -64,7 +68,9 @@ public class LinkWildcardNetworkHandler {
     }
 
     public static boolean updateNetworkOf(RedstoneLinkNetworkHandler handler, LevelAccessor world, IRedstoneLinkable actor) {
-        if (!FeatureToggle.isEnabled(CCItems.REDSTONE_LINK_WILDCARD.getId()))
+        if (world.isClientSide())
+            return false;
+        if (!FeatureToggle.isEnabled(wildcardId()))
             return false;
 
         Couple<Frequency> key = actor.getNetworkKey();
@@ -103,7 +109,7 @@ public class LinkWildcardNetworkHandler {
                 if (other.isListening())
                     continue;
 
-                if (!withinRange(actor, other, world))
+                if (!RedstoneLinkNetworkHandler.withinRange(actor, other))
                     continue;
 
                 if (power.get() < 15)
@@ -118,8 +124,7 @@ public class LinkWildcardNetworkHandler {
                 updatePower.accept(wildcardNetwork);
             }
 
-        if (actor instanceof LinkBehaviour linkBehaviour) {
-            // fix one-to-one loading order problem
+        if (actor instanceof ServerLinkBehaviour linkBehaviour) {
             if (linkBehaviour.isListening()) {
                 linkBehaviour.newPosition = true;
                 linkBehaviour.setReceivedStrength(power.get());
@@ -128,23 +133,23 @@ public class LinkWildcardNetworkHandler {
 
         if (network != null && !network.isEmpty())
             for (IRedstoneLinkable other : network) {
-                if (other != actor && other.isListening() && withinRange(actor, other, world))
+                if (other != actor && other.isListening() && RedstoneLinkNetworkHandler.withinRange(actor, other))
                     other.setReceivedStrength(power.get());
             }
     }
 
     public static void addToNetwork(RedstoneLinkNetworkHandler handler, LevelAccessor world, IRedstoneLinkable actor) {
+        if (world.isClientSide())
+            return;
+
         Couple<Frequency> key = actor.getNetworkKey();
         Map<Couple<Frequency>, Set<Couple<Frequency>>> wildcards = actor.isListening() ? receiversIn(world) : transmittersIn(world);
-//        CreateConnected.LOGGER.debug("Link-Wildcard: New {}: {}", actor.isListening() ? "receiver" : "transmitter", keyToString(key));
         if (!wildcards.containsKey(key)) {
             HashSet<Couple<Frequency>> connections = new LinkedHashSet<>();
             Map<Couple<Frequency>, Set<IRedstoneLinkable>> networks = handler.networksIn(world);
             for (Couple<Frequency> otherKey : networks.keySet()) {
                 if (!otherKey.equals(key) && test(key, otherKey)) {
-                    if (connections.add(otherKey)) {
-//                        CreateConnected.LOGGER.debug("Link-Wildcard: - {} {}", actor.isListening() ? "Receiving from" : "Transmitting to", keyToString(otherKey));
-                    }
+                    connections.add(otherKey);
                 }
             }
             wildcards.put(key, connections);
@@ -152,25 +157,24 @@ public class LinkWildcardNetworkHandler {
         Map<Couple<Frequency>, Set<Couple<Frequency>>> oppositeSet = actor.isListening() ? transmittersIn(world) : receiversIn(world);
         for (Map.Entry<Couple<Frequency>, Set<Couple<Frequency>>> entry : oppositeSet.entrySet()) {
             if (!entry.getKey().equals(key) && test(entry.getKey(), key)) {
-                if (entry.getValue().add(key)) {
-//                    CreateConnected.LOGGER.debug("Link-Wildcard: - Reverse: {} {}", actor.isListening() ? "Receiving from" : "Transmitting to", keyToString(entry.getKey()));
-                }
+                entry.getValue().add(key);
             }
         }
     }
 
     public static void removeFromNetwork(RedstoneLinkNetworkHandler handler, LevelAccessor world, IRedstoneLinkable actor) {
+        if (world.isClientSide())
+            return;
+
         Couple<Frequency> key = actor.getNetworkKey();
         Map<Couple<Frequency>, Set<IRedstoneLinkable>> networks = handler.networksIn(world);
         if (networks.containsKey(key) && !networks.get(key).isEmpty())
             return;
-//        CreateConnected.LOGGER.debug("Link-Wildcard: Removing {} {}", actor.isListening() ? "receiver" : "transmitter", keyToString(key));
         Map<Couple<Frequency>, Set<Couple<Frequency>>> wildcards = actor.isListening() ? receiversIn(world) : transmittersIn(world);
         wildcards.remove(key);
         Map<Couple<Frequency>, Set<Couple<Frequency>>> oppositeSet = actor.isListening() ? transmittersIn(world) : receiversIn(world);
         for (Map.Entry<Couple<Frequency>, Set<Couple<Frequency>>> entry : oppositeSet.entrySet()) {
             if (entry.getValue().remove(key)) {
-//                CreateConnected.LOGGER.debug("Link-Wildcard: - No longer {} {}", actor.isListening() ? "receiving from" : "transmitting to", keyToString(entry.getKey()));
                 handler.updateNetworkOf(world, new IRedstoneLinkable() {
                     @Override
                     public int getTransmittedStrength() {
@@ -208,11 +212,10 @@ public class LinkWildcardNetworkHandler {
             actor.setReceivedStrength(0);
     }
 
-    private static String keyToString(Couple<Frequency> key) {
-        return String.format("%s + %s",
-                BuiltInRegistries.ITEM.getKey(key.getFirst().getStack().getItem()),
-                BuiltInRegistries.ITEM.getKey(key.getSecond().getStack().getItem())
-        );
+    private static Identifier wildcardId() {
+        if (wildcardId == null)
+            wildcardId = BuiltInRegistries.ITEM.getKey(CCItems.REDSTONE_LINK_WILDCARD);
+        return wildcardId;
     }
 
     private static boolean test(Couple<Frequency> transmitter, Couple<Frequency> receiver) {
@@ -238,31 +241,5 @@ public class LinkWildcardNetworkHandler {
         } else {
             return transmitter.equals(receiver);
         }
-    }
-
-    // Implement a custom range check for compatibility with sable. Modified version of dev.ryanhcode.sable.neoforge.mixin.compatibility.create.redstone_links.RedstoneLinkNetworkHandlerMixin.sable$projectComparisons
-    private static boolean withinRange(IRedstoneLinkable from, IRedstoneLinkable to, LevelAccessor levelAccessor) {
-        final Level level = (Level) levelAccessor;
-
-        if (from == to) return true;
-
-        final BlockPos fromLocation = from.getLocation();
-        final Vector3d fromPos = new Vector3d(fromLocation.getX(), fromLocation.getY(), fromLocation.getZ());
-        final BlockPos toLocation = to.getLocation();
-        final Vector3d toPos = new Vector3d(toLocation.getX(), toLocation.getY(), toLocation.getZ());
-
-        final SableCompanion helper = SableCompanion.INSTANCE;
-        final SubLevelAccess fromSublevel = helper.getContaining(level, fromPos);
-        if (fromSublevel != null) {
-            fromSublevel.logicalPose().transformPosition(fromPos);
-        }
-
-        final SubLevelAccess toSublevel = helper.getContaining(level, toPos);
-        if (toSublevel != null) {
-            toSublevel.logicalPose().transformPosition(toPos);
-        }
-
-        final int linkRange = AllConfigs.server().logistics.linkRange.get();
-        return fromPos.distanceSquared(toPos) < linkRange * linkRange;
     }
 }

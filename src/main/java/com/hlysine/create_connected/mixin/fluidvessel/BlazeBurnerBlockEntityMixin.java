@@ -1,7 +1,7 @@
 package com.hlysine.create_connected.mixin.fluidvessel;
 
 import com.hlysine.create_connected.content.fluidvessel.FluidVesselBlock;
-import com.simibubi.create.content.processing.burner.BlazeBurnerBlockEntity;
+import com.zurrtum.create.content.processing.burner.BlazeBurnerBlockEntity;
 import net.minecraft.world.level.block.state.BlockState;
 import org.spongepowered.asm.mixin.Mixin;
 import org.spongepowered.asm.mixin.injection.At;

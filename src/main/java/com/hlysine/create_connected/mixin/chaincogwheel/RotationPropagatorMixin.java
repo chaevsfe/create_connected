@@ -1,10 +1,10 @@
 package com.hlysine.create_connected.mixin.chaincogwheel;
 
 import com.hlysine.create_connected.registries.CCBlocks;
-import com.simibubi.create.content.kinetics.RotationPropagator;
-import com.simibubi.create.content.kinetics.base.IRotate;
-import com.simibubi.create.content.kinetics.base.KineticBlockEntity;
-import com.simibubi.create.content.kinetics.chainDrive.ChainDriveBlock;
+import com.zurrtum.create.content.kinetics.RotationPropagator;
+import com.zurrtum.create.content.kinetics.base.IRotate;
+import com.zurrtum.create.content.kinetics.base.KineticBlockEntity;
+import com.zurrtum.create.content.kinetics.chainDrive.ChainDriveBlock;
 import net.minecraft.core.BlockPos;
 import net.minecraft.core.Direction;
 import net.minecraft.world.level.block.Block;
@@ -14,11 +14,11 @@ import org.spongepowered.asm.mixin.injection.At;
 import org.spongepowered.asm.mixin.injection.Inject;
 import org.spongepowered.asm.mixin.injection.callback.CallbackInfoReturnable;
 
-@Mixin(value = RotationPropagator.class, remap = false)
+@Mixin(RotationPropagator.class)
 public class RotationPropagatorMixin {
     @Inject(
-            method = "getRotationSpeedModifier(Lcom/simibubi/create/content/kinetics/base/KineticBlockEntity;Lcom/simibubi/create/content/kinetics/base/KineticBlockEntity;)F",
-            at = @At(value = "INVOKE", target = "Lcom/simibubi/create/content/kinetics/chainDrive/ChainDriveBlock;areBlocksConnected(Lnet/minecraft/world/level/block/state/BlockState;Lnet/minecraft/world/level/block/state/BlockState;Lnet/minecraft/core/Direction;)Z"),
+            method = "getRotationSpeedModifier(Lcom/zurrtum/create/content/kinetics/base/KineticBlockEntity;Lcom/zurrtum/create/content/kinetics/base/KineticBlockEntity;)F",
+            at = @At(value = "INVOKE", target = "Lcom/zurrtum/create/content/kinetics/chainDrive/ChainDriveBlock;areBlocksConnected(Lnet/minecraft/world/level/block/state/BlockState;Lnet/minecraft/world/level/block/state/BlockState;Lnet/minecraft/core/Direction;)Z"),
             cancellable = true
     )
     private static void handleChainCogwheels(KineticBlockEntity from,
@@ -32,9 +32,9 @@ public class RotationPropagatorMixin {
         final IRotate definitionTo = (IRotate) toBlock;
         final BlockPos diff = to.getBlockPos()
                 .subtract(from.getBlockPos());
-        final Direction direction = Direction.fromDelta(diff.getX(), diff.getY(), diff.getZ());
+        final Direction direction = Direction.getNearest(diff.getX(), diff.getY(), diff.getZ(), null);
 
-        if (stateFrom.is(CCBlocks.ENCASED_CHAIN_COGWHEEL.get()) && stateTo.is(CCBlocks.ENCASED_CHAIN_COGWHEEL.get())) {
+        if (stateFrom.is(CCBlocks.ENCASED_CHAIN_COGWHEEL) && stateTo.is(CCBlocks.ENCASED_CHAIN_COGWHEEL)) {
             if (direction == null) {
                 cir.setReturnValue(0f);
                 return;

@@ -1,10 +1,10 @@
 package com.hlysine.create_connected.content.attributefilter;
 
-import com.hlysine.create_connected.registries.CCItemAttributes;
+import com.hlysine.create_connected.registries.CCRegistration;
 import com.mojang.serialization.Codec;
 import com.mojang.serialization.MapCodec;
-import com.simibubi.create.content.logistics.item.filter.attribute.ItemAttribute;
-import com.simibubi.create.content.logistics.item.filter.attribute.ItemAttributeType;
+import com.zurrtum.create.content.logistics.item.filter.attribute.ItemAttribute;
+import com.zurrtum.create.content.logistics.item.filter.attribute.ItemAttributeType;
 import io.netty.buffer.ByteBuf;
 import net.minecraft.network.RegistryFriendlyByteBuf;
 import net.minecraft.network.codec.ByteBufCodecs;
@@ -21,7 +21,7 @@ public record ItemIdAttribute(String word) implements ItemAttribute {
             .xmap(ItemIdAttribute::new, ItemIdAttribute::word)
             .fieldOf("value");
 
-    public static final StreamCodec<ByteBuf, ItemIdAttribute> STREAM_CODEC = ByteBufCodecs.STRING_UTF8
+    public static final StreamCodec<ByteBuf, ItemIdAttribute> PACKET_CODEC = ByteBufCodecs.STRING_UTF8
             .map(ItemIdAttribute::new, ItemIdAttribute::word);
 
     @Override
@@ -31,7 +31,7 @@ public record ItemIdAttribute(String word) implements ItemAttribute {
 
     @Override
     public ItemAttributeType getType() {
-        return CCItemAttributes.ID_CONTAINS;
+        return CCRegistration.ID_CONTAINS;
     }
 
     @Override
@@ -69,8 +69,8 @@ public record ItemIdAttribute(String word) implements ItemAttribute {
         }
 
         @Override
-        public StreamCodec<? super RegistryFriendlyByteBuf, ? extends ItemAttribute> streamCodec() {
-            return STREAM_CODEC;
+        public StreamCodec<? super RegistryFriendlyByteBuf, ? extends ItemAttribute> packetCodec() {
+            return PACKET_CODEC;
         }
     }
 }

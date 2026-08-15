@@ -1,7 +1,7 @@
 package com.hlysine.create_connected.mixin;
 
-import com.hlysine.create_connected.datagen.advancements.AdvancementBehaviour;
-import com.simibubi.create.content.kinetics.base.KineticBlock;
+import com.hlysine.create_connected.foundation.advancement.AdvancementBehaviour;
+import com.zurrtum.create.content.kinetics.base.KineticBlock;
 import net.minecraft.core.BlockPos;
 import net.minecraft.world.entity.LivingEntity;
 import net.minecraft.world.item.ItemStack;
@@ -14,7 +14,10 @@ import org.spongepowered.asm.mixin.injection.callback.CallbackInfo;
 
 @Mixin(KineticBlock.class)
 public class KineticBlockAdvancementMixin {
-    @Inject(at = @At("HEAD"), method="setPlacedBy(Lnet/minecraft/world/level/Level;Lnet/minecraft/core/BlockPos;Lnet/minecraft/world/level/block/state/BlockState;Lnet/minecraft/world/entity/LivingEntity;Lnet/minecraft/world/item/ItemStack;)V")
+    @Inject(
+            at = @At("HEAD"),
+            method = "setPlacedBy(Lnet/minecraft/world/level/Level;Lnet/minecraft/core/BlockPos;Lnet/minecraft/world/level/block/state/BlockState;Lnet/minecraft/world/entity/LivingEntity;Lnet/minecraft/world/item/ItemStack;)V"
+    )
     private void trackOwner(Level worldIn, BlockPos pos, BlockState state, LivingEntity placer, ItemStack stack, CallbackInfo ci) {
         AdvancementBehaviour.trackOwner(worldIn, pos, placer);
     }

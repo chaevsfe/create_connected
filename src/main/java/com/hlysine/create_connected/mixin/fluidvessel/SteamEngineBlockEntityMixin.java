@@ -1,8 +1,8 @@
 package com.hlysine.create_connected.mixin.fluidvessel;
 
 import com.hlysine.create_connected.registries.CCBlocks;
-import com.simibubi.create.content.kinetics.steamEngine.SteamEngineBlock;
-import com.simibubi.create.content.kinetics.steamEngine.SteamEngineBlockEntity;
+import com.zurrtum.create.content.kinetics.steamEngine.SteamEngineBlock;
+import com.zurrtum.create.content.kinetics.steamEngine.SteamEngineBlockEntity;
 import net.minecraft.core.Direction;
 import net.minecraft.world.level.Level;
 import org.spongepowered.asm.mixin.Mixin;
@@ -10,10 +10,10 @@ import org.spongepowered.asm.mixin.injection.At;
 import org.spongepowered.asm.mixin.injection.Inject;
 import org.spongepowered.asm.mixin.injection.callback.CallbackInfoReturnable;
 
-@Mixin(value = SteamEngineBlockEntity.class, remap = false)
+@Mixin(SteamEngineBlockEntity.class)
 public class SteamEngineBlockEntityMixin {
     @Inject(
-            method = "isValid",
+            method = "isValid()Z",
             at = @At("HEAD"),
             cancellable = true
     )
@@ -27,7 +27,7 @@ public class SteamEngineBlockEntityMixin {
             return;
         }
 
-        if (level.getBlockState(be.getBlockPos().relative(dir)).is(CCBlocks.FLUID_VESSEL.get())) {
+        if (level.getBlockState(be.getBlockPos().relative(dir)).is(CCBlocks.FLUID_VESSEL)) {
             cir.setReturnValue(true);
         }
     }

@@ -1,7 +1,7 @@
 package com.hlysine.create_connected.mixin.copycat.wall;
 
 import com.hlysine.create_connected.content.copycat.ICopycatWithWrappedBlock;
-import com.simibubi.create.content.trains.track.TrackPaver;
+import com.zurrtum.create.content.trains.track.TrackPaver;
 import net.minecraft.world.level.block.WallBlock;
 import net.minecraft.world.level.block.state.BlockState;
 import org.spongepowered.asm.mixin.Mixin;
@@ -9,7 +9,7 @@ import org.spongepowered.asm.mixin.injection.At;
 import org.spongepowered.asm.mixin.injection.Inject;
 import org.spongepowered.asm.mixin.injection.callback.CallbackInfoReturnable;
 
-@Mixin(value = TrackPaver.class, remap = false)
+@Mixin(TrackPaver.class)
 public class TrackPaverMixin {
     @Inject(
             at = @At("HEAD"),

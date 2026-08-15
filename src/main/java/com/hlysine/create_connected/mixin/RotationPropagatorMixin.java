@@ -2,8 +2,8 @@ package com.hlysine.create_connected.mixin;
 
 import com.hlysine.create_connected.content.IConnectionForwardingBlock;
 import com.hlysine.create_connected.content.ISplitShaftBlockEntity;
-import com.simibubi.create.content.kinetics.RotationPropagator;
-import com.simibubi.create.content.kinetics.base.KineticBlockEntity;
+import com.zurrtum.create.content.kinetics.RotationPropagator;
+import com.zurrtum.create.content.kinetics.base.KineticBlockEntity;
 import net.minecraft.core.BlockPos;
 import net.minecraft.core.Direction;
 import org.spongepowered.asm.mixin.Mixin;
@@ -18,7 +18,7 @@ import java.util.List;
 public abstract class RotationPropagatorMixin {
 
     @Inject(
-            method = "getAxisModifier",
+            method = "getAxisModifier(Lcom/zurrtum/create/content/kinetics/base/KineticBlockEntity;Lnet/minecraft/core/Direction;)F",
             at = @At("HEAD"),
             cancellable = true
     )
@@ -32,7 +32,7 @@ public abstract class RotationPropagatorMixin {
     }
 
     @Inject(
-            method = "getPotentialNeighbourLocations",
+            method = "getPotentialNeighbourLocations(Lcom/zurrtum/create/content/kinetics/base/KineticBlockEntity;)Ljava/util/List;",
             at = @At("RETURN")
     )
     private static void forwardConnection(KineticBlockEntity be, CallbackInfoReturnable<List<BlockPos>> cir) {

@@ -2,8 +2,8 @@ package com.hlysine.create_connected.mixin.inventoryaccess;
 
 import com.hlysine.create_connected.content.inventoryaccessport.InventoryAccessPortBlockEntity;
 import com.hlysine.create_connected.content.inventorybridge.InventoryBridgeBlockEntity;
-import com.simibubi.create.AllBlocks;
-import com.simibubi.create.content.logistics.packager.PackagerBlockEntity;
+import com.zurrtum.create.AllBlocks;
+import com.zurrtum.create.content.logistics.packager.PackagerBlockEntity;
 import net.minecraft.world.level.block.entity.BlockEntity;
 import net.minecraft.world.level.block.state.BlockState;
 import org.spongepowered.asm.mixin.Mixin;
@@ -14,11 +14,11 @@ import org.spongepowered.asm.mixin.injection.callback.CallbackInfoReturnable;
 @Mixin(PackagerBlockEntity.class)
 public class PackagerBlockEntityMixin {
     @Inject(
-            method = "supportsBlockEntity",
+            method = "supportsBlockEntity(Lnet/minecraft/world/level/block/entity/BlockEntity;)Z",
             at = @At("HEAD"),
             cancellable = true
     )
-    private static void supportsInventoryAccess(BlockEntity target, CallbackInfoReturnable<Boolean> cir) {
+    private void supportsInventoryAccess(BlockEntity target, CallbackInfoReturnable<Boolean> cir) {
         if (target == null) return;
         if (target instanceof InventoryAccessPortBlockEntity accessPort) {
             BlockState attached = accessPort.getAttachedBlock();
@@ -41,7 +41,6 @@ public class PackagerBlockEntityMixin {
             if (attached != null) {
                 if (attached.is(AllBlocks.PORTABLE_STORAGE_INTERFACE)) {
                     cir.setReturnValue(false);
-                    return;
                 }
             }
         }

@@ -1,8 +1,8 @@
 package com.hlysine.create_connected.content.sequencedpulsegenerator.instructions;
 
-import com.hlysine.create_connected.registries.CCGuiTextures;
 import com.hlysine.create_connected.content.sequencedpulsegenerator.SequencedPulseGeneratorBlockEntity;
-import net.minecraft.nbt.CompoundTag;
+import net.minecraft.world.level.storage.ValueInput;
+import net.minecraft.world.level.storage.ValueOutput;
 
 public class OutputInstruction extends Instruction {
     private int progress = 0;
@@ -10,7 +10,7 @@ public class OutputInstruction extends Instruction {
     public OutputInstruction(int duration, int signal) {
         super(
                 "output",
-                CCGuiTextures.SEQUENCER_INSTRUCTION,
+                Background.INSTRUCTION,
                 new ParameterConfig(
                         1,
                         600,
@@ -37,13 +37,13 @@ public class OutputInstruction extends Instruction {
     }
 
     @Override
-    public void writeState(CompoundTag nbt) {
-        nbt.putInt("Progress", progress);
+    public void writeState(ValueOutput view) {
+        view.putInt("Progress", progress);
     }
 
     @Override
-    public void readState(CompoundTag nbt) {
-        progress = nbt.getInt("Progress");
+    public void readState(ValueInput view) {
+        progress = view.getIntOr("Progress", 0);
     }
 
     @Override

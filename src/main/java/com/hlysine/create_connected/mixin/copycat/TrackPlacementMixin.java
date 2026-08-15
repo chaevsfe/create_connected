@@ -5,7 +5,7 @@ import com.llamalad7.mixinextras.injector.wrapoperation.Operation;
 import com.llamalad7.mixinextras.injector.wrapoperation.WrapOperation;
 import com.llamalad7.mixinextras.sugar.Local;
 import com.llamalad7.mixinextras.sugar.ref.LocalRef;
-import com.simibubi.create.content.trains.track.TrackPlacement;
+import com.zurrtum.create.content.trains.track.TrackPlacement;
 import net.minecraft.world.item.BlockItem;
 import net.minecraft.world.level.Level;
 import net.minecraft.world.level.block.Block;
@@ -17,7 +17,7 @@ import org.spongepowered.asm.mixin.injection.callback.CallbackInfo;
 @Mixin(TrackPlacement.class)
 public class TrackPlacementMixin {
     @WrapOperation(
-            method = "paveTracks(Lnet/minecraft/world/level/Level;Lcom/simibubi/create/content/trains/track/TrackPlacement$PlacementInfo;Lnet/minecraft/world/item/BlockItem;Z)V",
+            method = "paveTracks(Lnet/minecraft/world/level/Level;Lcom/zurrtum/create/content/trains/track/TrackPlacement$PlacementInfo;Lnet/minecraft/world/item/BlockItem;Z)V",
             at = @At(value = "INVOKE", target = "Lnet/minecraft/world/item/BlockItem;getBlock()Lnet/minecraft/world/level/block/Block;")
     )
     private static Block getInnerBlock(BlockItem instance, Operation<Block> original) {
@@ -26,7 +26,7 @@ public class TrackPlacementMixin {
 
     @Inject(
             at = @At(value = "NEW", target = "()Ljava/util/HashSet;"),
-            method = "paveTracks(Lnet/minecraft/world/level/Level;Lcom/simibubi/create/content/trains/track/TrackPlacement$PlacementInfo;Lnet/minecraft/world/item/BlockItem;Z)V"
+            method = "paveTracks(Lnet/minecraft/world/level/Level;Lcom/zurrtum/create/content/trains/track/TrackPlacement$PlacementInfo;Lnet/minecraft/world/item/BlockItem;Z)V"
     )
     private static void revertBlock(Level level,
                                     TrackPlacement.PlacementInfo info,

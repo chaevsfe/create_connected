@@ -1,6 +1,6 @@
 package com.hlysine.create_connected.content.redstonelinkwildcard;
 
-import com.simibubi.create.content.redstone.link.RedstoneLinkNetworkHandler;
+import com.zurrtum.create.content.redstone.link.RedstoneLinkNetworkHandler;
 import net.minecraft.world.item.Item;
 
 public class RedstoneLinkWildcardItem extends Item implements ILinkWildcard {

@@ -6,9 +6,9 @@ import com.llamalad7.mixinextras.injector.ModifyExpressionValue;
 import com.llamalad7.mixinextras.injector.wrapoperation.Operation;
 import com.llamalad7.mixinextras.injector.wrapoperation.WrapOperation;
 import com.llamalad7.mixinextras.sugar.Local;
-import com.simibubi.create.content.schematics.ServerSchematicLoader;
-import com.simibubi.create.foundation.utility.CreatePaths;
-import com.simibubi.create.foundation.utility.FilesHelper;
+import com.zurrtum.create.content.schematics.ServerSchematicLoader;
+import com.zurrtum.create.foundation.utility.CreatePaths;
+import com.zurrtum.create.foundation.utility.FilesHelper;
 import net.minecraft.core.BlockPos;
 import net.minecraft.server.level.ServerPlayer;
 import net.minecraft.world.level.Level;
@@ -30,14 +30,14 @@ import java.util.Optional;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
-@Mixin(value = ServerSchematicLoader.class, remap = false)
+@Mixin(ServerSchematicLoader.class)
 public abstract class ServerSchematicLoaderMixin {
 
     @Unique
     private void deleteEmptyFolders(Path rootPath, Path pathToDelete) throws IOException {
         if (!Files.exists(rootPath) || !Files.exists(pathToDelete)) return;
         pathToDelete = pathToDelete.getParent();
-        while (!pathToDelete.equals(rootPath) && pathToDelete.toString().contains("schematics")) { // a failsafe to avoid deleting folders outside the schematics folder
+        while (!pathToDelete.equals(rootPath) && pathToDelete.toString().contains("schematics")) {
             try (Stream<Path> paths = Files.list(pathToDelete)) {
                 if (paths.findAny().isEmpty())
                     Files.delete(pathToDelete);
@@ -48,7 +48,7 @@ public abstract class ServerSchematicLoaderMixin {
     }
 
     @Inject(
-            at = @At(value = "INVOKE", target = "Lcom/simibubi/create/content/schematics/ServerSchematicLoader;validateSchematicSizeOnServer(Lnet/minecraft/server/level/ServerPlayer;J)Z"),
+            at = @At(value = "INVOKE", target = "Lcom/zurrtum/create/content/schematics/ServerSchematicLoader;validateSchematicSizeOnServer(Lnet/minecraft/server/level/ServerPlayer;J)Z"),
             method = "handleNewUpload(Lnet/minecraft/server/level/ServerPlayer;Ljava/lang/String;JLnet/minecraft/core/BlockPos;)V",
             cancellable = true
     )
@@ -79,7 +79,7 @@ public abstract class ServerSchematicLoaderMixin {
     @ModifyExpressionValue(
             at = @At(value = "INVOKE", target = "Ljava/nio/file/Files;list(Ljava/nio/file/Path;)Ljava/util/stream/Stream;"),
             slice = @Slice(
-                    from = @At(value = "FIELD", target = "Lcom/simibubi/create/infrastructure/config/CSchematics;maxSchematics:Lnet/createmod/catnip/config/ConfigBase$ConfigInt;"),
+                    from = @At(value = "FIELD", target = "Lcom/zurrtum/create/infrastructure/config/CSchematics;maxSchematics:Lcom/zurrtum/create/catnip/config/ConfigBase$ConfigInt;"),
                     to = @At(value = "INVOKE", target = "Ljava/util/stream/Stream;filter(Ljava/util/function/Predicate;)Ljava/util/stream/Stream;")
             ),
             method = "handleNewUpload(Lnet/minecraft/server/level/ServerPlayer;Ljava/lang/String;JLnet/minecraft/core/BlockPos;)V"

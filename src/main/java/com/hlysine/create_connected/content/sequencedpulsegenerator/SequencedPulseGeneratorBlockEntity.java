@@ -1,23 +1,24 @@
 package com.hlysine.create_connected.content.sequencedpulsegenerator;
 
-import com.hlysine.create_connected.content.sequencedpulsegenerator.instructions.*;
-import com.hlysine.create_connected.datagen.advancements.AdvancementBehaviour;
-import com.hlysine.create_connected.datagen.advancements.CCAdvancements;
-import com.simibubi.create.foundation.blockEntity.SmartBlockEntity;
-import com.simibubi.create.foundation.blockEntity.behaviour.BlockEntityBehaviour;
+import com.hlysine.create_connected.CreateConnected;
+import com.hlysine.create_connected.content.sequencedpulsegenerator.instructions.Instruction;
+import com.hlysine.create_connected.content.sequencedpulsegenerator.instructions.InstructionResult;
+import com.hlysine.create_connected.foundation.advancement.AdvancementBehaviour;
+import com.hlysine.create_connected.foundation.advancement.CCAdvancements;
+import com.zurrtum.create.api.behaviour.BlockEntityBehaviour;
+import com.zurrtum.create.foundation.blockEntity.SmartBlockEntity;
 import net.minecraft.core.BlockPos;
-import net.minecraft.core.HolderLookup;
 import net.minecraft.core.particles.ParticleTypes;
-import net.minecraft.nbt.CompoundTag;
-import net.minecraft.nbt.ListTag;
-import net.minecraft.nbt.Tag;
 import net.minecraft.server.level.ServerLevel;
 import net.minecraft.world.level.block.Block;
 import net.minecraft.world.level.block.entity.BlockEntityType;
 import net.minecraft.world.level.block.state.BlockState;
+import net.minecraft.world.level.storage.ValueInput;
+import net.minecraft.world.level.storage.ValueOutput;
 import net.minecraft.world.phys.Vec3;
 
 import java.util.List;
+import java.util.Optional;
 import java.util.Vector;
 
 import static com.hlysine.create_connected.content.sequencedpulsegenerator.SequencedPulseGeneratorBlock.POWERING;
@@ -29,24 +30,8 @@ public class SequencedPulseGeneratorBlockEntity extends SmartBlockEntity {
     private static final int MAX_RECURSION_DEPTH = 10;
     private static final float PARTICLE_DENSITY = 0.2f;
 
-    static {
-        Instruction.register(new OutputInstruction(10, 15));
-        Instruction.register(new TransformInstruction(2, 15));
-        Instruction.register(new WaitForInstruction(1, 0));
-        Instruction.register(new WaitForMinInstruction(8, 0));
-        Instruction.register(new WaitForMaxInstruction(7, 0));
-        Instruction.register(new WaitForExactInstruction(7, 0));
-        Instruction.register(new LoopForInstruction(3));
-        Instruction.register(new LoopIfInstruction(1));
-        Instruction.register(new LoopIfMinInstruction(8));
-        Instruction.register(new LoopIfMaxInstruction(7));
-        Instruction.register(new LoopIfExactInstruction(7));
-        Instruction.register(new LoopInstruction());
-        Instruction.register(new EndInstruction());
-    }
-
-    Vector<Instruction> instructions;
-    int currentInstruction;
+    public Vector<Instruction> instructions;
+    public int currentInstruction;
     int currentSignal;
     int previousInput;
     int currentInput;
@@ -62,7 +47,7 @@ public class SequencedPulseGeneratorBlockEntity extends SmartBlockEntity {
     }
 
     @Override
-    public void addBehaviours(List<BlockEntityBehaviour> behaviours) {
+    public void addBehaviours(List<BlockEntityBehaviour<?>> behaviours) {
         AdvancementBehaviour.registerAwardables(this, behaviours, CCAdvancements.PULSE_GEN_INFINITE_LOOP);
     }
 
@@ -93,8 +78,8 @@ public class SequencedPulseGeneratorBlockEntity extends SmartBlockEntity {
 
     private void applySignal() {
         level.setBlock(getBlockPos(), getBlockState().setValue(POWERING, currentSignal > 0), Block.UPDATE_ALL);
-        level.updateNeighborsAt(this.worldPosition, this.getBlockState().getBlock());
-        level.updateNeighborsAt(this.worldPosition.relative(this.getBlockState().getValue(SequencedPulseGeneratorBlock.FACING).getOpposite()), this.getBlockState().getBlock());
+        level.updateNeighborsAt(this.worldPosition, this.getBlockState().getBlock(), null);
+        level.updateNeighborsAt(this.worldPosition.relative(this.getBlockState().getValue(SequencedPulseGeneratorBlock.FACING).getOpposite()), this.getBlockState().getBlock(), null);
     }
 
     private void executeInstruction(boolean allowImmediate, int recursionDepth) {
@@ -142,7 +127,7 @@ public class SequencedPulseGeneratorBlockEntity extends SmartBlockEntity {
 
         if (isIdle())
             return;
-        if (level.isClientSide)
+        if (level.isClientSide())
             return;
 
         executeInstruction(true, 0);
@@ -183,23 +168,43 @@ public class SequencedPulseGeneratorBlockEntity extends SmartBlockEntity {
     }
 
     @Override
-    protected void write(CompoundTag tag, HolderLookup.Provider registries, boolean clientPacket) {
-        tag.putInt("InstructionIndex", currentInstruction);
-        tag.putInt("PrevInput", previousInput);
-        tag.putInt("CurrentInput", currentInput);
-        tag.putInt("CurrentSignal", currentSignal);
-        tag.put("Instructions", Instruction.serializeAll(instructions));
-        super.write(tag, registries, clientPacket);
+    protected void write(ValueOutput view, boolean clientPacket) {
+        view.putInt("InstructionIndex", currentInstruction);
+        view.putInt("PrevInput", previousInput);
+        view.putInt("CurrentInput", currentInput);
+        view.putInt("CurrentSignal", currentSignal);
+        Instruction.writeAll(view.childrenList(Instruction.LIST_KEY), instructions);
+        super.write(view, clientPacket);
     }
 
     @Override
-    protected void read(CompoundTag tag, HolderLookup.Provider registries, boolean clientPacket) {
-        currentInstruction = tag.getInt("InstructionIndex");
-        previousInput = tag.getInt("PrevInput");
-        currentInput = tag.getInt("CurrentInput");
-        currentSignal = tag.getInt("CurrentSignal");
-        ListTag list = tag.getList("Instructions", Tag.TAG_COMPOUND);
-        instructions = Instruction.deserializeAll(list);
-        super.read(tag, registries, clientPacket);
+    protected void read(ValueInput view, boolean clientPacket) {
+        currentInstruction = view.getIntOr("InstructionIndex", -1);
+        previousInput = view.getIntOr("PrevInput", 0);
+        currentInput = view.getIntOr("CurrentInput", 0);
+        currentSignal = view.getIntOr("CurrentSignal", 0);
+        readInstructions(view);
+        super.read(view, clientPacket);
+    }
+
+    private void readInstructions(ValueInput view) {
+        Optional<ValueInput.ValueInputList> saved = view.childrenList(Instruction.LIST_KEY);
+        if (saved.isEmpty()) {
+            CreateConnected.LOGGER.error("Sequenced pulse generator at {} was saved without an {} list, keeping the current program",
+                    worldPosition, Instruction.LIST_KEY);
+            return;
+        }
+        ValueInput.ValueInputList list = saved.get();
+        if (list.isEmpty()) {
+            instructions = Instruction.createDefault();
+            return;
+        }
+        Vector<Instruction> restored = Instruction.readAll(list);
+        if (restored.isEmpty()) {
+            CreateConnected.LOGGER.error("Sequenced pulse generator at {} has no readable instructions, keeping the current program",
+                    worldPosition);
+            return;
+        }
+        instructions = restored;
     }
 }

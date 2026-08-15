@@ -1,23 +1,20 @@
 package com.hlysine.create_connected.content.sequencedpulsegenerator;
 
+import com.hlysine.create_connected.foundation.advancement.AdvancementBehaviour;
 import com.hlysine.create_connected.registries.CCBlockEntityTypes;
-import com.hlysine.create_connected.datagen.advancements.AdvancementBehaviour;
 import com.mojang.serialization.MapCodec;
-import com.simibubi.create.AllItems;
-import com.simibubi.create.content.redstone.diodes.AbstractDiodeBlock;
-import com.simibubi.create.content.redstone.diodes.BrassDiodeBlock;
-import com.simibubi.create.content.redstone.diodes.PoweredLatchBlock;
-import com.simibubi.create.foundation.block.IBE;
-import net.createmod.catnip.gui.ScreenOpener;
-import net.createmod.catnip.platform.CatnipServices;
-import net.minecraft.client.player.LocalPlayer;
+import com.zurrtum.create.AllItems;
+import com.zurrtum.create.content.redstone.diodes.AbstractDiodeBlock;
+import com.zurrtum.create.content.redstone.diodes.BrassDiodeBlock;
+import com.zurrtum.create.content.redstone.diodes.PoweredLatchBlock;
+import com.zurrtum.create.foundation.block.IBE;
+import com.zurrtum.create.foundation.block.RedStoneConnectBlock;
 import net.minecraft.core.BlockPos;
 import net.minecraft.core.Direction;
 import net.minecraft.server.level.ServerLevel;
 import net.minecraft.util.RandomSource;
 import net.minecraft.world.InteractionHand;
 import net.minecraft.world.InteractionResult;
-import net.minecraft.world.ItemInteractionResult;
 import net.minecraft.world.entity.LivingEntity;
 import net.minecraft.world.entity.player.Player;
 import net.minecraft.world.item.BlockItem;
@@ -32,15 +29,23 @@ import net.minecraft.world.level.block.state.BlockState;
 import net.minecraft.world.level.block.state.StateDefinition;
 import net.minecraft.world.level.block.state.properties.BooleanProperty;
 import net.minecraft.world.phys.BlockHitResult;
-import net.neoforged.api.distmarker.Dist;
-import net.neoforged.api.distmarker.OnlyIn;
-import org.jetbrains.annotations.NotNull;
 
-public class SequencedPulseGeneratorBlock extends AbstractDiodeBlock implements IBE<SequencedPulseGeneratorBlockEntity> {
+import java.util.function.Consumer;
+
+public class SequencedPulseGeneratorBlock extends AbstractDiodeBlock
+        implements IBE<SequencedPulseGeneratorBlockEntity>, RedStoneConnectBlock {
+
     public static final BooleanProperty POWERING = BrassDiodeBlock.POWERING;
     public static final BooleanProperty POWERED_SIDE = PoweredLatchBlock.POWERED_SIDE;
 
     public static final MapCodec<SequencedPulseGeneratorBlock> CODEC = simpleCodec(SequencedPulseGeneratorBlock::new);
+
+    private static Consumer<SequencedPulseGeneratorBlockEntity> screenOpener = be -> {
+    };
+
+    public static void setScreenOpener(Consumer<SequencedPulseGeneratorBlockEntity> opener) {
+        screenOpener = opener;
+    }
 
     public SequencedPulseGeneratorBlock(Properties properties) {
         super(properties);
@@ -52,7 +57,7 @@ public class SequencedPulseGeneratorBlock extends AbstractDiodeBlock implements 
     }
 
     @Override
-    protected @NotNull MapCodec<? extends DiodeBlock> codec() {
+    protected MapCodec<? extends DiodeBlock> codec() {
         return CODEC;
     }
 
@@ -63,12 +68,12 @@ public class SequencedPulseGeneratorBlock extends AbstractDiodeBlock implements 
     }
 
     @Override
-    public void setPlacedBy(@NotNull Level worldIn, @NotNull BlockPos pos, @NotNull BlockState state, @NotNull LivingEntity placer, @NotNull ItemStack stack) {
+    public void setPlacedBy(Level worldIn, BlockPos pos, BlockState state, LivingEntity placer, ItemStack stack) {
         AdvancementBehaviour.trackOwner(worldIn, pos, placer);
     }
 
     @Override
-    protected void checkTickOnNeighbor(@NotNull Level level, @NotNull BlockPos pos, @NotNull BlockState state) {
+    protected void checkTickOnNeighbor(Level level, BlockPos pos, BlockState state) {
         super.checkTickOnNeighbor(level, pos, state);
         if (!this.isLocked(level, pos, state)) {
             int input = getInputSignal(level, pos, state);
@@ -96,11 +101,11 @@ public class SequencedPulseGeneratorBlock extends AbstractDiodeBlock implements 
     }
 
     @Override
-    public void tick(@NotNull BlockState state, @NotNull ServerLevel worldIn, @NotNull BlockPos pos, @NotNull RandomSource r) {
+    public void tick(BlockState state, ServerLevel worldIn, BlockPos pos, RandomSource r) {
     }
 
     @Override
-    protected int getOutputSignal(@NotNull BlockGetter worldIn, @NotNull BlockPos pos, @NotNull BlockState state) {
+    protected int getOutputSignal(BlockGetter worldIn, BlockPos pos, BlockState state) {
         BlockEntity be = worldIn.getBlockEntity(pos);
         if (!(be instanceof SequencedPulseGeneratorBlockEntity spg))
             return state.getValue(POWERING) ? 15 : 0;
@@ -108,67 +113,62 @@ public class SequencedPulseGeneratorBlock extends AbstractDiodeBlock implements 
     }
 
     @Override
-    public int getSignal(BlockState blockState, @NotNull BlockGetter blockAccess, @NotNull BlockPos
-            pos, @NotNull Direction side) {
+    public int getSignal(BlockState blockState, BlockGetter blockAccess, BlockPos pos, Direction side) {
         return blockState.getValue(FACING) == side ? this.getOutputSignal(blockAccess, pos, blockState) : 0;
     }
 
     @Override
-    protected int getDelay(@NotNull BlockState state) {
+    protected int getDelay(BlockState state) {
         return 2;
     }
 
     @Override
-    public boolean canConnectRedstone(@NotNull BlockState state, @NotNull BlockGetter world, @NotNull BlockPos pos, Direction side) {
+    public boolean canConnectRedstone(BlockState state, Direction side) {
         if (side == null)
             return false;
         return side.getAxis().isHorizontal();
     }
 
     @Override
-    public boolean hasAnalogOutputSignal(@NotNull BlockState state) {
+    public boolean hasAnalogOutputSignal(BlockState state) {
         return true;
     }
 
     @Override
-    public int getAnalogOutputSignal(@NotNull BlockState state, @NotNull Level world, @NotNull BlockPos pos) {
+    public int getAnalogOutputSignal(BlockState state, Level world, BlockPos pos, Direction direction) {
         return getBlockEntityOptional(world, pos).map(be -> be.currentInstruction + 1).orElse(0);
     }
 
     @Override
-    protected @NotNull ItemInteractionResult useItemOn(@NotNull ItemStack stack,
-                                                       @NotNull BlockState state,
-                                                       @NotNull Level level,
-                                                       @NotNull BlockPos pos,
-                                                       @NotNull Player player,
-                                                       @NotNull InteractionHand hand,
-                                                       @NotNull BlockHitResult hitResult) {
-        if (AllItems.WRENCH.isIn(stack))
-            return ItemInteractionResult.PASS_TO_DEFAULT_BLOCK_INTERACTION;
-        if (stack.getItem() instanceof BlockItem blockItem) {
-            return ItemInteractionResult.PASS_TO_DEFAULT_BLOCK_INTERACTION;
-        }
+    protected InteractionResult useItemOn(ItemStack stack,
+                                          BlockState state,
+                                          Level level,
+                                          BlockPos pos,
+                                          Player player,
+                                          InteractionHand hand,
+                                          BlockHitResult hitResult) {
+        if (stack.is(AllItems.WRENCH))
+            return InteractionResult.TRY_WITH_EMPTY_HAND;
+        if (stack.getItem() instanceof BlockItem)
+            return InteractionResult.TRY_WITH_EMPTY_HAND;
 
-        CatnipServices.PLATFORM.executeOnClientOnly(
-                () -> () -> withBlockEntityDo(level, pos, be -> this.displayScreen(be, player)));
-        return ItemInteractionResult.SUCCESS;
-    }
-
-    @Override
-    public @NotNull InteractionResult useWithoutItem(@NotNull BlockState state,
-                                                     @NotNull Level worldIn,
-                                                     @NotNull BlockPos pos,
-                                                     @NotNull Player player,
-                                                     @NotNull BlockHitResult hit) {
-        CatnipServices.PLATFORM.executeOnClientOnly(
-                () -> () -> withBlockEntityDo(worldIn, pos, be -> this.displayScreen(be, player)));
+        displayScreen(level, pos);
         return InteractionResult.SUCCESS;
     }
 
-    @OnlyIn(value = Dist.CLIENT)
-    protected void displayScreen(SequencedPulseGeneratorBlockEntity be, Player player) {
-        if (player instanceof LocalPlayer)
-            ScreenOpener.open(new SequencedPulseGeneratorScreen(be));
+    @Override
+    protected InteractionResult useWithoutItem(BlockState state,
+                                               Level worldIn,
+                                               BlockPos pos,
+                                               Player player,
+                                               BlockHitResult hit) {
+        displayScreen(worldIn, pos);
+        return InteractionResult.SUCCESS;
+    }
+
+    private void displayScreen(Level level, BlockPos pos) {
+        if (level.isClientSide())
+            withBlockEntityDo(level, pos, screenOpener);
     }
 
     @Override
@@ -178,6 +178,6 @@ public class SequencedPulseGeneratorBlock extends AbstractDiodeBlock implements 
 
     @Override
     public BlockEntityType<? extends SequencedPulseGeneratorBlockEntity> getBlockEntityType() {
-        return CCBlockEntityTypes.SEQUENCED_PULSE_GENERATOR.get();
+        return CCBlockEntityTypes.SEQUENCED_PULSE_GENERATOR;
     }
 }

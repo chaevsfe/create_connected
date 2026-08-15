@@ -3,7 +3,7 @@ package com.hlysine.create_connected.mixin.copycat.fence;
 import com.hlysine.create_connected.content.copycat.ICopycatWithWrappedBlock;
 import com.llamalad7.mixinextras.injector.wrapoperation.Operation;
 import com.llamalad7.mixinextras.injector.wrapoperation.WrapOperation;
-import com.simibubi.create.foundation.blockEntity.behaviour.ValueBoxRenderer;
+import com.zurrtum.create.client.foundation.blockEntity.behaviour.ValueBoxRenderer;
 import net.minecraft.world.item.BlockItem;
 import net.minecraft.world.level.block.Block;
 import org.spongepowered.asm.mixin.Mixin;

@@ -1,6 +1,6 @@
 package com.hlysine.create_connected.mixin.contraption;
 
-import com.simibubi.create.content.contraptions.Contraption;
+import com.zurrtum.create.content.contraptions.Contraption;
 import net.minecraft.core.BlockPos;
 import net.minecraft.world.level.Level;
 import net.minecraft.world.level.block.entity.BlockEntity;
@@ -12,7 +12,7 @@ import org.spongepowered.asm.mixin.injection.At;
 import org.spongepowered.asm.mixin.injection.Inject;
 import org.spongepowered.asm.mixin.injection.callback.CallbackInfo;
 
-@Mixin(value = Contraption.class, remap = false)
+@Mixin(Contraption.class)
 public class ContraptionMixin {
     @Inject(
             at = @At("TAIL"),
@@ -20,8 +20,8 @@ public class ContraptionMixin {
     )
     private void stopJukeboxOnMove(Level level, BlockPos pos, Pair<StructureTemplate.StructureBlockInfo, BlockEntity> pair, CallbackInfo ci) {
         if (pair.getValue() instanceof JukeboxBlockEntity be) {
-            if (be.jukeboxSongPlayer.isPlaying())
-                be.jukeboxSongPlayer.stop(level, be.getBlockState());
+            if (be.getSongPlayer().isPlaying())
+                be.getSongPlayer().stop(level, be.getBlockState());
         }
     }
 }
