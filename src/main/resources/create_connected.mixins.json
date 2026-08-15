@@ -1,9 +1,8 @@
 {
   "required": true,
   "package": "com.hlysine.create_connected.mixin",
-  "compatibilityLevel": "JAVA_8",
+  "compatibilityLevel": "JAVA_25",
   "minVersion": "0.8",
-  "refmap": "create_connected.refmap.json",
   "plugin": "com.hlysine.create_connected.mixin.MixinPlugin",
   "mixins": [
     "ItemUseOverridesMixin",
@@ -13,8 +12,6 @@
     "RotationPropagatorMixin",
     "brasschute.ChuteBlockEntityAccessor",
     "chaincogwheel.RotationPropagatorMixin",
-    "compat.CopycatBlockEntityMixin",
-    "compat.CopycatBlockMixin",
     "contraption.AbstractContainerMenuMixin",
     "contraption.ContainerLevelAccessMixin",
     "contraption.ContraptionMixin",
@@ -24,7 +21,6 @@
     "copycat.fence.FenceBlockMixin",
     "copycat.fence.ValueBoxRendererMixin",
     "copycat.fencegate.BlockCanSurviveMixin",
-    "copycat.fencegate.COMPATPathNodeDefaultsMixin",
     "copycat.fencegate.FenceGateBlockAccessor",
     "copycat.fencegate.WalkNodeEvaluatorMixin",
     "copycat.slab.SeatMovementBehaviourMixin",
@@ -40,28 +36,19 @@
     "fluidvessel.WhistleBlockMixin",
     "inventoryaccess.PackagerBlockEntityMixin",
     "inventoryaccess.PackagerBlockMixin",
-    "itemsilo.ContraptionMixin",
-    "itemsilo.MountedStorageManagerMixin",
     "kineticbattery.DeployerHandlerMixin",
     "kineticbattery.KineticNetworkAccessor",
     "linkedtransmitter.AnalogLeverBlockEntityAccessor",
     "linkedtransmitter.AnalogLeverBlockMixin",
-    "linkedtransmitter.ThrottleLeverBlockMixin",
     "nestedschematics.FilesHelperMixin",
     "nestedschematics.SchematicExportMixin",
     "nestedschematics.ServerSchematicLoaderMixin",
     "redstonelinkwildcard.RedstoneLinkNetworkHandlerMixin",
-    "sequencedgearshift.AbstractSimiScreenAccessor",
     "sequencedgearshift.InstructionAccessor",
     "sequencedgearshift.InstructionMixin",
     "sequencedgearshift.InstructionSpeedModifiersAccessor",
     "sequencedgearshift.SequencedGearshiftBlockEntityMixin",
     "sequencedgearshift.SequencerInstructionsMixin"
-  ],
-  "client": [
-    "featuretoggle.SubMenuConfigScreenMixin",
-    "nestedschematics.ClientSchematicLoaderMixin",
-    "sequencedgearshift.SequencedGearshiftScreenMixin"
   ],
   "injectors": {
     "defaultRequire": 1

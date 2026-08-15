@@ -1,0 +1,48 @@
+{
+  "schemaVersion": 1,
+  "id": "create_connected",
+  "version": "${version}",
+  "name": "Create: Connected",
+  "description": "Create: Connected port for Create Fly 26.2. Quality-of-life blocks that you wish existed in Create.",
+  "authors": [
+    "hlysine"
+  ],
+  "contributors": [
+    "chaevsfe"
+  ],
+  "contact": {
+    "homepage": "https://github.com/chaevsfe/create_connected",
+    "sources": "https://github.com/chaevsfe/create_connected",
+    "issues": "https://github.com/chaevsfe/create_connected/issues"
+  },
+  "license": [
+    "AGPL-3.0-or-later"
+  ],
+  "icon": "create_connected_icon.png",
+  "environment": "*",
+  "entrypoints": {
+    "main": [
+      "com.hlysine.create_connected.CreateConnected"
+    ],
+    "client": [
+      "com.hlysine.create_connected.CreateConnectedClient"
+    ],
+    "create_plugin": [
+      "com.hlysine.create_connected.CreateConnectedPlugin"
+    ]
+  },
+  "mixins": [
+    "create_connected.mixins.json",
+    {
+      "config": "create_connected.client.mixins.json",
+      "environment": "client"
+    }
+  ],
+  "depends": {
+    "minecraft": "${minecraft_dependency_version}",
+    "fabricloader": ">=${fabric_loader_version}",
+    "fabric-api": "*",
+    "create": "${create_fabric_version_range}",
+    "java": ">=25"
+  }
+}
