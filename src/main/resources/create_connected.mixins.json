@@ -5,6 +5,7 @@
   "minVersion": "0.8",
   "plugin": "com.hlysine.create_connected.mixin.MixinPlugin",
   "mixins": [
+    "ButtonBlockAccessor",
     "ItemUseOverridesMixin",
     "KineticBlockAdvancementMixin",
     "ManualApplicationRecipeMixin",
@@ -38,7 +39,6 @@
     "inventoryaccess.PackagerBlockMixin",
     "kineticbattery.DeployerHandlerMixin",
     "kineticbattery.KineticNetworkAccessor",
-    "linkedtransmitter.AnalogLeverBlockEntityAccessor",
     "linkedtransmitter.AnalogLeverBlockMixin",
     "nestedschematics.FilesHelperMixin",
     "nestedschematics.SchematicExportMixin",

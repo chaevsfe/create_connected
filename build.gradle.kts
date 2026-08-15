@@ -35,14 +35,16 @@ sourceSets {
             "com/hlysine/create_connected/ConnectedLang.java",
             "com/hlysine/create_connected/CreateConnected.java",
             "com/hlysine/create_connected/CreateConnectedClient.java",
-            "com/hlysine/create_connected/compat/**",
-            "com/hlysine/create_connected/config/**",
-            "com/hlysine/create_connected/content/**",
             "com/hlysine/create_connected/datagen/**",
-            "com/hlysine/create_connected/foundation/**",
+            "com/hlysine/create_connected/content/sequencedpulsegenerator/**",
+            "com/hlysine/create_connected/content/attributefilter/**",
+            "com/hlysine/create_connected/content/redstonelinkwildcard/**",
+            "com/hlysine/create_connected/registries/CCPackets.java",
+            "com/hlysine/create_connected/compat/CreateConnectedJEI.java",
+            "com/hlysine/create_connected/registries/CCTags.java",
+            "com/hlysine/create_connected/registries/CCPonderPlugin.java",
             "com/hlysine/create_connected/mixin/**",
             "com/hlysine/create_connected/ponder/**",
-            "com/hlysine/create_connected/registries/**",
         )
     }
     named("client") {
