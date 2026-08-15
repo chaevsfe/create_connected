@@ -34,31 +34,4 @@ public abstract class FluidTankBlockEntityMixin extends SmartBlockEntity {
         }
     }
 
-    @SuppressWarnings("UnreachableCode")
-    @Inject(
-            at = @At("HEAD"),
-            method = "read(Lnet/minecraft/world/level/storage/ValueInput;Z)V",
-            cancellable = true
-    )
-    private void read(ValueInput view, boolean clientPacket, CallbackInfo ci) {
-        FluidTankBlockEntity self = (FluidTankBlockEntity) (Object) this;
-        if (self instanceof FluidVesselBlockEntity) {
-            super.read(view, clientPacket);
-            ci.cancel();
-        }
-    }
-
-    @SuppressWarnings("UnreachableCode")
-    @Inject(
-            at = @At("HEAD"),
-            method = "write(Lnet/minecraft/world/level/storage/ValueOutput;Z)V",
-            cancellable = true
-    )
-    private void write(ValueOutput view, boolean clientPacket, CallbackInfo ci) {
-        FluidTankBlockEntity self = (FluidTankBlockEntity) (Object) this;
-        if (self instanceof FluidVesselBlockEntity) {
-            super.write(view, clientPacket);
-            ci.cancel();
-        }
-    }
 }
