@@ -1,50 +1,44 @@
 package com.hlysine.create_connected.content.itemsilo;
 
 import com.hlysine.create_connected.registries.CCBlockEntityTypes;
-import com.hlysine.create_connected.CreateConnected;
-import com.simibubi.create.api.connectivity.ConnectivityHandler;
-import com.simibubi.create.api.packager.InventoryIdentifier;
-import com.simibubi.create.foundation.ICapabilityProvider;
-import com.simibubi.create.foundation.blockEntity.IMultiBlockEntityContainer;
-import com.simibubi.create.foundation.blockEntity.SmartBlockEntity;
-import com.simibubi.create.foundation.blockEntity.behaviour.BlockEntityBehaviour;
-import com.simibubi.create.foundation.blockEntity.behaviour.inventory.VersionedInventoryWrapper;
-import com.simibubi.create.foundation.mixin.accessor.ItemStackHandlerAccessor;
-import com.simibubi.create.infrastructure.config.AllConfigs;
-import net.createmod.catnip.nbt.NBTHelper;
+import com.zurrtum.create.api.behaviour.BlockEntityBehaviour;
+import com.zurrtum.create.api.connectivity.ConnectivityHandler;
+import com.zurrtum.create.api.packager.InventoryIdentifier;
+import com.zurrtum.create.foundation.blockEntity.IMultiBlockEntityContainer;
+import com.zurrtum.create.foundation.blockEntity.SmartBlockEntity;
+import com.zurrtum.create.foundation.blockEntity.behaviour.inventory.VersionedInventory;
+import com.zurrtum.create.infrastructure.config.AllConfigs;
+import com.zurrtum.create.infrastructure.items.ItemInventory;
+import com.zurrtum.create.infrastructure.items.ItemStackHandler;
 import net.minecraft.core.BlockPos;
 import net.minecraft.core.Direction;
 import net.minecraft.core.Direction.Axis;
-import net.minecraft.core.HolderLookup;
-import net.minecraft.nbt.CompoundTag;
-import net.minecraft.nbt.NbtUtils;
+import net.minecraft.core.NonNullList;
 import net.minecraft.world.Clearable;
+import net.minecraft.world.Containers;
 import net.minecraft.world.item.ItemStack;
+import net.minecraft.world.level.block.Block;
 import net.minecraft.world.level.block.Blocks;
 import net.minecraft.world.level.block.entity.BlockEntity;
 import net.minecraft.world.level.block.entity.BlockEntityType;
 import net.minecraft.world.level.block.state.BlockState;
 import net.minecraft.world.level.levelgen.structure.BoundingBox;
-import net.neoforged.bus.api.SubscribeEvent;
-import net.neoforged.fml.common.EventBusSubscriber;
-import net.neoforged.neoforge.capabilities.Capabilities;
-import net.neoforged.neoforge.capabilities.RegisterCapabilitiesEvent;
-import net.neoforged.neoforge.items.IItemHandler;
-import net.neoforged.neoforge.items.IItemHandlerModifiable;
-import net.neoforged.neoforge.items.ItemStackHandler;
-import net.neoforged.neoforge.items.wrapper.CombinedInvWrapper;
+import net.minecraft.world.level.storage.ValueInput;
+import net.minecraft.world.level.storage.ValueOutput;
+import org.jetbrains.annotations.Nullable;
 
+import java.util.BitSet;
 import java.util.List;
+import java.util.function.Supplier;
 
-@EventBusSubscriber(modid = CreateConnected.MODID)
 public class ItemSiloBlockEntity extends SmartBlockEntity implements IMultiBlockEntityContainer.Inventory, Clearable {
 
-    protected ICapabilityProvider<IItemHandler> itemCapability = null;
+    protected @Nullable Supplier<ItemInventory> itemCapability;
     protected InventoryIdentifier invId;
 
-    protected ItemStackHandler inventory;
-    protected BlockPos controller;
-    protected BlockPos lastKnownPos;
+    protected ItemSiloHandler inventory;
+    protected @Nullable BlockPos controller;
+    protected @Nullable BlockPos lastKnownPos;
     protected boolean updateConnectivity;
     protected int radius;
     protected int length;
@@ -53,35 +47,22 @@ public class ItemSiloBlockEntity extends SmartBlockEntity implements IMultiBlock
     public ItemSiloBlockEntity(BlockEntityType<?> type, BlockPos pos, BlockState state) {
         super(type, pos, state);
 
-        inventory = new ItemStackHandler(AllConfigs.server().logistics.vaultCapacity.get()) {
-            @Override
-            protected void onContentsChanged(int slot) {
-                super.onContentsChanged(slot);
-                updateComparators();
-                level.blockEntityChanged(worldPosition);
-            }
-        };
+        inventory = new ItemSiloHandler();
 
         radius = 1;
         length = 1;
     }
 
-    @SubscribeEvent
-    public static void registerCapabilities(RegisterCapabilitiesEvent event) {
-        event.registerBlockEntity(
-                Capabilities.ItemHandler.BLOCK,
-                CCBlockEntityTypes.ITEM_SILO.get(),
-                (be, context) -> {
-                    be.initCapability();
-                    if (be.itemCapability == null)
-                        return null;
-                    return be.itemCapability.getCapability();
-                }
-        );
+    @Override
+    public void preRemoveSideEffects(BlockPos pos, BlockState oldState) {
+        super.preRemoveSideEffects(pos, oldState);
+        Containers.dropContents(level, pos, inventory);
+        level.removeBlockEntity(pos);
+        ConnectivityHandler.splitMulti(this);
     }
 
     @Override
-    public void addBehaviours(List<BlockEntityBehaviour> behaviours) {
+    public void addBehaviours(List<BlockEntityBehaviour<?>> behaviours) {
     }
 
     protected void updateConnectivity() {
@@ -101,10 +82,11 @@ public class ItemSiloBlockEntity extends SmartBlockEntity implements IMultiBlock
         level.blockEntityChanged(controllerBE.worldPosition);
 
         BlockPos pos = controllerBE.getBlockPos();
+        Block block = getBlockState().getBlock();
         for (int y = 0; y < controllerBE.length; y++) {
             for (int z = 0; z < controllerBE.radius; z++) {
                 for (int x = 0; x < controllerBE.radius; x++) {
-                    level.updateNeighbourForOutputSignal(pos.offset(x, y, z), getBlockState().getBlock());
+                    level.updateNeighbourForOutputSignal(pos.offset(x, y, z), block);
                 }
             }
         }
@@ -126,7 +108,7 @@ public class ItemSiloBlockEntity extends SmartBlockEntity implements IMultiBlock
     }
 
     @Override
-    public BlockPos getLastKnownPos() {
+    public @Nullable BlockPos getLastKnownPos() {
         return lastKnownPos;
     }
 
@@ -143,7 +125,7 @@ public class ItemSiloBlockEntity extends SmartBlockEntity implements IMultiBlock
 
     @SuppressWarnings("unchecked")
     @Override
-    public ItemSiloBlockEntity getControllerBE() {
+    public @Nullable ItemSiloBlockEntity getControllerBE() {
         if (isController())
             return this;
         BlockEntity blockEntity = level.getBlockEntity(controller);
@@ -152,6 +134,7 @@ public class ItemSiloBlockEntity extends SmartBlockEntity implements IMultiBlock
         return null;
     }
 
+    @Override
     public void removeController(boolean keepContents) {
         if (level.isClientSide())
             return;
@@ -163,24 +146,23 @@ public class ItemSiloBlockEntity extends SmartBlockEntity implements IMultiBlock
         BlockState state = getBlockState();
         if (ItemSiloBlock.isVault(state)) {
             state = state.setValue(ItemSiloBlock.LARGE, false);
-            getLevel().setBlock(worldPosition, state, 22);
+            getLevel().setBlock(worldPosition, state,
+                    Block.UPDATE_CLIENTS | Block.UPDATE_INVISIBLE | Block.UPDATE_KNOWN_SHAPE);
         }
 
         itemCapability = null;
-        invalidateCapabilities();
         setChanged();
         sendData();
     }
 
     @Override
     public void setController(BlockPos controller) {
-        if (level.isClientSide && !isVirtual())
+        if (level.isClientSide() && !isVirtual())
             return;
         if (controller.equals(this.controller))
             return;
         this.controller = controller;
         itemCapability = null;
-        invalidateCapabilities();
         setChanged();
         sendData();
     }
@@ -191,30 +173,26 @@ public class ItemSiloBlockEntity extends SmartBlockEntity implements IMultiBlock
     }
 
     @Override
-    protected void read(CompoundTag compound, HolderLookup.Provider registries, boolean clientPacket) {
-        super.read(compound, registries, clientPacket);
+    protected void read(ValueInput view, boolean clientPacket) {
+        super.read(view, clientPacket);
 
         BlockPos controllerBefore = controller;
         int prevSize = radius;
         int prevLength = length;
 
-        updateConnectivity = compound.contains("Uninitialized");
+        updateConnectivity = view.getBooleanOr("Uninitialized", false);
 
-        lastKnownPos = null;
-        if (compound.contains("LastKnownPos"))
-            lastKnownPos = NBTHelper.readBlockPos(compound, "LastKnownPos");
+        lastKnownPos = view.read("LastKnownPos", BlockPos.CODEC).orElse(null);
 
-        controller = null;
-        if (compound.contains("Controller"))
-            controller = NBTHelper.readBlockPos(compound, "Controller");
+        controller = view.read("Controller", BlockPos.CODEC).orElse(null);
 
         if (isController()) {
-            radius = compound.getInt("Size");
-            length = compound.getInt("Length");
+            radius = view.getIntOr("Size", 0);
+            length = view.getIntOr("Length", 0);
         }
 
         if (!clientPacket) {
-            inventory.deserializeNBT(registries, compound.getCompound("Inventory"));
+            inventory.read(view);
             return;
         }
 
@@ -225,79 +203,88 @@ public class ItemSiloBlockEntity extends SmartBlockEntity implements IMultiBlock
     }
 
     @Override
-    protected void write(CompoundTag compound, HolderLookup.Provider registries, boolean clientPacket) {
+    protected void write(ValueOutput view, boolean clientPacket) {
         if (updateConnectivity)
-            compound.putBoolean("Uninitialized", true);
+            view.putBoolean("Uninitialized", true);
         if (lastKnownPos != null)
-            compound.put("LastKnownPos", NbtUtils.writeBlockPos(lastKnownPos));
+            view.store("LastKnownPos", BlockPos.CODEC, lastKnownPos);
         if (!isController())
-            compound.put("Controller", NbtUtils.writeBlockPos(controller));
+            view.store("Controller", BlockPos.CODEC, controller);
         if (isController()) {
-            compound.putInt("Size", radius);
-            compound.putInt("Length", length);
+            view.putInt("Size", radius);
+            view.putInt("Length", length);
         }
 
-        super.write(compound, registries, clientPacket);
+        super.write(view, clientPacket);
 
         if (!clientPacket) {
-            compound.putString("StorageType", "CombinedInv");
-            compound.put("Inventory", inventory.serializeNBT(registries));
+            view.putString("StorageType", "CombinedInv");
+            inventory.write(view);
         }
     }
 
-    public ItemStackHandler getInventoryOfBlock() {
+    public ItemSiloHandler getInventoryOfBlock() {
         return inventory;
     }
 
     public InventoryIdentifier getInvId() {
-        // ensure capability is up to date first, which sets the ID
-        this.initCapability();
-        return this.invId;
+        initCapability();
+        return invId;
     }
 
     public void applyInventoryToBlock(ItemStackHandler handler) {
-        for (int i = 0; i < inventory.getSlots(); i++)
-            inventory.setStackInSlot(i, i < handler.getSlots() ? handler.getStackInSlot(i) : ItemStack.EMPTY);
+        int size = handler.getContainerSize();
+        for (int i = 0; i < size; i++)
+            inventory.setItem(i, handler.getItem(i));
+        for (int i = size, max = inventory.getContainerSize(); i < max; i++)
+            inventory.setItem(i, ItemStack.EMPTY);
     }
 
-    private void initCapability() {
-        if (itemCapability != null && itemCapability.getCapability() != null)
-            return;
+    public void initCapability() {
         if (!isController()) {
             ItemSiloBlockEntity controllerBE = getControllerBE();
             if (controllerBE == null)
                 return;
-            controllerBE.initCapability();
-            itemCapability = ICapabilityProvider.of(() -> {
+            if (controllerBE.itemCapability == null || controllerBE.itemCapability.get() == null)
+                controllerBE.initCapability();
+            itemCapability = () -> {
                 if (controllerBE.isRemoved())
                     return null;
                 if (controllerBE.itemCapability == null)
                     return null;
-                return controllerBE.itemCapability.getCapability();
-            });
+                return controllerBE.itemCapability.get();
+            };
             invId = controllerBE.invId;
             return;
         }
 
-        IItemHandlerModifiable[] invs = new IItemHandlerModifiable[length * radius * radius];
+        ItemSiloHandler[] invs = new ItemSiloHandler[length * radius * radius];
+        Find:
         for (int yOffset = 0; yOffset < length; yOffset++) {
             for (int xOffset = 0; xOffset < radius; xOffset++) {
                 for (int zOffset = 0; zOffset < radius; zOffset++) {
                     BlockPos vaultPos = worldPosition.offset(xOffset, yOffset, zOffset);
                     ItemSiloBlockEntity vaultAt =
-                            ConnectivityHandler.partAt(CCBlockEntityTypes.ITEM_SILO.get(), level, vaultPos);
-                    invs[yOffset * radius * radius + xOffset * radius + zOffset] =
-                            vaultAt != null ? vaultAt.inventory : new ItemStackHandler();
+                            ConnectivityHandler.partAt(CCBlockEntityTypes.ITEM_SILO, level, vaultPos);
+                    if (vaultAt == null) {
+                        invs = null;
+                        break Find;
+                    }
+                    invs[yOffset * radius * radius + xOffset * radius + zOffset] = vaultAt.inventory;
                 }
             }
         }
 
-        itemCapability = ICapabilityProvider.of(new VersionedInventoryWrapper(new CombinedInvWrapper(invs)));
+        if (invs == null) {
+            itemCapability = null;
+        } else {
+            ConnectedItemSiloHandler capability = new ConnectedItemSiloHandler(invs);
+            itemCapability = () -> capability;
+        }
 
-        // build an identifier encompassing all component vaults
         BlockPos farCorner = worldPosition.offset(radius, length, radius);
-        BoundingBox bounds = BoundingBox.fromCorners(this.worldPosition, farCorner);
-        this.invId = new InventoryIdentifier.Bounds(bounds);
+        BoundingBox bounds = BoundingBox.fromCorners(worldPosition, farCorner);
+        invId = new InventoryIdentifier.Bounds(bounds);
     }
 
     public static int getMaxLength(int radius) {
@@ -311,12 +298,12 @@ public class ItemSiloBlockEntity extends SmartBlockEntity implements IMultiBlock
 
     @Override
     public void notifyMultiUpdated() {
-        BlockState state = this.getBlockState();
-        if (ItemSiloBlock.isVault(state)) { // safety
-            level.setBlock(getBlockPos(), state.setValue(ItemSiloBlock.LARGE, radius > 2), 6);
+        BlockState state = getBlockState();
+        if (ItemSiloBlock.isVault(state)) {
+            level.setBlock(getBlockPos(), state.setValue(ItemSiloBlock.LARGE, radius > 2),
+                    Block.UPDATE_CLIENTS | Block.UPDATE_INVISIBLE);
         }
         itemCapability = null;
-        invalidateCapabilities();
         setChanged();
     }
 
@@ -327,7 +314,8 @@ public class ItemSiloBlockEntity extends SmartBlockEntity implements IMultiBlock
 
     @Override
     public int getMaxLength(Direction.Axis longAxis, int width) {
-        if (longAxis == Direction.Axis.Y) return getMaxLength(width);
+        if (longAxis == Direction.Axis.Y)
+            return getMaxLength(width);
         return getMaxWidth();
     }
 
@@ -348,12 +336,12 @@ public class ItemSiloBlockEntity extends SmartBlockEntity implements IMultiBlock
 
     @Override
     public void setHeight(int height) {
-        this.length = height;
+        length = height;
     }
 
     @Override
     public void setWidth(int width) {
-        this.radius = width;
+        radius = width;
     }
 
     @Override
@@ -363,7 +351,123 @@ public class ItemSiloBlockEntity extends SmartBlockEntity implements IMultiBlock
 
     @Override
     public void clearContent() {
-        ((ItemStackHandlerAccessor) inventory).create$getStacks().clear();
+        inventory.clearContent();
+    }
+
+    public class ItemSiloHandler implements ItemInventory {
+        private final int size;
+        protected final NonNullList<ItemStack> stacks;
+
+        public ItemSiloHandler() {
+            size = AllConfigs.server().logistics.vaultCapacity.get();
+            stacks = NonNullList.withSize(size, ItemStack.EMPTY);
+        }
+
+        @Override
+        public int getContainerSize() {
+            return size;
+        }
+
+        @Override
+        public ItemStack getItem(int slot) {
+            if (slot >= size)
+                return ItemStack.EMPTY;
+            return stacks.get(slot);
+        }
+
+        @Override
+        public void setItem(int slot, ItemStack stack) {
+            if (slot >= size)
+                return;
+            stacks.set(slot, stack);
+        }
+
+        @Override
+        public void setChanged() {
+            level.blockEntityChanged(worldPosition);
+        }
+
+        public void write(ValueOutput view) {
+            ValueOutput.TypedOutputList<ItemStack> list = view.list("Inventory", ItemStack.CODEC);
+            for (ItemStack stack : stacks) {
+                if (stack.isEmpty())
+                    continue;
+                list.add(stack);
+            }
+        }
+
+        public void read(ValueInput view) {
+            ValueInput.TypedInputList<ItemStack> list = view.listOrEmpty("Inventory", ItemStack.CODEC);
+            int i = 0;
+            for (ItemStack itemStack : list) {
+                if (i >= size)
+                    break;
+                stacks.set(i++, itemStack);
+            }
+            for (int size = stacks.size(); i < size; i++) {
+                stacks.set(i, ItemStack.EMPTY);
+            }
+        }
+    }
+
+    public class ConnectedItemSiloHandler implements ItemInventory, VersionedInventory {
+        private final ItemSiloHandler[] itemHandler;
+        private final int vaultCapacity;
+        private final int size;
+        private final int id;
+        private final BitSet accessed;
+        private int version;
+
+        public ConnectedItemSiloHandler(ItemSiloHandler[] invs) {
+            vaultCapacity = AllConfigs.server().logistics.vaultCapacity.get();
+            itemHandler = invs;
+            size = vaultCapacity * invs.length;
+            id = idGenerator.getAndIncrement();
+            accessed = new BitSet(invs.length);
+            version = 0;
+        }
+
+        @Override
+        public int getContainerSize() {
+            return size;
+        }
+
+        @Override
+        public ItemStack getItem(int slot) {
+            if (slot >= size)
+                return ItemStack.EMPTY;
+            int i = slot / vaultCapacity;
+            accessed.set(i);
+            return itemHandler[i].getItem(slot % vaultCapacity);
+        }
+
+        @Override
+        public void setItem(int slot, ItemStack stack) {
+            if (slot >= size)
+                return;
+            int i = slot / vaultCapacity;
+            ItemSiloHandler handler = itemHandler[i];
+            handler.setItem(slot % vaultCapacity, stack);
+            handler.setChanged();
+        }
+
+        @Override
+        public int getVersion() {
+            return version;
+        }
+
+        @Override
+        public int getId() {
+            return id;
+        }
+
+        @Override
+        public void setChanged() {
+            for (ItemSiloHandler inventory : itemHandler) {
+                inventory.setChanged();
+            }
+            updateComparators();
+            version++;
+        }
     }
 }
-

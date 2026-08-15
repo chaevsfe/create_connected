@@ -1,14 +1,11 @@
 package com.hlysine.create_connected.content.parallelgearbox;
 
-
-import com.simibubi.create.content.kinetics.transmission.SplitShaftBlockEntity;
-import net.minecraft.MethodsReturnNonnullByDefault;
+import com.zurrtum.create.content.kinetics.transmission.SplitShaftBlockEntity;
 import net.minecraft.core.BlockPos;
 import net.minecraft.core.Direction;
 import net.minecraft.world.level.block.entity.BlockEntityType;
 import net.minecraft.world.level.block.state.BlockState;
 
-@MethodsReturnNonnullByDefault
 public class ParallelGearboxBlockEntity extends SplitShaftBlockEntity {
 
     public ParallelGearboxBlockEntity(BlockEntityType<?> type, BlockPos pos, BlockState state) {
@@ -17,7 +14,8 @@ public class ParallelGearboxBlockEntity extends SplitShaftBlockEntity {
 
     @Override
     public float getRotationSpeedModifier(Direction face) {
-        if (!hasSource()) return 1;
+        if (!hasSource())
+            return 1;
         return getRotationSpeedModifier(face, getSourceFacing());
     }
 

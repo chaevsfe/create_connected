@@ -1,25 +1,15 @@
 package com.hlysine.create_connected.content.kineticbridge;
 
-
-import com.google.common.collect.ImmutableList;
-import com.hlysine.create_connected.ConnectedLang;
-import com.simibubi.create.foundation.blockEntity.SmartBlockEntity;
-import com.simibubi.create.foundation.blockEntity.behaviour.ValueBoxTransform;
-import com.simibubi.create.foundation.blockEntity.behaviour.ValueSettingsBoard;
-import com.simibubi.create.foundation.blockEntity.behaviour.ValueSettingsFormatter;
-import com.simibubi.create.foundation.blockEntity.behaviour.scrollValue.ScrollValueBehaviour;
-import net.createmod.catnip.lang.LangNumberFormat;
-import net.minecraft.network.chat.Component;
-import net.minecraft.network.chat.MutableComponent;
+import com.zurrtum.create.foundation.blockEntity.SmartBlockEntity;
+import com.zurrtum.create.foundation.blockEntity.behaviour.ValueSettings;
+import com.zurrtum.create.foundation.blockEntity.behaviour.scrollValue.ServerScrollValueBehaviour;
 import net.minecraft.util.Mth;
 import net.minecraft.world.entity.player.Player;
-import net.minecraft.world.phys.BlockHitResult;
 
-public class StressImpactScrollValueBehaviour extends ScrollValueBehaviour {
+public class StressImpactScrollValueBehaviour extends ServerScrollValueBehaviour {
 
-    public StressImpactScrollValueBehaviour(Component label, SmartBlockEntity be, ValueBoxTransform slot) {
-        super(label, be, slot);
-        withFormatter(v -> String.format("%1sx", LangNumberFormat.format(convertValue(v))));
+    public StressImpactScrollValueBehaviour(SmartBlockEntity be) {
+        super(be);
     }
 
     public static float convertValue(int value) {
@@ -27,16 +17,8 @@ public class StressImpactScrollValueBehaviour extends ScrollValueBehaviour {
         double result = Math.pow(2, absoluteValue / 10.0);
         if (absoluteValue < 40) {
             return (float) result;
-        } else {
-            return (int) result;
         }
-    }
-
-    @Override
-    public ValueSettingsBoard createBoard(Player player, BlockHitResult hitResult) {
-        ImmutableList<Component> rows = ImmutableList.of(ConnectedLang.translateDirect("kinetic_bridge.stress_impact_short"));
-        ValueSettingsFormatter formatter = new ValueSettingsFormatter(this::formatSettings);
-        return new ValueSettingsBoard(label, 160, 10, rows, formatter);
+        return (int) result;
     }
 
     @Override
@@ -52,15 +34,9 @@ public class StressImpactScrollValueBehaviour extends ScrollValueBehaviour {
         return new ValueSettings(0, Math.abs(value));
     }
 
-    public MutableComponent formatSettings(ValueSettings settings) {
-        return ConnectedLang.number(Math.max(0, convertValue(settings.value()))).add(Component.literal("x"))
-                .component();
-    }
-
     @Override
     public String getClipboardKey() {
         return "Stress Impact";
     }
 
 }
-

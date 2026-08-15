@@ -1,9 +1,8 @@
 package com.hlysine.create_connected.content.dashboard;
 
-
-import com.simibubi.create.api.behaviour.display.DisplayTarget;
-import com.simibubi.create.content.redstone.displayLink.DisplayLinkContext;
-import com.simibubi.create.content.redstone.displayLink.target.DisplayTargetStats;
+import com.zurrtum.create.api.behaviour.display.DisplayTarget;
+import com.zurrtum.create.content.redstone.displayLink.DisplayLinkContext;
+import com.zurrtum.create.content.redstone.displayLink.target.DisplayTargetStats;
 import net.minecraft.network.chat.Component;
 import net.minecraft.network.chat.MutableComponent;
 import net.minecraft.world.level.block.entity.BlockEntity;
@@ -48,4 +47,3 @@ public class DashboardDisplayTarget extends DisplayTarget {
     }
 
 }
-

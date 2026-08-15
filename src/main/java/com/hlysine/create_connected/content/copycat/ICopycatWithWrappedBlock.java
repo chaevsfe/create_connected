@@ -1,9 +1,12 @@
 package com.hlysine.create_connected.content.copycat;
 
+import net.minecraft.core.Direction;
+import net.minecraft.core.Vec3i;
 import net.minecraft.world.level.block.Block;
 import net.minecraft.world.level.block.state.BlockState;
 import net.minecraft.world.level.block.state.properties.BlockStateProperties;
 import net.minecraft.world.level.block.state.properties.Property;
+import org.jetbrains.annotations.Nullable;
 
 import java.util.function.Function;
 
@@ -23,7 +26,15 @@ public interface ICopycatWithWrappedBlock {
     static BlockState unwrapForOperation(Block wrappedBlock, BlockState state, Function<BlockState, BlockState> operation) {
         BlockState wrappedState = wrappedState(wrappedBlock, state);
         BlockState newState = operation.apply(wrappedState);
-        return wrappedState(state.getBlock(), newState);
+        return copyState(newState, state, true);
+    }
+
+    static @Nullable Direction fromDelta(Vec3i delta) {
+        for (Direction direction : Direction.values()) {
+            if (direction.getUnitVec3i().equals(delta))
+                return direction;
+        }
+        return null;
     }
 
     static BlockState wrappedState(Block wrappedBlock, BlockState state) {

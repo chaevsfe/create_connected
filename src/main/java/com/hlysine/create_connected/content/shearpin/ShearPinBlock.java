@@ -1,27 +1,26 @@
 package com.hlysine.create_connected.content.shearpin;
 
 import com.google.common.base.Predicates;
+import com.hlysine.create_connected.content.AbstractBEShaftBlock;
+import com.hlysine.create_connected.foundation.advancement.AdvancementBehaviour;
+import com.hlysine.create_connected.foundation.advancement.CCAdvancements;
 import com.hlysine.create_connected.registries.CCBlockEntityTypes;
 import com.hlysine.create_connected.registries.CCBlocks;
-import com.hlysine.create_connected.content.AbstractBEShaftBlock;
-import com.hlysine.create_connected.datagen.advancements.AdvancementBehaviour;
-import com.hlysine.create_connected.datagen.advancements.CCAdvancements;
-import com.simibubi.create.AllBlocks;
-import com.simibubi.create.AllShapes;
-import com.simibubi.create.content.kinetics.simpleRelays.AbstractSimpleShaftBlock;
-import com.simibubi.create.content.kinetics.simpleRelays.ShaftBlock;
-import com.simibubi.create.foundation.placement.PoleHelper;
-import net.createmod.catnip.placement.IPlacementHelper;
-import net.createmod.catnip.placement.PlacementHelpers;
-import net.createmod.catnip.placement.PlacementOffset;
-import net.minecraft.MethodsReturnNonnullByDefault;
+import com.zurrtum.create.AllBlocks;
+import com.zurrtum.create.AllShapes;
+import com.zurrtum.create.catnip.placement.IPlacementHelper;
+import com.zurrtum.create.catnip.placement.PlacementHelpers;
+import com.zurrtum.create.catnip.placement.PlacementOffset;
+import com.zurrtum.create.content.kinetics.simpleRelays.AbstractSimpleShaftBlock;
+import com.zurrtum.create.content.kinetics.simpleRelays.ShaftBlock;
+import com.zurrtum.create.foundation.placement.PoleHelper;
 import net.minecraft.core.BlockPos;
 import net.minecraft.core.Direction;
 import net.minecraft.core.particles.ParticleTypes;
 import net.minecraft.server.level.ServerLevel;
 import net.minecraft.util.RandomSource;
 import net.minecraft.world.InteractionHand;
-import net.minecraft.world.ItemInteractionResult;
+import net.minecraft.world.InteractionResult;
 import net.minecraft.world.entity.player.Player;
 import net.minecraft.world.item.BlockItem;
 import net.minecraft.world.item.ItemStack;
@@ -34,7 +33,6 @@ import net.minecraft.world.phys.BlockHitResult;
 import net.minecraft.world.phys.Vec3;
 import net.minecraft.world.phys.shapes.CollisionContext;
 import net.minecraft.world.phys.shapes.VoxelShape;
-import org.jetbrains.annotations.NotNull;
 
 import java.util.function.Predicate;
 
@@ -53,31 +51,29 @@ public class ShearPinBlock extends AbstractBEShaftBlock<ShearPinBlockEntity> {
 
     @Override
     public BlockEntityType<? extends ShearPinBlockEntity> getBlockEntityType() {
-        return CCBlockEntityTypes.SHEAR_PIN.get();
+        return CCBlockEntityTypes.SHEAR_PIN;
     }
 
     @Override
-    public void tick(@NotNull BlockState pState, ServerLevel pLevel, @NotNull BlockPos pPos, @NotNull RandomSource pRandom) {
-        BlockEntity be = pLevel.getBlockEntity(pPos);
+    public void tick(BlockState state, ServerLevel level, BlockPos pos, RandomSource random) {
+        BlockEntity be = level.getBlockEntity(pos);
         if (!(be instanceof ShearPinBlockEntity kte))
             return;
         if (!kte.isOverStressed())
             return;
 
-        if (!pLevel.isClientSide) {
-            pLevel.destroyBlock(pPos, false);
-            Vec3 center = pPos.getCenter();
-            pLevel.sendParticles(ParticleTypes.LARGE_SMOKE, center.x, center.y, center.z, 5, 0.1, 0.1, 0.1, 0.05);
-            AdvancementBehaviour.tryAward(kte, CCAdvancements.SHEAR_PIN);
-        }
+        level.destroyBlock(pos, false);
+        Vec3 center = Vec3.atCenterOf(pos);
+        level.sendParticles(ParticleTypes.LARGE_SMOKE, center.x, center.y, center.z, 5, 0.1, 0.1, 0.1, 0.05);
+        AdvancementBehaviour.tryAward(kte, CCAdvancements.SHEAR_PIN);
     }
 
     public static boolean isShaft(BlockState state) {
-        return CCBlocks.SHEAR_PIN.has(state);
+        return state.is(CCBlocks.SHEAR_PIN);
     }
 
     @Override
-    public @NotNull VoxelShape getShape(BlockState state, @NotNull BlockGetter worldIn, @NotNull BlockPos pos, @NotNull CollisionContext context) {
+    public VoxelShape getShape(BlockState state, BlockGetter worldIn, BlockPos pos, CollisionContext context) {
         return AllShapes.SIX_VOXEL_POLE.get(state.getValue(AXIS));
     }
 
@@ -92,38 +88,49 @@ public class ShearPinBlock extends AbstractBEShaftBlock<ShearPinBlockEntity> {
     }
 
     @Override
-    public @NotNull ItemInteractionResult useItemOn(@NotNull ItemStack item, @NotNull BlockState state, @NotNull Level world, @NotNull BlockPos pos, Player player, @NotNull InteractionHand hand,
-                                                    @NotNull BlockHitResult ray) {
+    protected InteractionResult useItemOn(
+            ItemStack item,
+            BlockState state,
+            Level world,
+            BlockPos pos,
+            Player player,
+            InteractionHand hand,
+            BlockHitResult ray
+    ) {
         if (player.isShiftKeyDown() || !player.mayBuild())
-            return ItemInteractionResult.PASS_TO_DEFAULT_BLOCK_INTERACTION;
+            return InteractionResult.TRY_WITH_EMPTY_HAND;
 
         IPlacementHelper helper = PlacementHelpers.get(placementHelperId);
         if (helper.matchesItem(item))
             return helper.getOffset(player, world, state, pos, ray)
-                    .placeInWorld(world, (BlockItem) item.getItem(), player, hand, ray);
+                    .placeInWorld(world, (BlockItem) item.getItem(), player, hand);
 
-        return ItemInteractionResult.PASS_TO_DEFAULT_BLOCK_INTERACTION;
+        return InteractionResult.TRY_WITH_EMPTY_HAND;
     }
 
-    @MethodsReturnNonnullByDefault
     private static class PlacementHelper extends PoleHelper<Direction.Axis> {
-        // used for extending a shaft in its axis, like the piston poles. works with
-        // shafts and cogs
 
         private PlacementHelper() {
-            super(Predicates.or(Predicates.or(AllBlocks.SHAFT::has, AllBlocks.POWERED_SHAFT::has), CCBlocks.SHEAR_PIN::has),
+            super(Predicates.or(
+                            Predicates.or(state -> state.is(AllBlocks.SHAFT), state -> state.is(AllBlocks.POWERED_SHAFT)),
+                            state -> state.is(CCBlocks.SHEAR_PIN)),
                     state -> state.getValue(AXIS), AXIS);
         }
 
         @Override
         public Predicate<ItemStack> getItemPredicate() {
-            return i -> i.getItem() instanceof BlockItem
-                    && (((BlockItem) i.getItem()).getBlock() instanceof AbstractSimpleShaftBlock);
+            return i -> i.getItem() instanceof BlockItem blockItem
+                    && blockItem.getBlock() instanceof AbstractSimpleShaftBlock;
         }
 
         @Override
-        public PlacementOffset getOffset(Player player, Level world, BlockState state, BlockPos pos,
-                                         BlockHitResult ray) {
+        public PlacementOffset getOffset(
+                Player player,
+                Level world,
+                BlockState state,
+                BlockPos pos,
+                BlockHitResult ray
+        ) {
             PlacementOffset offset = super.getOffset(player, world, state, pos, ray);
             if (offset.isSuccessful())
                 offset.withTransform(offset.getTransform()

@@ -1,12 +1,11 @@
 package com.hlysine.create_connected.content.copycat.board;
 
-import com.google.common.collect.ImmutableMap;
-import com.hlysine.create_connected.registries.CCShapes;
 import com.hlysine.create_connected.content.copycat.MigratingWaterloggedCopycatBlock;
-import com.simibubi.create.api.schematic.requirement.SpecialBlockItemRequirement;
-import com.simibubi.create.content.equipment.wrench.IWrenchable;
-import com.simibubi.create.content.schematics.requirement.ItemRequirement;
-import net.createmod.catnip.data.Iterate;
+import com.hlysine.create_connected.registries.CCShapes;
+import com.zurrtum.create.api.schematic.requirement.SpecialBlockItemRequirement;
+import com.zurrtum.create.catnip.data.Iterate;
+import com.zurrtum.create.content.equipment.wrench.IWrenchable;
+import com.zurrtum.create.content.schematics.requirement.ItemRequirement;
 import net.minecraft.core.BlockPos;
 import net.minecraft.core.Direction;
 import net.minecraft.core.Position;
@@ -18,7 +17,7 @@ import net.minecraft.world.entity.player.Player;
 import net.minecraft.world.item.ItemStack;
 import net.minecraft.world.item.context.BlockPlaceContext;
 import net.minecraft.world.item.context.UseOnContext;
-import net.minecraft.world.level.BlockAndTintGetter;
+import net.minecraft.world.level.BlockAndLightGetter;
 import net.minecraft.world.level.BlockGetter;
 import net.minecraft.world.level.Level;
 import net.minecraft.world.level.block.Block;
@@ -33,10 +32,12 @@ import net.minecraft.world.level.block.state.properties.BooleanProperty;
 import net.minecraft.world.phys.shapes.CollisionContext;
 import net.minecraft.world.phys.shapes.Shapes;
 import net.minecraft.world.phys.shapes.VoxelShape;
-import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import java.util.*;
+import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.List;
+import java.util.Map;
 import java.util.function.Function;
 
 public class CopycatBoardBlock extends MigratingWaterloggedCopycatBlock implements SpecialBlockItemRequirement {
@@ -47,7 +48,7 @@ public class CopycatBoardBlock extends MigratingWaterloggedCopycatBlock implemen
     public static BooleanProperty EAST = BlockStateProperties.EAST;
     public static BooleanProperty WEST = BlockStateProperties.WEST;
     public static final Map<Direction, BooleanProperty> PROPERTY_BY_DIRECTION = PipeBlock.PROPERTY_BY_DIRECTION;
-    private final ImmutableMap<BlockState, VoxelShape> shapesCache;
+    private final Function<BlockState, VoxelShape> shapesCache;
 
     public CopycatBoardBlock(Properties properties) {
         super(properties);
@@ -68,7 +69,7 @@ public class CopycatBoardBlock extends MigratingWaterloggedCopycatBlock implemen
     }
 
     @Override
-    public boolean isIgnoredConnectivitySide(BlockAndTintGetter reader, BlockState state, Direction face,
+    public boolean isIgnoredConnectivitySide(BlockAndLightGetter reader, BlockState state, Direction face,
                                              @Nullable BlockPos fromPos, @Nullable BlockPos toPos) {
         if (fromPos == null || toPos == null)
             return true;
@@ -77,7 +78,7 @@ public class CopycatBoardBlock extends MigratingWaterloggedCopycatBlock implemen
     }
 
     @Override
-    public boolean canConnectTexturesToward(BlockAndTintGetter reader, BlockPos fromPos, BlockPos toPos, BlockState state) {
+    public boolean canConnectTexturesToward(BlockAndLightGetter reader, BlockPos fromPos, BlockPos toPos, BlockState state) {
         return reader.getBlockState(toPos).is(this);
     }
 
@@ -101,16 +102,14 @@ public class CopycatBoardBlock extends MigratingWaterloggedCopycatBlock implemen
         return shape;
     }
 
-    @SuppressWarnings("deprecation")
     @Override
-    public @NotNull VoxelShape getShape(@NotNull BlockState pState, @NotNull BlockGetter pLevel, @NotNull BlockPos pPos, @NotNull CollisionContext pContext) {
-        return Objects.requireNonNull(this.shapesCache.get(pState));
+    public VoxelShape getShape(BlockState pState, BlockGetter pLevel, BlockPos pPos, CollisionContext pContext) {
+        return this.shapesCache.apply(pState);
     }
 
     @Override
-    public BlockState getStateForPlacement(@NotNull BlockPlaceContext context) {
+    public BlockState getStateForPlacement(BlockPlaceContext context) {
         BlockState stateForPlacement = super.getStateForPlacement(context);
-        assert stateForPlacement != null;
         BlockPos blockPos = context.getClickedPos();
         BlockState state = context.getLevel().getBlockState(blockPos);
         if (isSelfState(state)) {
@@ -123,15 +122,14 @@ public class CopycatBoardBlock extends MigratingWaterloggedCopycatBlock implemen
         }
     }
 
-    @SuppressWarnings("deprecation")
     @Override
-    public boolean canBeReplaced(BlockState pState, BlockPlaceContext pUseContext) {
+    protected boolean canBeReplaced(BlockState pState, BlockPlaceContext pUseContext) {
         ItemStack itemstack = pUseContext.getItemInHand();
         if (!itemstack.is(this.asItem())) return false;
         if (!pState.getValue(byDirection(pUseContext.getClickedFace().getOpposite()))) {
             Direction direction = pUseContext.getClickedFace().getOpposite();
             double pos = getByAxis(pUseContext.getClickedPos(), direction.getAxis());
-            if (getByAxis(direction.getNormal(), direction.getAxis()) > 0) pos += 1;
+            if (getByAxis(direction.getUnitVec3i(), direction.getAxis()) > 0) pos += 1;
             double loc = getByAxis(pUseContext.getClickLocation(), direction.getAxis());
             if (Math.abs(pos - loc) < 2 / 16.0) {
                 return true;
@@ -139,7 +137,7 @@ public class CopycatBoardBlock extends MigratingWaterloggedCopycatBlock implemen
         }
         if (!pState.getValue(byDirection(pUseContext.getClickedFace()))) {
             double hitLoc = getByAxis(pUseContext.getClickLocation(), pUseContext.getClickedFace().getAxis());
-            int direction = getByAxis(pUseContext.getClickedFace().getNormal(), pUseContext.getClickedFace().getAxis());
+            int direction = getByAxis(pUseContext.getClickedFace().getUnitVec3i(), pUseContext.getClickedFace().getAxis());
             double offset = hitLoc - Math.round(hitLoc);
             if (Mth.sign(direction) == Mth.sign(offset) && Math.abs(offset) < 2 / 16.0) {
                 return true;
@@ -160,7 +158,7 @@ public class CopycatBoardBlock extends MigratingWaterloggedCopycatBlock implemen
         for (Direction direction : Iterate.directions) {
             if (!state.getValue(byDirection(direction))) continue;
             double pos = getByAxis(context.getClickedPos(), direction.getAxis());
-            if (getByAxis(direction.getNormal(), direction.getAxis()) > 0) pos += 1;
+            if (getByAxis(direction.getUnitVec3i(), direction.getAxis()) > 0) pos += 1;
             double loc = getByAxis(context.getClickLocation(), direction.getAxis());
             if (Math.abs(pos - loc) < 2 / 16.0) {
                 options.add(direction);
@@ -169,18 +167,19 @@ public class CopycatBoardBlock extends MigratingWaterloggedCopycatBlock implemen
         if (options.size() > 1) {
             Direction backup = options.get(0);
             options.removeIf(d -> d.getAxis() != context.getClickedFace().getAxis());
-            if (options.size() == 0) options.add(backup);
+            if (options.isEmpty()) options.add(backup);
         }
-        if (options.size() == 0) {
+        if (options.isEmpty()) {
             return super.onSneakWrenched(state, context);
         }
 
         Level world = context.getLevel();
         BlockPos pos = context.getClickedPos();
         Player player = context.getPlayer();
-        if (world instanceof ServerLevel) {
+        if (world instanceof ServerLevel serverLevel) {
             if (player != null && !player.isCreative()) {
-                List<ItemStack> drops = Block.getDrops(defaultBlockState().setValue(byDirection(options.get(0)), true), (ServerLevel) world, pos, world.getBlockEntity(pos), player, context.getItemInHand());
+                List<ItemStack> drops = Block.getDrops(defaultBlockState().setValue(byDirection(options.get(0)), true),
+                        serverLevel, pos, world.getBlockEntity(pos), player, context.getItemInHand());
                 for (ItemStack drop : drops) {
                     player.getInventory().placeItemBackInInventory(drop);
                 }
@@ -216,26 +215,12 @@ public class CopycatBoardBlock extends MigratingWaterloggedCopycatBlock implemen
     }
 
     @Override
-    public boolean hidesNeighborFace(BlockGetter level, BlockPos pos, BlockState state, BlockState neighborState,
-                                     Direction dir) {
-        if (state.is(this) && !state.getValue(byDirection(dir))) return false;
-        if (neighborState.is(this) && !neighborState.getValue(byDirection(dir.getOpposite()))) return false;
-        if (state.is(this) == neighborState.is(this)) {
-            return (getMaterial(level, pos).skipRendering(getMaterial(level, pos.relative(dir)), dir.getOpposite()));
-        }
-
-        return getMaterial(level, pos).skipRendering(neighborState, dir.getOpposite());
-    }
-
-    @SuppressWarnings("deprecation")
-    @Override
-    public @NotNull BlockState rotate(@NotNull BlockState pState, Rotation pRotation) {
+    public BlockState rotate(BlockState pState, Rotation pRotation) {
         return mapDirections(pState, pRotation::rotate);
     }
 
-    @SuppressWarnings("deprecation")
     @Override
-    public @NotNull BlockState mirror(@NotNull BlockState pState, Mirror pMirror) {
+    public BlockState mirror(BlockState pState, Mirror pMirror) {
         return mapDirections(pState, pMirror::mirror);
     }
 
@@ -253,4 +238,3 @@ public class CopycatBoardBlock extends MigratingWaterloggedCopycatBlock implemen
         return PROPERTY_BY_DIRECTION.get(direction);
     }
 }
-

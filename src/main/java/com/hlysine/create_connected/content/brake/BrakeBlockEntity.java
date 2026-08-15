@@ -1,11 +1,11 @@
 package com.hlysine.create_connected.content.brake;
 
-import com.hlysine.create_connected.registries.CCBlocks;
 import com.hlysine.create_connected.config.CCConfigs;
-import com.hlysine.create_connected.datagen.advancements.AdvancementBehaviour;
-import com.hlysine.create_connected.datagen.advancements.CCAdvancements;
-import com.simibubi.create.content.kinetics.transmission.SplitShaftBlockEntity;
-import com.simibubi.create.foundation.blockEntity.behaviour.BlockEntityBehaviour;
+import com.hlysine.create_connected.foundation.advancement.AdvancementBehaviour;
+import com.hlysine.create_connected.foundation.advancement.CCAdvancements;
+import com.hlysine.create_connected.registries.CCBlocks;
+import com.zurrtum.create.api.behaviour.BlockEntityBehaviour;
+import com.zurrtum.create.content.kinetics.transmission.SplitShaftBlockEntity;
 import net.minecraft.core.BlockPos;
 import net.minecraft.core.Direction;
 import net.minecraft.core.particles.ParticleTypes;
@@ -26,7 +26,6 @@ public class BrakeBlockEntity extends SplitShaftBlockEntity {
     private int tickTimer = 0;
     private boolean advancementAwarded = false;
 
-
     public BrakeBlockEntity(BlockEntityType<?> type, BlockPos pos, BlockState state) {
         super(type, pos, state);
     }
@@ -40,11 +39,10 @@ public class BrakeBlockEntity extends SplitShaftBlockEntity {
     public float calculateStressApplied() {
         if (!getBlockState().getValue(POWERED)) {
             return super.calculateStressApplied();
-        } else {
-            float impact = CCConfigs.server().brakeActiveStress.getF();
-            this.lastStressApplied = impact;
-            return impact;
         }
+        float impact = CCConfigs.server().brakeActiveStress.getF();
+        this.lastStressApplied = impact;
+        return impact;
     }
 
     @Override
@@ -54,7 +52,7 @@ public class BrakeBlockEntity extends SplitShaftBlockEntity {
         if (tickTimer-- < 0) {
             tickTimer = TICK_INTERVAL;
 
-            DoubleSupplier stressSupplier = CCConfigs.server().stressValues.getImpact(CCBlocks.BRAKE.get());
+            DoubleSupplier stressSupplier = CCConfigs.server().stressValues.getImpact(CCBlocks.BRAKE);
             double unpoweredStress = stressSupplier == null ? 0 : stressSupplier.getAsDouble();
             double poweredStress = CCConfigs.server().brakeActiveStress.get();
             boolean isBraking = getBlockState().getValue(POWERED) == (poweredStress >= unpoweredStress);
@@ -65,7 +63,7 @@ public class BrakeBlockEntity extends SplitShaftBlockEntity {
             if (level.isClientSide()) {
                 if (isBraking && absSpeed > 0) {
                     Vec3 loc = Vec3.atBottomCenterOf(getBlockPos());
-                    level.addParticle(ParticleTypes.LARGE_SMOKE, false, loc.x, loc.y + 0.5, loc.z, 0, 0.05, 0);
+                    level.addParticle(ParticleTypes.LARGE_SMOKE, loc.x, loc.y + 0.5, loc.z, 0, 0.05, 0);
                 }
             } else {
                 if (isBraking && absSpeed > MIN_ADVANCEMENT_SPEED && !advancementAwarded) {
@@ -79,7 +77,7 @@ public class BrakeBlockEntity extends SplitShaftBlockEntity {
     }
 
     @Override
-    public void addBehaviours(List<BlockEntityBehaviour> behaviours) {
+    public void addBehaviours(List<BlockEntityBehaviour<?>> behaviours) {
         super.addBehaviours(behaviours);
         AdvancementBehaviour.registerAwardables(this, behaviours, CCAdvancements.OVERPOWERED_BRAKE);
     }

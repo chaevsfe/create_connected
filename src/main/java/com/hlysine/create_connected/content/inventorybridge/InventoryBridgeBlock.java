@@ -1,28 +1,31 @@
 package com.hlysine.create_connected.content.inventorybridge;
 
 import com.hlysine.create_connected.registries.CCBlockEntityTypes;
-import com.simibubi.create.content.equipment.wrench.IWrenchable;
-import com.simibubi.create.foundation.block.IBE;
+import com.zurrtum.create.content.equipment.wrench.IWrenchable;
+import com.zurrtum.create.foundation.block.IBE;
+import com.zurrtum.create.foundation.block.NeighborUpdateListeningBlock;
+import com.zurrtum.create.foundation.item.ItemHelper;
+import com.zurrtum.create.infrastructure.items.ItemInventoryProvider;
 import net.minecraft.core.BlockPos;
 import net.minecraft.core.Direction;
 import net.minecraft.core.Direction.Axis;
 import net.minecraft.core.Vec3i;
+import net.minecraft.world.Container;
 import net.minecraft.world.item.context.BlockPlaceContext;
 import net.minecraft.world.level.Level;
+import net.minecraft.world.level.LevelAccessor;
 import net.minecraft.world.level.block.Block;
-import net.minecraft.world.level.block.entity.BlockEntity;
 import net.minecraft.world.level.block.entity.BlockEntityType;
 import net.minecraft.world.level.block.state.BlockState;
 import net.minecraft.world.level.block.state.StateDefinition;
 import net.minecraft.world.level.block.state.properties.BlockStateProperties;
 import net.minecraft.world.level.block.state.properties.BooleanProperty;
 import net.minecraft.world.level.block.state.properties.EnumProperty;
-import net.neoforged.neoforge.capabilities.BlockCapability;
-import net.neoforged.neoforge.capabilities.Capabilities;
-import net.neoforged.neoforge.items.IItemHandler;
-import org.jetbrains.annotations.NotNull;
+import org.jspecify.annotations.Nullable;
 
-public class InventoryBridgeBlock extends Block implements IBE<InventoryBridgeBlockEntity>, IWrenchable {
+public class InventoryBridgeBlock extends Block
+        implements IBE<InventoryBridgeBlockEntity>, IWrenchable, NeighborUpdateListeningBlock,
+        ItemInventoryProvider<InventoryBridgeBlockEntity> {
 
     public static BooleanProperty ATTACHED_POSITIVE = BooleanProperty.create("attached_positive");
     public static BooleanProperty ATTACHED_NEGATIVE = BooleanProperty.create("attached_negative");
@@ -43,16 +46,25 @@ public class InventoryBridgeBlock extends Block implements IBE<InventoryBridgeBl
     }
 
     @Override
+    @Nullable
+    public Container getInventory(
+            LevelAccessor world,
+            BlockPos pos,
+            BlockState state,
+            InventoryBridgeBlockEntity blockEntity,
+            @Nullable Direction context
+    ) {
+        return blockEntity.getItemCapability();
+    }
+
+    @Override
     public BlockState getStateForPlacement(BlockPlaceContext context) {
         BlockState state = defaultBlockState();
-        BlockCapability<IItemHandler, Direction> itemCap = Capabilities.ItemHandler.BLOCK;
 
         Direction preferredFacing = null;
         for (Direction face : context.getNearestLookingDirections()) {
-            BlockEntity be = context.getLevel()
-                    .getBlockEntity(context.getClickedPos()
-                            .relative(face));
-            if (be != null && context.getLevel().getCapability(itemCap, be.getBlockPos(), null) != null) {
+            BlockPos neighbourPos = context.getClickedPos().relative(face);
+            if (ItemHelper.getInventory(context.getLevel(), neighbourPos, null) != null) {
                 preferredFacing = face;
                 break;
             }
@@ -66,20 +78,26 @@ public class InventoryBridgeBlock extends Block implements IBE<InventoryBridgeBl
     }
 
     @Override
-    public void onPlace(@NotNull BlockState state, @NotNull Level worldIn, @NotNull BlockPos pos, @NotNull BlockState oldState, boolean isMoving) {
+    protected void onPlace(BlockState state, Level worldIn, BlockPos pos, BlockState oldState, boolean isMoving) {
         withBlockEntityDo(worldIn, pos, InventoryBridgeBlockEntity::updateConnectedInventory);
     }
 
     @Override
-    public void neighborChanged(@NotNull BlockState pState, @NotNull Level pLevel, @NotNull BlockPos pPos, @NotNull Block pBlock, @NotNull BlockPos pFromPos, boolean pIsMoving) {
-        withBlockEntityDo(pLevel, pPos, InventoryBridgeBlockEntity::updateConnectedInventory);
-        super.neighborChanged(pState, pLevel, pPos, pBlock, pFromPos, pIsMoving);
-        Vec3i diff = pFromPos.subtract(pPos);
-        Direction fromSide = Direction.fromDelta(diff.getX(), diff.getY(), diff.getZ());
+    public void neighborUpdate(
+            BlockState state,
+            Level level,
+            BlockPos pos,
+            Block sourceBlock,
+            BlockPos fromPos,
+            boolean isMoving
+    ) {
+        withBlockEntityDo(level, pos, InventoryBridgeBlockEntity::updateConnectedInventory);
+        Vec3i diff = fromPos.subtract(pos);
+        Direction fromSide = Direction.getNearest(diff.getX(), diff.getY(), diff.getZ(), null);
         if (fromSide == null)
-            pLevel.updateNeighborsAt(pPos, this);
+            level.updateNeighborsAt(pos, this, null);
         else
-            pLevel.updateNeighborsAtExceptFromFacing(pPos, this, fromSide);
+            level.updateNeighborsAtExceptFromFacing(pos, this, fromSide, null);
     }
 
     public static Direction getNegativeTarget(BlockState state) {
@@ -91,21 +109,21 @@ public class InventoryBridgeBlock extends Block implements IBE<InventoryBridgeBl
     }
 
     @Override
-    public boolean hasAnalogOutputSignal(@NotNull BlockState state) {
+    protected boolean hasAnalogOutputSignal(BlockState state) {
         return true;
     }
 
     @Override
-    public int getAnalogOutputSignal(@NotNull BlockState blockState, @NotNull Level worldIn, @NotNull BlockPos pos) {
+    protected int getAnalogOutputSignal(BlockState blockState, Level worldIn, BlockPos pos, Direction direction) {
         BlockPos pos1 = pos.relative(getNegativeTarget(blockState));
         BlockPos pos2 = pos.relative(getPositiveTarget(blockState));
         BlockState target1 = worldIn.getBlockState(pos1);
         BlockState target2 = worldIn.getBlockState(pos2);
         int total = 0;
         if (blockState.getValue(ATTACHED_NEGATIVE) && !target1.is(this) && target1.hasAnalogOutputSignal())
-            total += target1.getAnalogOutputSignal(worldIn, pos1);
+            total += target1.getAnalogOutputSignal(worldIn, pos1, direction);
         if (blockState.getValue(ATTACHED_POSITIVE) && !target2.is(this) && target2.hasAnalogOutputSignal())
-            total += target2.getAnalogOutputSignal(worldIn, pos2);
+            total += target2.getAnalogOutputSignal(worldIn, pos2, direction);
         return total / 2;
     }
 
@@ -116,8 +134,7 @@ public class InventoryBridgeBlock extends Block implements IBE<InventoryBridgeBl
 
     @Override
     public BlockEntityType<? extends InventoryBridgeBlockEntity> getBlockEntityType() {
-        return CCBlockEntityTypes.INVENTORY_BRIDGE.get();
+        return CCBlockEntityTypes.INVENTORY_BRIDGE;
     }
 
 }
-

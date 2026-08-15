@@ -1,18 +1,12 @@
 package com.hlysine.create_connected.content.dashboard;
 
-import com.hlysine.create_connected.ConnectedLang;
-import com.mojang.serialization.DataResult;
-import com.mojang.serialization.DynamicOps;
-import com.simibubi.create.foundation.blockEntity.SmartBlockEntity;
-import com.simibubi.create.foundation.blockEntity.behaviour.BlockEntityBehaviour;
-import net.createmod.catnip.annotations.ClientOnly;
-import net.createmod.catnip.data.Iterate;
+import com.zurrtum.create.api.behaviour.BlockEntityBehaviour;
+import com.zurrtum.create.api.behaviour.display.DisplayHolder;
+import com.zurrtum.create.catnip.data.Iterate;
+import com.zurrtum.create.foundation.blockEntity.SmartBlockEntity;
 import net.minecraft.core.BlockPos;
 import net.minecraft.core.Direction;
-import net.minecraft.core.HolderLookup;
 import net.minecraft.nbt.CompoundTag;
-import net.minecraft.nbt.NbtOps;
-import net.minecraft.nbt.Tag;
 import net.minecraft.network.chat.Component;
 import net.minecraft.network.chat.MutableComponent;
 import net.minecraft.world.entity.player.Player;
@@ -21,27 +15,34 @@ import net.minecraft.world.level.block.entity.BlockEntity;
 import net.minecraft.world.level.block.entity.BlockEntityType;
 import net.minecraft.world.level.block.entity.SignText;
 import net.minecraft.world.level.block.state.BlockState;
-import net.minecraft.world.phys.Vec3;
+import net.minecraft.world.level.storage.ValueInput;
+import net.minecraft.world.level.storage.ValueOutput;
 import org.jetbrains.annotations.Nullable;
 
 import java.util.ArrayList;
 import java.util.List;
 
-public class DashboardBlockEntity extends SmartBlockEntity {
+public class DashboardBlockEntity extends SmartBlockEntity implements DisplayHolder {
 
     SignText text = new SignText().setColor(DyeColor.WHITE);
-    int cycleTimer = 0;
-    boolean wasDisplaying;
-    private static final int LAZY_TICK_RATE = 4;
-    private static final int CYCLE_INTERVAL = 40;
+    private @Nullable CompoundTag displayLink;
 
     public DashboardBlockEntity(BlockEntityType<?> type, BlockPos pos, BlockState state) {
         super(type, pos, state);
-        setLazyTickRate(LAZY_TICK_RATE);
     }
 
     @Override
-    public void addBehaviours(List<BlockEntityBehaviour> behaviours) {
+    public void addBehaviours(List<BlockEntityBehaviour<?>> behaviours) {
+    }
+
+    @Override
+    public @Nullable CompoundTag getDisplayLinkData() {
+        return displayLink;
+    }
+
+    @Override
+    public void setDisplayLinkData(@Nullable CompoundTag data) {
+        displayLink = data;
     }
 
     public SignText getText() {
@@ -79,7 +80,7 @@ public class DashboardBlockEntity extends SmartBlockEntity {
         return getBlockPos().relative(getBlockState().getValue(DashboardBlock.FACING));
     }
 
-    private @Nullable Component getStatusLine() {
+    public @Nullable Component getStatusLine() {
         MutableComponent status = Component.empty();
         boolean needSpacer = false;
         for (int i = 0; i < SignText.LINES; i++) {
@@ -95,12 +96,12 @@ public class DashboardBlockEntity extends SmartBlockEntity {
         return status;
     }
 
-    private @Nullable List<Component> getAllDisplays(BlockPos seatPos) {
+    public @Nullable List<Component> getAllDisplays(BlockPos seatPos) {
         List<Component> list = new ArrayList<>(4);
         for (Direction direction : Iterate.horizontalDirections) {
             BlockPos dashboardPos = seatPos.relative(direction);
             if (dashboardPos.equals(getBlockPos())) {
-                if (!list.isEmpty()) return null; // one dashboard takes care of displaying status text for all
+                if (!list.isEmpty()) return null;
                 Component status = getStatusLine();
                 if (status == null) return null;
                 list.add(status);
@@ -119,70 +120,23 @@ public class DashboardBlockEntity extends SmartBlockEntity {
         return list;
     }
 
-    @ClientOnly
-    private boolean displayStatus() {
-        BlockPos seatPos = getSeatPos();
-        if (seatPos == null)
-            return false;
-
-        Player player = ClientPlayerAccess.getPlayer();
-        if (player == null)
-            return false;
-        if (!player.isPassenger())
-            return false;
-
-        Vec3 center = Vec3.atCenterOf(seatPos);
-        if (player.distanceToSqr(center) > 1.2)
-            return false;
-        List<Component> list = getAllDisplays(seatPos);
-        if (list == null || list.isEmpty()) return false;
-
-        Component status = list.get((cycleTimer / CYCLE_INTERVAL) % list.size());
-        player.displayClientMessage(status, true);
-        cycleTimer += LAZY_TICK_RATE;
-        return true;
-    }
-
-    static void displayOpenStatus(Player player, boolean open) {
-        ConnectedLang
-                .translate(open ? "dashboard.activate_hud" : "dashboard.deactivate_hud")
-                .sendStatus(player);
+    public static void displayOpenStatus(Player player, boolean open) {
+        player.sendOverlayMessage(Component.translatable(open
+                ? "create_connected.dashboard.activate_hud"
+                : "create_connected.dashboard.deactivate_hud"));
     }
 
     @Override
-    public void lazyTick() {
-        super.lazyTick();
-
-        if (getLevel().isClientSide()) {
-            boolean success = displayStatus();
-            if (!success && wasDisplaying) {
-                Player player = ClientPlayerAccess.getPlayer();
-                if (player != null) {
-                    if (!getBlockState().getValue(DashboardBlock.OPEN))
-                        displayOpenStatus(player, false); // avoid flickering on wrench by displaying the open status instead of empty
-                    else
-                        player.displayClientMessage(Component.empty(), true);
-                }
-            }
-            wasDisplaying = success;
-        }
+    protected void write(ValueOutput view, boolean clientPacket) {
+        super.write(view, clientPacket);
+        view.store("text", SignText.DIRECT_CODEC, text);
+        writeDisplayLink(view);
     }
 
     @Override
-    public void write(CompoundTag tag, HolderLookup.Provider registries, boolean clientPacket) {
-        super.write(tag, registries, clientPacket);
-        DynamicOps<Tag> ops = registries.createSerializationContext(NbtOps.INSTANCE);
-        DataResult<Tag> result = SignText.DIRECT_CODEC.encodeStart(ops, this.text);
-        result.result().ifPresent((tagResult) -> tag.put("text", tagResult));
-    }
-
-    @Override
-    protected void read(CompoundTag tag, HolderLookup.Provider registries, boolean clientPacket) {
-        super.read(tag, registries, clientPacket);
-        DynamicOps<Tag> ops = registries.createSerializationContext(NbtOps.INSTANCE);
-        if (tag.contains("text")) {
-            DataResult<SignText> result = SignText.DIRECT_CODEC.parse(ops, tag.getCompound("text"));
-            result.result().ifPresent((signText) -> this.text = signText);
-        }
+    protected void read(ValueInput view, boolean clientPacket) {
+        super.read(view, clientPacket);
+        view.read("text", SignText.DIRECT_CODEC).ifPresent(signText -> this.text = signText);
+        readDisplayLink(view);
     }
 }

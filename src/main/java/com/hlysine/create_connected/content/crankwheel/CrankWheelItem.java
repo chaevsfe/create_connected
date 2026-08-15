@@ -1,33 +1,33 @@
 package com.hlysine.create_connected.content.crankwheel;
 
-import com.simibubi.create.AllShapes;
-import com.simibubi.create.content.kinetics.base.DirectionalKineticBlock;
-import com.simibubi.create.content.kinetics.base.HorizontalKineticBlock;
-import com.simibubi.create.content.kinetics.base.IRotate;
-import com.simibubi.create.content.kinetics.base.RotatedPillarKineticBlock;
-import com.simibubi.create.content.kinetics.simpleRelays.CogWheelBlock;
-import com.simibubi.create.content.kinetics.simpleRelays.ICogWheel;
-import net.createmod.catnip.data.Iterate;
-import net.createmod.catnip.placement.IPlacementHelper;
-import net.createmod.catnip.placement.PlacementHelpers;
-import net.createmod.catnip.placement.PlacementOffset;
-import net.minecraft.MethodsReturnNonnullByDefault;
+import com.zurrtum.create.AllShapes;
+import com.zurrtum.create.catnip.data.Iterate;
+import com.zurrtum.create.catnip.placement.IPlacementHelper;
+import com.zurrtum.create.catnip.placement.PlacementHelpers;
+import com.zurrtum.create.catnip.placement.PlacementOffset;
+import com.zurrtum.create.content.kinetics.base.DirectionalKineticBlock;
+import com.zurrtum.create.content.kinetics.base.HorizontalKineticBlock;
+import com.zurrtum.create.content.kinetics.base.IRotate;
+import com.zurrtum.create.content.kinetics.base.RotatedPillarKineticBlock;
+import com.zurrtum.create.content.kinetics.simpleRelays.CogWheelBlock;
+import com.zurrtum.create.content.kinetics.simpleRelays.ICogWheel;
 import net.minecraft.core.BlockPos;
 import net.minecraft.core.Direction;
 import net.minecraft.core.Direction.Axis;
+import net.minecraft.world.InteractionHand;
 import net.minecraft.world.InteractionResult;
 import net.minecraft.world.entity.player.Player;
 import net.minecraft.world.item.BlockItem;
 import net.minecraft.world.item.ItemStack;
-import net.minecraft.world.item.context.UseOnContext;
 import net.minecraft.world.level.Level;
 import net.minecraft.world.level.block.state.BlockState;
 import net.minecraft.world.phys.BlockHitResult;
+import org.jspecify.annotations.Nullable;
 
 import java.util.List;
 import java.util.function.Predicate;
 
-import static com.simibubi.create.content.kinetics.base.RotatedPillarKineticBlock.AXIS;
+import static com.zurrtum.create.content.kinetics.base.RotatedPillarKineticBlock.AXIS;
 
 public class CrankWheelItem extends BlockItem {
 
@@ -45,37 +45,42 @@ public class CrankWheelItem extends BlockItem {
                 PlacementHelpers.register(large ? new IntegratedLargeCogHelper() : new IntegratedSmallCogHelper());
     }
 
-    @Override
-    public InteractionResult onItemUseFirst(ItemStack stack, UseOnContext context) {
-        Level world = context.getLevel();
-        BlockPos pos = context.getClickedPos();
-        BlockState state = world.getBlockState(pos);
+    @Nullable
+    public static InteractionResult onItemUseFirst(
+            Level world,
+            @Nullable Player player,
+            ItemStack stack,
+            InteractionHand hand,
+            BlockHitResult ray,
+            BlockPos pos
+    ) {
+        if (!(stack.getItem() instanceof CrankWheelItem item))
+            return null;
 
-        IPlacementHelper helper = PlacementHelpers.get(placementHelperId);
-        Player player = context.getPlayer();
-        BlockHitResult ray = new BlockHitResult(context.getClickLocation(), context.getClickedFace(), pos, true);
+        BlockState state = world.getBlockState(pos);
+        IPlacementHelper helper = PlacementHelpers.get(item.placementHelperId);
         if (helper.matchesState(state) && player != null && !player.isShiftKeyDown()) {
-            return helper.getOffset(player, world, state, pos, ray)
-                    .placeInWorld(world, this, player, context.getHand(), ray).result();
+            InteractionResult result = helper.getOffset(player, world, state, pos, ray)
+                    .placeInWorld(world, item, player, hand);
+            if (result != InteractionResult.TRY_WITH_EMPTY_HAND)
+                return result;
         }
 
-        if (integratedCogHelperId != -1) {
-            helper = PlacementHelpers.get(integratedCogHelperId);
+        if (item.integratedCogHelperId != -1) {
+            helper = PlacementHelpers.get(item.integratedCogHelperId);
 
             if (helper.matchesState(state) && player != null && !player.isShiftKeyDown()) {
-                return helper.getOffset(player, world, state, pos, ray)
-                        .placeInWorld(world, this, player, context.getHand(), ray).result();
+                return helper.getOffset(player, world, state, pos, ray).placeInWorld(world, item, player, hand);
             }
         }
 
-        return super.onItemUseFirst(stack, context);
+        return null;
     }
 
     public static boolean isCrankWheelItem(ItemStack item) {
         return item.getItem() instanceof BlockItem blockItem && blockItem.getBlock() instanceof CrankWheelBlock;
     }
 
-    @MethodsReturnNonnullByDefault
     private static class SmallCogHelper extends DiagonalCogHelper {
 
         @Override
@@ -84,8 +89,13 @@ public class CrankWheelItem extends BlockItem {
         }
 
         @Override
-        public PlacementOffset getOffset(Player player, Level world, BlockState state, BlockPos pos,
-                                         BlockHitResult ray) {
+        public PlacementOffset getOffset(
+                Player player,
+                Level world,
+                BlockState state,
+                BlockPos pos,
+                BlockHitResult ray
+        ) {
             if (hitOnShaft(state, ray))
                 return PlacementOffset.fail();
 
@@ -99,12 +109,12 @@ public class CrankWheelItem extends BlockItem {
                     if (!CogWheelBlock.isValidCogwheelPosition(false, world, newPos, axis))
                         continue;
 
-                    if (!world.getBlockState(newPos)
-                            .canBeReplaced())
+                    if (!world.getBlockState(newPos).canBeReplaced())
                         continue;
 
-                    return PlacementOffset.success(newPos, s -> s.setValue(AXIS, axis).setValue(CrankWheelBlock.FACING, Direction.getFacingAxis(player, axis).getOpposite()));
-
+                    return PlacementOffset.success(newPos, s -> s.setValue(AXIS, axis)
+                            .setValue(CrankWheelBlock.FACING,
+                                    Direction.getFacingAxis(player, axis).getOpposite()));
                 }
 
                 return PlacementOffset.fail();
@@ -114,7 +124,6 @@ public class CrankWheelItem extends BlockItem {
         }
     }
 
-    @MethodsReturnNonnullByDefault
     private static class LargeCogHelper extends DiagonalCogHelper {
 
         @Override
@@ -123,28 +132,32 @@ public class CrankWheelItem extends BlockItem {
         }
 
         @Override
-        public PlacementOffset getOffset(Player player, Level world, BlockState state, BlockPos pos,
-                                         BlockHitResult ray) {
+        public PlacementOffset getOffset(
+                Player player,
+                Level world,
+                BlockState state,
+                BlockPos pos,
+                BlockHitResult ray
+        ) {
             if (hitOnShaft(state, ray))
                 return PlacementOffset.fail();
 
             if (ICogWheel.isLargeCog(state)) {
                 Axis axis = ((IRotate) state.getBlock()).getRotationAxis(state);
-                Direction side = IPlacementHelper.orderedByDistanceOnlyAxis(pos, ray.getLocation(), axis)
-                        .get(0);
+                Direction side = IPlacementHelper.orderedByDistanceOnlyAxis(pos, ray.getLocation(), axis).get(0);
                 List<Direction> directions = IPlacementHelper.orderedByDistanceExceptAxis(pos, ray.getLocation(), axis);
                 for (Direction dir : directions) {
-                    BlockPos newPos = pos.relative(dir)
-                            .relative(side);
+                    BlockPos newPos = pos.relative(dir).relative(side);
 
                     if (!CogWheelBlock.isValidCogwheelPosition(true, world, newPos, dir.getAxis()))
                         continue;
 
-                    if (!world.getBlockState(newPos)
-                            .canBeReplaced())
+                    if (!world.getBlockState(newPos).canBeReplaced())
                         continue;
 
-                    return PlacementOffset.success(newPos, s -> s.setValue(AXIS, dir.getAxis()).setValue(CrankWheelBlock.FACING, Direction.getFacingAxis(player, dir.getAxis()).getOpposite()));
+                    return PlacementOffset.success(newPos, s -> s.setValue(AXIS, dir.getAxis())
+                            .setValue(CrankWheelBlock.FACING,
+                                    Direction.getFacingAxis(player, dir.getAxis()).getOpposite()));
                 }
 
                 return PlacementOffset.fail();
@@ -154,7 +167,6 @@ public class CrankWheelItem extends BlockItem {
         }
     }
 
-    @MethodsReturnNonnullByDefault
     public abstract static class DiagonalCogHelper implements IPlacementHelper {
 
         @Override
@@ -163,26 +175,28 @@ public class CrankWheelItem extends BlockItem {
         }
 
         @Override
-        public PlacementOffset getOffset(Player player, Level world, BlockState state, BlockPos pos,
-                                         BlockHitResult ray) {
-            // diagonal gears of different size
+        public PlacementOffset getOffset(
+                Player player,
+                Level world,
+                BlockState state,
+                BlockPos pos,
+                BlockHitResult ray
+        ) {
             Axis axis = ((IRotate) state.getBlock()).getRotationAxis(state);
-            Direction closest = IPlacementHelper.orderedByDistanceExceptAxis(pos, ray.getLocation(), axis)
-                    .get(0);
+            Direction closest = IPlacementHelper.orderedByDistanceExceptAxis(pos, ray.getLocation(), axis).get(0);
             List<Direction> directions = IPlacementHelper.orderedByDistanceExceptAxis(pos, ray.getLocation(), axis,
                     d -> d.getAxis() != closest.getAxis());
 
             for (Direction dir : directions) {
-                BlockPos newPos = pos.relative(dir)
-                        .relative(closest);
-                if (!world.getBlockState(newPos)
-                        .canBeReplaced())
+                BlockPos newPos = pos.relative(dir).relative(closest);
+                if (!world.getBlockState(newPos).canBeReplaced())
                     continue;
 
                 if (!CogWheelBlock.isValidCogwheelPosition(ICogWheel.isLargeCog(state), world, newPos, axis))
                     continue;
 
-                return PlacementOffset.success(newPos, s -> s.setValue(AXIS, axis).setValue(CrankWheelBlock.FACING, Direction.getFacingAxis(player, axis).getOpposite()));
+                return PlacementOffset.success(newPos, s -> s.setValue(AXIS, axis)
+                        .setValue(CrankWheelBlock.FACING, Direction.getFacingAxis(player, axis).getOpposite()));
             }
 
             return PlacementOffset.fail();
@@ -192,13 +206,10 @@ public class CrankWheelItem extends BlockItem {
             return AllShapes.SIX_VOXEL_POLE.get(((IRotate) state.getBlock()).getRotationAxis(state))
                     .bounds()
                     .inflate(0.001)
-                    .contains(ray.getLocation()
-                            .subtract(ray.getLocation()
-                                    .align(Iterate.axisSet)));
+                    .contains(ray.getLocation().subtract(ray.getLocation().align(Iterate.axisSet)));
         }
     }
 
-    @MethodsReturnNonnullByDefault
     public static class IntegratedLargeCogHelper implements IPlacementHelper {
 
         @Override
@@ -212,17 +223,20 @@ public class CrankWheelItem extends BlockItem {
         }
 
         @Override
-        public PlacementOffset getOffset(Player player, Level world, BlockState state, BlockPos pos,
-                                         BlockHitResult ray) {
+        public PlacementOffset getOffset(
+                Player player,
+                Level world,
+                BlockState state,
+                BlockPos pos,
+                BlockHitResult ray
+        ) {
             Direction face = ray.getDirection();
             Axis newAxis;
 
             if (state.hasProperty(HorizontalKineticBlock.HORIZONTAL_FACING))
-                newAxis = state.getValue(HorizontalKineticBlock.HORIZONTAL_FACING)
-                        .getAxis();
+                newAxis = state.getValue(HorizontalKineticBlock.HORIZONTAL_FACING).getAxis();
             else if (state.hasProperty(DirectionalKineticBlock.FACING))
-                newAxis = state.getValue(DirectionalKineticBlock.FACING)
-                        .getAxis();
+                newAxis = state.getValue(DirectionalKineticBlock.FACING).getAxis();
             else if (state.hasProperty(RotatedPillarKineticBlock.AXIS))
                 newAxis = state.getValue(RotatedPillarKineticBlock.AXIS);
             else
@@ -235,17 +249,16 @@ public class CrankWheelItem extends BlockItem {
                     IPlacementHelper.orderedByDistanceExceptAxis(pos, ray.getLocation(), face.getAxis(), newAxis);
 
             for (Direction d : directions) {
-                BlockPos newPos = pos.relative(face)
-                        .relative(d);
+                BlockPos newPos = pos.relative(face).relative(d);
 
-                if (!world.getBlockState(newPos)
-                        .canBeReplaced())
+                if (!world.getBlockState(newPos).canBeReplaced())
                     continue;
 
                 if (!CogWheelBlock.isValidCogwheelPosition(false, world, newPos, newAxis))
                     return PlacementOffset.fail();
 
-                return PlacementOffset.success(newPos, s -> s.setValue(CrankWheelBlock.AXIS, newAxis).setValue(CrankWheelBlock.FACING, Direction.getFacingAxis(player, newAxis).getOpposite()));
+                return PlacementOffset.success(newPos, s -> s.setValue(CrankWheelBlock.AXIS, newAxis)
+                        .setValue(CrankWheelBlock.FACING, Direction.getFacingAxis(player, newAxis).getOpposite()));
             }
 
             return PlacementOffset.fail();
@@ -253,7 +266,6 @@ public class CrankWheelItem extends BlockItem {
 
     }
 
-    @MethodsReturnNonnullByDefault
     public static class IntegratedSmallCogHelper implements IPlacementHelper {
 
         @Override
@@ -267,17 +279,20 @@ public class CrankWheelItem extends BlockItem {
         }
 
         @Override
-        public PlacementOffset getOffset(Player player, Level world, BlockState state, BlockPos pos,
-                                         BlockHitResult ray) {
+        public PlacementOffset getOffset(
+                Player player,
+                Level world,
+                BlockState state,
+                BlockPos pos,
+                BlockHitResult ray
+        ) {
             Direction face = ray.getDirection();
             Axis newAxis;
 
             if (state.hasProperty(HorizontalKineticBlock.HORIZONTAL_FACING))
-                newAxis = state.getValue(HorizontalKineticBlock.HORIZONTAL_FACING)
-                        .getAxis();
+                newAxis = state.getValue(HorizontalKineticBlock.HORIZONTAL_FACING).getAxis();
             else if (state.hasProperty(DirectionalKineticBlock.FACING))
-                newAxis = state.getValue(DirectionalKineticBlock.FACING)
-                        .getAxis();
+                newAxis = state.getValue(DirectionalKineticBlock.FACING).getAxis();
             else if (state.hasProperty(RotatedPillarKineticBlock.AXIS))
                 newAxis = state.getValue(RotatedPillarKineticBlock.AXIS);
             else
@@ -291,8 +306,7 @@ public class CrankWheelItem extends BlockItem {
             for (Direction d : directions) {
                 BlockPos newPos = pos.relative(d);
 
-                if (!world.getBlockState(newPos)
-                        .canBeReplaced())
+                if (!world.getBlockState(newPos).canBeReplaced())
                     continue;
 
                 if (!CogWheelBlock.isValidCogwheelPosition(false, world, newPos, newAxis))
@@ -300,7 +314,9 @@ public class CrankWheelItem extends BlockItem {
 
                 return PlacementOffset.success()
                         .at(newPos)
-                        .withTransform(s -> s.setValue(CrankWheelBlock.AXIS, newAxis).setValue(CrankWheelBlock.FACING, Direction.getFacingAxis(player, newAxis).getOpposite()));
+                        .withTransform(s -> s.setValue(CrankWheelBlock.AXIS, newAxis)
+                                .setValue(CrankWheelBlock.FACING,
+                                        Direction.getFacingAxis(player, newAxis).getOpposite()));
             }
 
             return PlacementOffset.fail();
@@ -308,4 +324,3 @@ public class CrankWheelItem extends BlockItem {
 
     }
 }
-

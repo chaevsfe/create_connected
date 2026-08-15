@@ -1,7 +1,7 @@
 package com.hlysine.create_connected.registries;
 
-import com.simibubi.create.AllShapes;
-import net.createmod.catnip.math.VoxelShaper;
+import com.zurrtum.create.AllShapes;
+import com.zurrtum.create.catnip.math.VoxelShaper;
 import net.minecraft.core.Direction;
 import net.minecraft.world.level.block.Block;
 import net.minecraft.world.phys.shapes.VoxelShape;

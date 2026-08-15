@@ -1,13 +1,10 @@
 package com.hlysine.create_connected.content.fluidvessel;
 
-import com.simibubi.create.content.fluids.tank.CreativeFluidTankBlockEntity;
-import com.simibubi.create.foundation.fluid.SmartFluidTank;
+import com.zurrtum.create.content.fluids.tank.CreativeFluidTankBlockEntity.CreativeFluidTankInventory;
+import com.zurrtum.create.foundation.fluid.FluidTank;
 import net.minecraft.core.BlockPos;
-import net.minecraft.network.chat.Component;
 import net.minecraft.world.level.block.entity.BlockEntityType;
 import net.minecraft.world.level.block.state.BlockState;
-
-import java.util.List;
 
 public class CreativeFluidVesselBlockEntity extends FluidVesselBlockEntity {
 
@@ -16,13 +13,8 @@ public class CreativeFluidVesselBlockEntity extends FluidVesselBlockEntity {
     }
 
     @Override
-    protected SmartFluidTank createInventory() {
-        return new CreativeFluidTankBlockEntity.CreativeSmartFluidTank(getCapacityMultiplier(), this::onFluidStackChanged);
-    }
-
-    @Override
-    public boolean addToGoggleTooltip(List<Component> tooltip, boolean isPlayerSneaking) {
-        return false;
+    protected FluidTank createInventory() {
+        return new CreativeFluidTankInventory(getCapacityMultiplier(), this::onFluidStackChanged);
     }
 
 }

@@ -1,22 +1,22 @@
 package com.hlysine.create_connected.content.copycat.beam;
 
+import com.hlysine.create_connected.content.copycat.ICopycatWithWrappedBlock;
+import com.hlysine.create_connected.content.copycat.MigratingWaterloggedCopycatBlock;
 import com.hlysine.create_connected.registries.CCBlocks;
 import com.hlysine.create_connected.registries.CCShapes;
-import com.hlysine.create_connected.content.copycat.MigratingWaterloggedCopycatBlock;
-import com.simibubi.create.foundation.placement.PoleHelper;
-import net.createmod.catnip.placement.IPlacementHelper;
-import net.createmod.catnip.placement.PlacementHelpers;
-import net.minecraft.MethodsReturnNonnullByDefault;
+import com.zurrtum.create.catnip.placement.IPlacementHelper;
+import com.zurrtum.create.catnip.placement.PlacementHelpers;
+import com.zurrtum.create.foundation.placement.PoleHelper;
 import net.minecraft.core.BlockPos;
 import net.minecraft.core.Direction;
 import net.minecraft.core.Vec3i;
 import net.minecraft.world.InteractionHand;
-import net.minecraft.world.ItemInteractionResult;
+import net.minecraft.world.InteractionResult;
 import net.minecraft.world.entity.player.Player;
 import net.minecraft.world.item.BlockItem;
 import net.minecraft.world.item.ItemStack;
 import net.minecraft.world.item.context.BlockPlaceContext;
-import net.minecraft.world.level.BlockAndTintGetter;
+import net.minecraft.world.level.BlockAndLightGetter;
 import net.minecraft.world.level.BlockGetter;
 import net.minecraft.world.level.Level;
 import net.minecraft.world.level.block.Block;
@@ -29,7 +29,6 @@ import net.minecraft.world.level.pathfinder.PathComputationType;
 import net.minecraft.world.phys.BlockHitResult;
 import net.minecraft.world.phys.shapes.CollisionContext;
 import net.minecraft.world.phys.shapes.VoxelShape;
-import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.util.function.Predicate;
@@ -49,14 +48,13 @@ public class CopycatBeamBlock extends MigratingWaterloggedCopycatBlock {
     }
 
     @Override
-    protected @NotNull ItemInteractionResult useItemOn(ItemStack stack, BlockState state, Level level, BlockPos pos, Player player, InteractionHand hand, BlockHitResult hitResult) {
+    protected InteractionResult useItemOn(ItemStack stack, BlockState state, Level level, BlockPos pos, Player player, InteractionHand hand, BlockHitResult hitResult) {
         if (!player.isShiftKeyDown() && player.mayBuild()) {
             ItemStack heldItem = player.getItemInHand(hand);
             IPlacementHelper placementHelper = PlacementHelpers.get(placementHelperId);
             if (placementHelper.matchesItem(heldItem)) {
-                placementHelper.getOffset(player, level, state, pos, hitResult)
-                        .placeInWorld(level, (BlockItem) heldItem.getItem(), player, hand, hitResult);
-                return ItemInteractionResult.SUCCESS;
+                return placementHelper.getOffset(player, level, state, pos, hitResult)
+                        .placeInWorld(level, (BlockItem) heldItem.getItem(), player, hand);
             }
         }
 
@@ -64,7 +62,7 @@ public class CopycatBeamBlock extends MigratingWaterloggedCopycatBlock {
     }
 
     @Override
-    public boolean isIgnoredConnectivitySide(BlockAndTintGetter reader, BlockState state, Direction face,
+    public boolean isIgnoredConnectivitySide(BlockAndLightGetter reader, BlockState state, Direction face,
                                              @Nullable BlockPos fromPos, @Nullable BlockPos toPos) {
         if (fromPos == null || toPos == null)
             return true;
@@ -73,16 +71,14 @@ public class CopycatBeamBlock extends MigratingWaterloggedCopycatBlock {
         BlockState toState = reader.getBlockState(toPos);
 
         if (toState.is(this)) {
-            // connecting to another copycat beam
             return toState.getValue(AXIS) != axis;
         } else {
-            // doesn't connect to any other blocks
             return true;
         }
     }
 
     @Override
-    public boolean canConnectTexturesToward(BlockAndTintGetter reader, BlockPos fromPos, BlockPos toPos,
+    public boolean canConnectTexturesToward(BlockAndLightGetter reader, BlockPos fromPos, BlockPos toPos,
                                             BlockState state) {
         Axis axis = state.getValue(AXIS);
         BlockState toState = reader.getBlockState(toPos);
@@ -91,7 +87,7 @@ public class CopycatBeamBlock extends MigratingWaterloggedCopycatBlock {
         if (diff.equals(Vec3i.ZERO)) {
             return true;
         }
-        Direction face = Direction.fromDelta(diff.getX(), diff.getY(), diff.getZ());
+        Direction face = ICopycatWithWrappedBlock.fromDelta(diff);
         if (face == null) {
             return false;
         }
@@ -119,9 +115,8 @@ public class CopycatBeamBlock extends MigratingWaterloggedCopycatBlock {
     }
 
     @Override
-    public BlockState getStateForPlacement(@NotNull BlockPlaceContext context) {
+    public BlockState getStateForPlacement(BlockPlaceContext context) {
         BlockState stateForPlacement = super.getStateForPlacement(context);
-        assert stateForPlacement != null;
         Axis axis = context.getNearestLookingDirection().getAxis();
         return stateForPlacement.setValue(AXIS, axis);
     }
@@ -132,29 +127,12 @@ public class CopycatBeamBlock extends MigratingWaterloggedCopycatBlock {
     }
 
     @Override
-    public @NotNull VoxelShape getShape(BlockState pState, @NotNull BlockGetter pLevel, @NotNull BlockPos pPos, @NotNull CollisionContext pContext) {
+    public VoxelShape getShape(BlockState pState, BlockGetter pLevel, BlockPos pPos, CollisionContext pContext) {
         return CCShapes.CASING_8PX_CENTERED.get(pState.getValue(AXIS));
     }
 
     @Override
-    public boolean supportsExternalFaceHiding(BlockState state) {
-        return true;
-    }
-
-    @Override
-    public boolean hidesNeighborFace(BlockGetter level, BlockPos pos, BlockState state, BlockState neighborState,
-                                     Direction dir) {
-        if (state.is(this) == neighborState.is(this)) {
-            if (getMaterial(level, pos).skipRendering(getMaterial(level, pos.relative(dir)), dir.getOpposite())) {
-                return state.getValue(AXIS) == dir.getAxis() && neighborState.getValue(AXIS) == dir.getAxis();
-            }
-        }
-
-        return false;
-    }
-
-    @Override
-    public @NotNull BlockState rotate(@NotNull BlockState state, Rotation rot) {
+    public BlockState rotate(BlockState state, Rotation rot) {
         switch (rot) {
             case COUNTERCLOCKWISE_90, CLOCKWISE_90 -> {
                 return switch (state.getValue(AXIS)) {
@@ -169,11 +147,10 @@ public class CopycatBeamBlock extends MigratingWaterloggedCopycatBlock {
         }
     }
 
-    @MethodsReturnNonnullByDefault
     private static class PlacementHelper extends PoleHelper<Axis> {
 
         private PlacementHelper() {
-            super(CCBlocks.COPYCAT_BEAM::has, state -> state.getValue(AXIS), AXIS);
+            super(state -> state.is(CCBlocks.COPYCAT_BEAM), state -> state.getValue(AXIS), AXIS);
         }
 
         @Override
@@ -185,4 +162,3 @@ public class CopycatBeamBlock extends MigratingWaterloggedCopycatBlock {
     }
 
 }
-

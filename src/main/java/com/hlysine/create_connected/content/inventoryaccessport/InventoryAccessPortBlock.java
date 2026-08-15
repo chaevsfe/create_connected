@@ -1,30 +1,31 @@
 package com.hlysine.create_connected.content.inventoryaccessport;
 
 import com.hlysine.create_connected.registries.CCBlockEntityTypes;
-import com.simibubi.create.content.equipment.wrench.IWrenchable;
-import com.simibubi.create.content.redstone.DirectedDirectionalBlock;
-import com.simibubi.create.foundation.block.IBE;
+import com.zurrtum.create.content.equipment.wrench.IWrenchable;
+import com.zurrtum.create.content.redstone.DirectedDirectionalBlock;
+import com.zurrtum.create.foundation.block.IBE;
+import com.zurrtum.create.foundation.block.NeighborUpdateListeningBlock;
+import com.zurrtum.create.foundation.item.ItemHelper;
+import com.zurrtum.create.infrastructure.items.ItemInventoryProvider;
 import net.minecraft.core.BlockPos;
 import net.minecraft.core.Direction;
 import net.minecraft.core.Direction.Axis;
+import net.minecraft.world.Container;
 import net.minecraft.world.item.context.BlockPlaceContext;
 import net.minecraft.world.level.Level;
-import net.minecraft.world.level.LevelReader;
+import net.minecraft.world.level.LevelAccessor;
 import net.minecraft.world.level.block.Block;
-import net.minecraft.world.level.block.entity.BlockEntity;
 import net.minecraft.world.level.block.entity.BlockEntityType;
 import net.minecraft.world.level.block.state.BlockState;
 import net.minecraft.world.level.block.state.StateDefinition;
 import net.minecraft.world.level.block.state.properties.AttachFace;
 import net.minecraft.world.level.block.state.properties.BlockStateProperties;
 import net.minecraft.world.level.block.state.properties.BooleanProperty;
-import net.neoforged.neoforge.capabilities.BlockCapability;
-import net.neoforged.neoforge.capabilities.Capabilities;
-import net.neoforged.neoforge.common.extensions.IBlockExtension;
-import net.neoforged.neoforge.items.IItemHandler;
-import org.jetbrains.annotations.NotNull;
+import org.jspecify.annotations.Nullable;
 
-public class InventoryAccessPortBlock extends DirectedDirectionalBlock implements IBE<InventoryAccessPortBlockEntity>, IWrenchable, IBlockExtension {
+public class InventoryAccessPortBlock extends DirectedDirectionalBlock
+        implements IBE<InventoryAccessPortBlockEntity>, IWrenchable, NeighborUpdateListeningBlock,
+        ItemInventoryProvider<InventoryAccessPortBlockEntity> {
 
     public static BooleanProperty ATTACHED = BlockStateProperties.ATTACHED;
 
@@ -39,16 +40,25 @@ public class InventoryAccessPortBlock extends DirectedDirectionalBlock implement
     }
 
     @Override
+    @Nullable
+    public Container getInventory(
+            LevelAccessor world,
+            BlockPos pos,
+            BlockState state,
+            InventoryAccessPortBlockEntity blockEntity,
+            @Nullable Direction context
+    ) {
+        return blockEntity.getItemCapability();
+    }
+
+    @Override
     public BlockState getStateForPlacement(BlockPlaceContext context) {
         BlockState state = defaultBlockState();
-        BlockCapability<IItemHandler, Direction> itemCap = Capabilities.ItemHandler.BLOCK;
 
         Direction preferredFacing = null;
         for (Direction face : context.getNearestLookingDirections()) {
-            BlockEntity be = context.getLevel()
-                    .getBlockEntity(context.getClickedPos()
-                            .relative(face));
-            if (be != null && context.getLevel().getCapability(itemCap, be.getBlockPos(), null) != null) {
+            BlockPos neighbourPos = context.getClickedPos().relative(face);
+            if (ItemHelper.getInventory(context.getLevel(), neighbourPos, null) != null) {
                 preferredFacing = face;
                 break;
             }
@@ -56,8 +66,8 @@ public class InventoryAccessPortBlock extends DirectedDirectionalBlock implement
 
         if (preferredFacing == null) {
             Direction facing = context.getNearestLookingDirection();
-            preferredFacing = context.getPlayer() != null && context.getPlayer()
-                    .isShiftKeyDown() ? facing : facing.getOpposite();
+            preferredFacing = context.getPlayer() != null && context.getPlayer().isShiftKeyDown()
+                    ? facing : facing.getOpposite();
         }
 
         if (preferredFacing.getAxis() == Axis.Y) {
@@ -69,28 +79,37 @@ public class InventoryAccessPortBlock extends DirectedDirectionalBlock implement
     }
 
     @Override
-    public void onPlace(@NotNull BlockState state, @NotNull Level worldIn, @NotNull BlockPos pos, @NotNull BlockState oldState, boolean isMoving) {
+    protected void onPlace(BlockState state, Level worldIn, BlockPos pos, BlockState oldState, boolean isMoving) {
         withBlockEntityDo(worldIn, pos, InventoryAccessPortBlockEntity::updateConnectedInventory);
     }
 
     @Override
-    public void onNeighborChange(@NotNull BlockState state, @NotNull LevelReader level, @NotNull BlockPos pos, @NotNull BlockPos neighbor) {
-        super.onNeighborChange(state, level, pos, neighbor);
-        withBlockEntityDo(level, pos, InventoryAccessPortBlockEntity::updateConnectedInventory);
+    public void neighborUpdate(
+            BlockState state,
+            Level world,
+            BlockPos pos,
+            Block sourceBlock,
+            BlockPos fromPos,
+            boolean isMoving
+    ) {
+        withBlockEntityDo(world, pos, InventoryAccessPortBlockEntity::updateConnectedInventory);
     }
 
     @Override
-    public boolean hasAnalogOutputSignal(@NotNull BlockState state) {
+    protected boolean hasAnalogOutputSignal(BlockState state) {
         return true;
     }
 
     @Override
-    public int getAnalogOutputSignal(@NotNull BlockState blockState, @NotNull Level worldIn, @NotNull BlockPos pos) {
-        if (!blockState.getValue(ATTACHED)) return 0;
+    protected int getAnalogOutputSignal(BlockState blockState, Level worldIn, BlockPos pos, Direction direction) {
+        if (!blockState.getValue(ATTACHED))
+            return 0;
         BlockPos targetPos = pos.relative(DirectedDirectionalBlock.getTargetDirection(blockState));
         BlockState targetState = worldIn.getBlockState(targetPos);
-        if (targetState.is(this)) return 0;
-        return targetState.hasAnalogOutputSignal() ? targetState.getAnalogOutputSignal(worldIn, targetPos) : 0;
+        if (targetState.is(this))
+            return 0;
+        return targetState.hasAnalogOutputSignal()
+                ? targetState.getAnalogOutputSignal(worldIn, targetPos, direction) : 0;
     }
 
     @Override
@@ -100,8 +119,7 @@ public class InventoryAccessPortBlock extends DirectedDirectionalBlock implement
 
     @Override
     public BlockEntityType<? extends InventoryAccessPortBlockEntity> getBlockEntityType() {
-        return CCBlockEntityTypes.INVENTORY_ACCESS_PORT.get();
+        return CCBlockEntityTypes.INVENTORY_ACCESS_PORT;
     }
 
 }
-

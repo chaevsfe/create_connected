@@ -2,15 +2,15 @@ package com.hlysine.create_connected.content.linkedtransmitter;
 
 import com.hlysine.create_connected.registries.CCBlockEntityTypes;
 import com.hlysine.create_connected.registries.CCItems;
-import com.simibubi.create.AllSoundEvents;
-import com.simibubi.create.api.schematic.requirement.SpecialBlockItemRequirement;
-import com.simibubi.create.content.equipment.wrench.IWrenchable;
-import com.simibubi.create.content.schematics.requirement.ItemRequirement;
-import com.simibubi.create.foundation.block.IBE;
+import com.zurrtum.create.AllSoundEvents;
+import com.zurrtum.create.api.schematic.requirement.SpecialBlockItemRequirement;
+import com.zurrtum.create.content.equipment.wrench.IWrenchable;
+import com.zurrtum.create.content.schematics.requirement.ItemRequirement;
+import com.zurrtum.create.foundation.block.IBE;
 import net.minecraft.core.BlockPos;
+import net.minecraft.server.level.ServerLevel;
 import net.minecraft.world.InteractionHand;
 import net.minecraft.world.InteractionResult;
-import net.minecraft.world.ItemInteractionResult;
 import net.minecraft.world.entity.player.Player;
 import net.minecraft.world.item.ItemStack;
 import net.minecraft.world.item.context.UseOnContext;
@@ -27,17 +27,16 @@ import net.minecraft.world.level.block.state.properties.BlockStateProperties;
 import net.minecraft.world.level.block.state.properties.BooleanProperty;
 import net.minecraft.world.level.storage.loot.LootParams;
 import net.minecraft.world.phys.BlockHitResult;
-import net.minecraft.world.phys.HitResult;
 import net.minecraft.world.phys.shapes.CollisionContext;
 import net.minecraft.world.phys.shapes.Shapes;
 import net.minecraft.world.phys.shapes.VoxelShape;
-import org.jetbrains.annotations.NotNull;
-import org.jetbrains.annotations.Nullable;
+import org.jspecify.annotations.Nullable;
 
 import java.util.ArrayList;
 import java.util.List;
 
-public class LinkedLeverBlock extends LeverBlock implements IBE<LinkedTransmitterBlockEntity>, SpecialBlockItemRequirement, IWrenchable, LinkedTransmitterBlock {
+public class LinkedLeverBlock extends LeverBlock
+        implements IBE<LinkedTransmitterBlockEntity>, SpecialBlockItemRequirement, IWrenchable, LinkedTransmitterBlock {
     public static BooleanProperty LOCKED = BlockStateProperties.LOCKED;
 
     private final LeverBlock base;
@@ -64,24 +63,23 @@ public class LinkedLeverBlock extends LeverBlock implements IBE<LinkedTransmitte
     }
 
     @Override
-    public @NotNull VoxelShape getShape(@NotNull BlockState state,
-                                        @NotNull BlockGetter level,
-                                        @NotNull BlockPos pos,
-                                        @NotNull CollisionContext context) {
+    protected VoxelShape getShape(BlockState state, BlockGetter level, BlockPos pos, CollisionContext context) {
         return Shapes.or(getTransmitterShape(state), super.getShape(state, level, pos, context));
     }
 
     @Override
-    public @NotNull List<ItemStack> getDrops(@NotNull BlockState state, LootParams.@NotNull Builder builder) {
+    public List<ItemStack> getDrops(BlockState state, LootParams.Builder builder) {
         return base.defaultBlockState().getDrops(builder);
     }
 
     @Override
-    public @NotNull InteractionResult useWithoutItem(@NotNull BlockState state,
-                                                     @NotNull Level level,
-                                                     @NotNull BlockPos pos,
-                                                     @NotNull Player player,
-                                                     @NotNull BlockHitResult hit) {
+    protected InteractionResult useWithoutItem(
+            BlockState state,
+            Level level,
+            BlockPos pos,
+            Player player,
+            BlockHitResult hit
+    ) {
         if (player.isSpectator())
             return InteractionResult.PASS;
 
@@ -94,23 +92,25 @@ public class LinkedLeverBlock extends LeverBlock implements IBE<LinkedTransmitte
     }
 
     @Override
-    public @NotNull ItemInteractionResult useItemOn(@NotNull ItemStack stack,
-                                                    @NotNull BlockState state,
-                                                    @NotNull Level level,
-                                                    @NotNull BlockPos pos,
-                                                    @NotNull Player player,
-                                                    @NotNull InteractionHand hand,
-                                                    @NotNull BlockHitResult hitResult) {
+    protected InteractionResult useItemOn(
+            ItemStack stack,
+            BlockState state,
+            Level level,
+            BlockPos pos,
+            Player player,
+            InteractionHand hand,
+            BlockHitResult hitResult
+    ) {
         return LinkedTransmitterBlock.super.useWax(stack, state, level, pos, player, hand, hitResult);
     }
 
     @Override
-    public void onRemove(@NotNull BlockState state, @NotNull Level world, @NotNull BlockPos pos, @NotNull BlockState newState, boolean isMoving) {
-        if (!state.is(newState.getBlock()) && !isMoving && getBlockEntityOptional(world, pos).map(be -> be.containsBase).orElse(false)) {
-            Block.popResource(world, pos, new ItemStack(CCItems.LINKED_TRANSMITTER.get()));
+    protected void affectNeighborsAfterRemoval(BlockState state, ServerLevel level, BlockPos pos, boolean movedByPiston) {
+        if (!movedByPiston && getBlockEntityOptional(level, pos).map(be -> be.containsBase).orElse(false)) {
+            Block.popResource(level, pos, new ItemStack(CCItems.LINKED_TRANSMITTER));
         }
-        withBlockEntityDo(world, pos, be -> be.transmit(0));
-        base.defaultBlockState().onRemove(world, pos, newState, isMoving);
+        withBlockEntityDo(level, pos, be -> be.transmit(0));
+        base.defaultBlockState().affectNeighborsAfterRemoval(level, pos, movedByPiston);
     }
 
     @Override
@@ -123,7 +123,7 @@ public class LinkedLeverBlock extends LeverBlock implements IBE<LinkedTransmitte
     public InteractionResult onWrenched(BlockState state, UseOnContext context) {
         Player player = context.getPlayer();
         if (!player.isCreative()) {
-            player.getInventory().placeItemBackInInventory(new ItemStack(CCItems.LINKED_TRANSMITTER.get()));
+            player.getInventory().placeItemBackInInventory(new ItemStack(CCItems.LINKED_TRANSMITTER));
         }
         withBlockEntityDo(context.getLevel(), context.getClickedPos(), be -> be.containsBase = false);
         replaceWithBase(state, context.getLevel(), context.getClickedPos());
@@ -150,13 +150,13 @@ public class LinkedLeverBlock extends LeverBlock implements IBE<LinkedTransmitte
     }
 
     @Override
-    public void pull(@NotNull BlockState state, @NotNull Level level, @NotNull BlockPos pos, @Nullable Player player) {
+    public void pull(BlockState state, Level level, BlockPos pos, @Nullable Player player) {
         super.pull(state, level, pos, player);
         updateTransmittedSignal(level, pos);
     }
 
     public void updateTransmittedSignal(Level worldIn, BlockPos pos) {
-        if (worldIn.isClientSide)
+        if (worldIn.isClientSide())
             return;
 
         BlockState state = worldIn.getBlockState(pos);
@@ -166,21 +166,15 @@ public class LinkedLeverBlock extends LeverBlock implements IBE<LinkedTransmitte
     }
 
     @Override
-    public @NotNull ItemStack getCloneItemStack(@NotNull BlockState state,
-                                                @NotNull HitResult target,
-                                                @NotNull LevelReader world,
-                                                @NotNull BlockPos pos,
-                                                @NotNull Player player) {
-        if (isHittingBase(state, world, pos, target))
-            return base.getCloneItemStack(state, target, world, pos, player);
-        return new ItemStack(CCItems.LINKED_TRANSMITTER.get());
+    protected ItemStack getCloneItemStack(LevelReader level, BlockPos pos, BlockState state, boolean includeData) {
+        return new ItemStack(CCItems.LINKED_TRANSMITTER);
     }
 
     @Override
-    public ItemRequirement getRequiredItems(BlockState state, BlockEntity be) {
+    public ItemRequirement getRequiredItems(BlockState state, @Nullable BlockEntity be) {
         ArrayList<ItemStack> requiredItems = new ArrayList<>();
         requiredItems.add(new ItemStack(base));
-        requiredItems.add(new ItemStack(CCItems.LINKED_TRANSMITTER.get()));
+        requiredItems.add(new ItemStack(CCItems.LINKED_TRANSMITTER));
         return new ItemRequirement(ItemRequirement.ItemUseType.CONSUME, requiredItems);
     }
 
@@ -191,6 +185,6 @@ public class LinkedLeverBlock extends LeverBlock implements IBE<LinkedTransmitte
 
     @Override
     public BlockEntityType<? extends LinkedTransmitterBlockEntity> getBlockEntityType() {
-        return CCBlockEntityTypes.LINKED_TRANSMITTER.get();
+        return CCBlockEntityTypes.LINKED_TRANSMITTER;
     }
 }

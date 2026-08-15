@@ -2,21 +2,17 @@ package com.hlysine.create_connected.content.sixwaygearbox;
 
 import com.hlysine.create_connected.registries.CCBlockEntityTypes;
 import com.hlysine.create_connected.registries.CCItems;
-import com.simibubi.create.content.kinetics.base.RotatedPillarKineticBlock;
-import com.simibubi.create.foundation.block.IBE;
+import com.zurrtum.create.content.kinetics.base.RotatedPillarKineticBlock;
+import com.zurrtum.create.foundation.block.IBE;
 import net.minecraft.core.BlockPos;
 import net.minecraft.core.Direction;
 import net.minecraft.core.Direction.Axis;
-import net.minecraft.world.entity.player.Player;
 import net.minecraft.world.item.ItemStack;
 import net.minecraft.world.item.context.BlockPlaceContext;
 import net.minecraft.world.level.LevelReader;
 import net.minecraft.world.level.block.entity.BlockEntityType;
 import net.minecraft.world.level.block.state.BlockState;
-import net.minecraft.world.level.material.PushReaction;
 import net.minecraft.world.level.storage.loot.LootParams;
-import net.minecraft.world.phys.HitResult;
-import org.jetbrains.annotations.NotNull;
 
 import java.util.List;
 
@@ -27,26 +23,17 @@ public class SixWayGearboxBlock extends RotatedPillarKineticBlock implements IBE
     }
 
     @Override
-    public PushReaction getPistonPushReaction(@NotNull BlockState state) {
-        return PushReaction.PUSH_ONLY;
-    }
-
-    @Override
-    public @NotNull List<ItemStack> getDrops(BlockState state, @NotNull LootParams.Builder builder) {
+    public List<ItemStack> getDrops(BlockState state, LootParams.Builder builder) {
         if (state.getValue(AXIS).isVertical())
             return super.getDrops(state, builder);
-        return List.of(new ItemStack(CCItems.VERTICAL_SIX_WAY_GEARBOX.get()));
+        return List.of(new ItemStack(CCItems.VERTICAL_SIX_WAY_GEARBOX));
     }
 
     @Override
-    public @NotNull ItemStack getCloneItemStack(BlockState state,
-                                                @NotNull HitResult target,
-                                                @NotNull LevelReader world,
-                                                @NotNull BlockPos pos,
-                                                @NotNull Player player) {
+    protected ItemStack getCloneItemStack(LevelReader world, BlockPos pos, BlockState state, boolean includeData) {
         if (state.getValue(AXIS).isVertical())
-            return super.getCloneItemStack(state, target, world, pos, player);
-        return new ItemStack(CCItems.VERTICAL_SIX_WAY_GEARBOX.get());
+            return super.getCloneItemStack(world, pos, state, includeData);
+        return new ItemStack(CCItems.VERTICAL_SIX_WAY_GEARBOX);
     }
 
     @Override
@@ -71,6 +58,6 @@ public class SixWayGearboxBlock extends RotatedPillarKineticBlock implements IBE
 
     @Override
     public BlockEntityType<? extends SixWayGearboxBlockEntity> getBlockEntityType() {
-        return CCBlockEntityTypes.SIX_WAY_GEARBOX.get();
+        return CCBlockEntityTypes.SIX_WAY_GEARBOX;
     }
 }

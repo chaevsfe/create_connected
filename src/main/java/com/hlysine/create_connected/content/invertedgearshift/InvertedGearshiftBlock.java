@@ -1,8 +1,8 @@
 package com.hlysine.create_connected.content.invertedgearshift;
 
 import com.hlysine.create_connected.registries.CCBlockEntityTypes;
-import com.simibubi.create.content.kinetics.transmission.GearshiftBlock;
-import com.simibubi.create.content.kinetics.transmission.SplitShaftBlockEntity;
+import com.zurrtum.create.content.kinetics.transmission.GearshiftBlock;
+import com.zurrtum.create.content.kinetics.transmission.SplitShaftBlockEntity;
 import net.minecraft.world.level.block.entity.BlockEntityType;
 
 public class InvertedGearshiftBlock extends GearshiftBlock {
@@ -13,7 +13,6 @@ public class InvertedGearshiftBlock extends GearshiftBlock {
 
     @Override
     public BlockEntityType<? extends SplitShaftBlockEntity> getBlockEntityType() {
-        return CCBlockEntityTypes.INVERTED_GEARSHIFT.get();
+        return CCBlockEntityTypes.INVERTED_GEARSHIFT;
     }
 }
-

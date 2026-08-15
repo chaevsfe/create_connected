@@ -1,51 +1,35 @@
 package com.hlysine.create_connected.content.fluidvessel;
 
-import com.hlysine.create_connected.registries.CCBlockEntityTypes;
-import com.hlysine.create_connected.CreateConnected;
-import com.simibubi.create.api.connectivity.ConnectivityHandler;
-import com.simibubi.create.api.equipment.goggles.IHaveGoggleInformation;
-import com.simibubi.create.content.fluids.tank.FluidTankBlockEntity;
-import com.simibubi.create.foundation.blockEntity.IMultiBlockEntityContainer;
-import com.simibubi.create.foundation.fluid.SmartFluidTank;
-import com.simibubi.create.infrastructure.config.AllConfigs;
-import net.createmod.catnip.animation.LerpedFloat;
-import net.createmod.catnip.nbt.NBTHelper;
+import com.zurrtum.create.api.connectivity.ConnectivityHandler;
+import com.zurrtum.create.catnip.animation.LerpedFloat;
+import com.zurrtum.create.content.fluids.tank.FluidTankBlockEntity;
+import com.zurrtum.create.infrastructure.fluids.FluidStack;
 import net.minecraft.core.BlockPos;
 import net.minecraft.core.Direction;
-import net.minecraft.core.HolderLookup;
-import net.minecraft.nbt.CompoundTag;
-import net.minecraft.nbt.NbtUtils;
-import net.minecraft.network.chat.Component;
+import net.minecraft.core.Direction.Axis;
+import net.minecraft.world.level.block.Block;
 import net.minecraft.world.level.block.entity.BlockEntity;
 import net.minecraft.world.level.block.entity.BlockEntityType;
 import net.minecraft.world.level.block.state.BlockState;
+import net.minecraft.world.level.storage.ValueInput;
+import net.minecraft.world.level.storage.ValueOutput;
 import net.minecraft.world.phys.AABB;
-import net.neoforged.bus.api.SubscribeEvent;
-import net.neoforged.fml.common.EventBusSubscriber;
-import net.neoforged.neoforge.capabilities.Capabilities;
-import net.neoforged.neoforge.capabilities.RegisterCapabilitiesEvent;
-import net.neoforged.neoforge.fluids.FluidStack;
-import net.neoforged.neoforge.fluids.FluidType;
-import net.neoforged.neoforge.fluids.capability.IFluidHandler;
-import net.neoforged.neoforge.fluids.capability.IFluidHandler.FluidAction;
-import net.neoforged.neoforge.fluids.capability.templates.FluidTank;
+import org.jspecify.annotations.Nullable;
 
-import javax.annotation.Nullable;
-import java.util.List;
+import static com.hlysine.create_connected.content.fluidvessel.FluidVesselBlock.AXIS;
+import static com.hlysine.create_connected.content.fluidvessel.FluidVesselBlock.LIGHT_LEVEL;
+import static com.hlysine.create_connected.content.fluidvessel.FluidVesselBlock.NEGATIVE;
+import static com.hlysine.create_connected.content.fluidvessel.FluidVesselBlock.POSITIVE;
+import static com.hlysine.create_connected.content.fluidvessel.FluidVesselBlock.SHAPE;
+import static com.hlysine.create_connected.content.fluidvessel.FluidVesselBlock.Shape;
+import static com.hlysine.create_connected.content.fluidvessel.FluidVesselBlock.WindowType;
+import static com.hlysine.create_connected.content.fluidvessel.FluidVesselBlock.isVessel;
 
-import static com.hlysine.create_connected.content.fluidvessel.FluidVesselBlock.*;
-import static net.minecraft.core.Direction.Axis;
-
-@EventBusSubscriber(modid = CreateConnected.MODID)
-public class FluidVesselBlockEntity extends FluidTankBlockEntity implements IHaveGoggleInformation, IMultiBlockEntityContainer.Fluid {
+public class FluidVesselBlockEntity extends FluidTankBlockEntity {
 
     private static final int MAX_SIZE = 3;
-    private static final int SYNC_RATE = 8;
 
     protected WindowType windowType;
-
-    // For rendering purposes only
-    private LerpedFloat fluidLevel;
 
     public FluidVesselBlockEntity(BlockEntityType<?> type, BlockPos pos, BlockState state) {
         super(type, pos, state);
@@ -54,53 +38,9 @@ public class FluidVesselBlockEntity extends FluidTankBlockEntity implements IHav
         refreshCapability();
     }
 
-    @SubscribeEvent
-    public static void registerCapabilities(RegisterCapabilitiesEvent event) {
-        event.registerBlockEntity(
-                Capabilities.FluidHandler.BLOCK,
-                CCBlockEntityTypes.FLUID_VESSEL.get(),
-                (be, context) -> {
-                    if (be.fluidCapability == null)
-                        be.refreshCapability();
-                    return be.fluidCapability;
-                }
-        );
-        event.registerBlockEntity(
-                Capabilities.FluidHandler.BLOCK,
-                CCBlockEntityTypes.CREATIVE_FLUID_VESSEL.get(),
-                (be, context) -> {
-                    if (be.fluidCapability == null)
-                        be.refreshCapability();
-                    return be.fluidCapability;
-                }
-        );
-    }
-
     @Override
-    protected SmartFluidTank createInventory() {
-        return new SmartFluidTank(getCapacityMultiplier(), this::onFluidStackChanged);
-    }
-
-    @Override
-    protected void updateConnectivity() {
-        updateConnectivity = false;
-        if (level.isClientSide)
-            return;
-        if (!isController())
-            return;
-        ConnectivityHandler.formMulti(this);
-    }
-
-    @Override
-    public void tick() {
-        super.tick();
-        if (fluidLevel != null)
-            fluidLevel.tickChaser();
-    }
-
-    @Override
-    public BlockPos getLastKnownPos() {
-        return lastKnownPos;
+    public void updateConnectivity() {
+        super.updateConnectivity();
     }
 
     public Axis getAxis() {
@@ -108,30 +48,19 @@ public class FluidVesselBlockEntity extends FluidTankBlockEntity implements IHav
     }
 
     @Override
-    public boolean isController() {
-        return controller == null || worldPosition.getX() == controller.getX()
-                && worldPosition.getY() == controller.getY() && worldPosition.getZ() == controller.getZ();
-    }
-
-    private void onPositionChanged() {
-        removeController(true);
-        lastKnownPos = worldPosition;
-    }
-
-    @Override
     protected void onFluidStackChanged(FluidStack newFluidStack) {
         if (!hasLevel())
             return;
 
-        FluidType attributes = newFluidStack.getFluid()
-                .getFluidType();
-        int luminosity = (int) (attributes.getLightLevel(newFluidStack) / 1.2f);
-        boolean reversed = attributes.isLighterThanAir();
+        int luminosity = (int) (newFluidStack.getFluid()
+                .defaultFluidState()
+                .createLegacyBlock()
+                .getLightEmission() / 1.2f);
         int maxY = (int) ((getFillState() * width) + 1);
         Axis axis = getAxis();
 
         for (int yOffset = 0; yOffset < width; yOffset++) {
-            boolean isBright = reversed ? (width - yOffset <= maxY) : (yOffset < maxY);
+            boolean isBright = yOffset < maxY;
             int actualLuminosity = isBright ? luminosity : luminosity > 0 ? 1 : 0;
 
             for (int lengthOffset = 0; lengthOffset < height; lengthOffset++) {
@@ -153,23 +82,40 @@ public class FluidVesselBlockEntity extends FluidTankBlockEntity implements IHav
             }
         }
 
-        if (!level.isClientSide) {
+        if (!level.isClientSide()) {
             setChanged();
             sendData();
         }
 
         if (isVirtual()) {
-            if (fluidLevel == null)
-                fluidLevel = LerpedFloat.linear()
-                        .startWithValue(getFillState());
-            fluidLevel.chase(getFillState(), .5f, LerpedFloat.Chaser.EXP);
+            if (getFluidLevel() == null)
+                setFluidLevel(LerpedFloat.linear()
+                        .startWithValue(getFillState()));
+            getFluidLevel().chase(getFillState(), .5f, LerpedFloat.Chaser.EXP);
         }
     }
 
-    @SuppressWarnings("unchecked")
     @Override
+    protected void updateStateLuminosity() {
+        if (level.isClientSide())
+            return;
+        int actualLuminosity = luminosity;
+        FluidVesselBlockEntity controllerBE = getControllerBE();
+        if (controllerBE == null || !controllerBE.window)
+            actualLuminosity = 0;
+        refreshBlockState();
+        BlockState state = getBlockState();
+        if (!isVessel(state))
+            return;
+        if (state.getValue(LIGHT_LEVEL) != actualLuminosity)
+            level.setBlock(worldPosition, state.setValue(LIGHT_LEVEL, actualLuminosity),
+                    Block.UPDATE_NEIGHBORS | Block.UPDATE_CLIENTS | Block.UPDATE_INVISIBLE | Block.UPDATE_KNOWN_SHAPE);
+    }
+
+    @Override
+    @Nullable
     public FluidVesselBlockEntity getControllerBE() {
-        if (isController())
+        if (isController() || !hasLevel())
             return this;
         BlockEntity blockEntity = level.getBlockEntity(controller);
         if (blockEntity instanceof FluidVesselBlockEntity)
@@ -179,7 +125,7 @@ public class FluidVesselBlockEntity extends FluidTankBlockEntity implements IHav
 
     @Override
     public void removeController(boolean keepFluids) {
-        if (level.isClientSide)
+        if (level.isClientSide())
             return;
         updateConnectivity = true;
         if (!keepFluids)
@@ -195,7 +141,8 @@ public class FluidVesselBlockEntity extends FluidTankBlockEntity implements IHav
             state = state.setValue(POSITIVE, true);
             state = state.setValue(NEGATIVE, true);
             state = state.setValue(SHAPE, window ? Shape.WINDOW : Shape.PLAIN);
-            getLevel().setBlock(worldPosition, state, 22);
+            getLevel().setBlock(worldPosition, state,
+                    Block.UPDATE_CLIENTS | Block.UPDATE_INVISIBLE | Block.UPDATE_KNOWN_SHAPE);
         }
 
         refreshCapability();
@@ -297,7 +244,10 @@ public class FluidVesselBlockEntity extends FluidTankBlockEntity implements IHav
                             }
                         }
 
-                    level.setBlock(pos, blockState.setValue(SHAPE, shape), 22);
+                    level.setBlock(pos, blockState.setValue(SHAPE, shape),
+                            Block.UPDATE_CLIENTS | Block.UPDATE_INVISIBLE | Block.UPDATE_KNOWN_SHAPE);
+                    if (level.getBlockEntity(pos) instanceof FluidVesselBlockEntity vesselAt)
+                        vesselAt.updateStateLuminosity();
                     level.getChunkSource()
                             .getLightEngine()
                             .checkBlock(pos);
@@ -338,43 +288,16 @@ public class FluidVesselBlockEntity extends FluidTankBlockEntity implements IHav
     }
 
     @Override
-    public void setController(BlockPos controller) {
-        if (level.isClientSide && !isVirtual())
-            return;
-        if (controller.equals(this.controller))
-            return;
-        this.controller = controller;
-        refreshCapability();
-        setChanged();
-        sendData();
-    }
-
-    protected void refreshCapability() {
-        fluidCapability = handlerForCapability();
-        invalidateCapabilities();
-    }
-
-    protected IFluidHandler handlerForCapability() {
-        return isController() ? (boiler.isActive() ? boiler.createHandler() : tankInventory)
-                : ((getControllerBE() != null) ? getControllerBE().handlerForCapability() : new FluidTank(0));
-    }
-
-    @Override
-    public BlockPos getController() {
-        return isController() ? worldPosition : controller;
-    }
-
-    @Override
     protected AABB createRenderBoundingBox() {
-        if (isController()) {
-            Axis axis = getAxis();
-            return super.createRenderBoundingBox().expandTowards(
-                    axis == Axis.X ? (height - 1) : (width - 1),
-                    width - 1,
-                    axis == Axis.Z ? (height - 1) : (width - 1)
-            );
-        } else
-            return super.createRenderBoundingBox();
+        AABB base = new AABB(getBlockPos());
+        if (!isController())
+            return base;
+        Axis axis = getAxis();
+        return base.expandTowards(
+                axis == Axis.X ? (height - 1) : (width - 1),
+                width - 1,
+                axis == Axis.Z ? (height - 1) : (width - 1)
+        );
     }
 
     @Override
@@ -387,143 +310,33 @@ public class FluidVesselBlockEntity extends FluidTankBlockEntity implements IHav
     }
 
     @Override
-    public boolean addToGoggleTooltip(List<Component> tooltip, boolean isPlayerSneaking) {
-        FluidVesselBlockEntity controllerBE = getControllerBE();
-        if (controllerBE == null)
-            return false;
-        if (controllerBE.boiler.addToGoggleTooltip(tooltip, isPlayerSneaking, controllerBE.getTotalTankSize()))
-            return true;
-        return containedFluidTooltip(tooltip, isPlayerSneaking,
-                level.getCapability(Capabilities.FluidHandler.BLOCK, controllerBE.getBlockPos(), null));
+    protected void read(ValueInput view, boolean clientPacket) {
+        super.read(view, clientPacket);
+        if (isController())
+            windowType = view.read("WindowType", WindowType.CODEC)
+                    .orElse(WindowType.SIDE_WIDE);
     }
 
     @Override
-    protected void read(CompoundTag compound, HolderLookup.Provider registries, boolean clientPacket) {
-        super.read(compound, registries, clientPacket);
+    public void write(ValueOutput view, boolean clientPacket) {
+        super.write(view, clientPacket);
+        if (isController())
+            view.store("WindowType", WindowType.CODEC, windowType);
+    }
 
-        BlockPos controllerBefore = controller;
-        int prevWidth = width;
-        int prevLength = height;
-        int prevLum = luminosity;
-
-        updateConnectivity = compound.contains("Uninitialized");
-        luminosity = compound.getInt("Luminosity");
-
-        lastKnownPos = null;
-        if (compound.contains("LastKnownPos"))
-            lastKnownPos = NBTHelper.readBlockPos(compound, "LastKnownPos");
-
-        controller = null;
-        if (compound.contains("Controller"))
-            controller = NBTHelper.readBlockPos(compound, "Controller");
-
+    @Override
+    public void writeSafe(ValueOutput view) {
         if (isController()) {
-            window = compound.getBoolean("Window");
-            windowType = NBTHelper.readEnum(compound, "WindowType", WindowType.class);
-            width = compound.getInt("Size");
-            height = compound.getInt("Height");
-            tankInventory.setCapacity(getTotalTankSize() * getCapacityMultiplier());
-
-            tankInventory.readFromNBT(registries, compound.getCompound("TankContent"));
-            if (tankInventory.getSpace() < 0)
-                tankInventory.drain(-tankInventory.getSpace(), FluidAction.EXECUTE);
+            view.putBoolean("Window", window);
+            view.putInt("Size", width);
+            view.putInt("Height", height);
         }
-
-        boiler.read(compound.getCompound("Boiler"), width * width * height);
-
-        if (compound.contains("ForceFluidLevel") || fluidLevel == null)
-            fluidLevel = LerpedFloat.linear()
-                    .startWithValue(getFillState());
-
-        updateCapability = true;
-
-        if (!clientPacket)
-            return;
-
-        boolean changeOfController =
-                controllerBefore == null ? controller != null : !controllerBefore.equals(controller);
-        if (changeOfController || prevWidth != width || prevLength != height) {
-            if (hasLevel())
-                level.sendBlockUpdated(getBlockPos(), getBlockState(), getBlockState(), 16);
-            if (isController())
-                tankInventory.setCapacity(getCapacityMultiplier() * getTotalTankSize());
-            invalidateRenderBoundingBox();
-        }
-        if (isController()) {
-            float fillState = getFillState();
-            if (compound.contains("ForceFluidLevel") || fluidLevel == null)
-                fluidLevel = LerpedFloat.linear()
-                        .startWithValue(fillState);
-            fluidLevel.chase(fillState, 0.5f, LerpedFloat.Chaser.EXP);
-        }
-        if (luminosity != prevLum && hasLevel())
-            level.getChunkSource()
-                    .getLightEngine()
-                    .checkBlock(worldPosition);
-
-        if (compound.contains("LazySync"))
-            fluidLevel.chase(fluidLevel.getChaseTarget(), 0.125f, LerpedFloat.Chaser.EXP);
-    }
-
-    @Override
-    public void write(CompoundTag compound, HolderLookup.Provider registries, boolean clientPacket) {
-        if (updateConnectivity)
-            compound.putBoolean("Uninitialized", true);
-        compound.put("Boiler", boiler.write());
-        if (lastKnownPos != null)
-            compound.put("LastKnownPos", NbtUtils.writeBlockPos(lastKnownPos));
-        if (!isController())
-            compound.put("Controller", NbtUtils.writeBlockPos(controller));
-        if (isController()) {
-            compound.putBoolean("Window", window);
-            NBTHelper.writeEnum(compound, "WindowType", windowType);
-            compound.put("TankContent", tankInventory.writeToNBT(registries, new CompoundTag()));
-            compound.putInt("Size", width);
-            compound.putInt("Height", height);
-        }
-        compound.putInt("Luminosity", luminosity);
-        super.write(compound, registries, clientPacket);
-
-        if (!clientPacket)
-            return;
-        if (forceFluidLevelUpdate)
-            compound.putBoolean("ForceFluidLevel", true);
-        if (queuedSync)
-            compound.putBoolean("LazySync", true);
-        forceFluidLevelUpdate = false;
-    }
-
-    public static int getMaxSize() {
-        return MAX_SIZE;
-    }
-
-    public static int getCapacityMultiplier() {
-        return AllConfigs.server().fluids.fluidTankCapacity.get() * 1000;
-    }
-
-    public static int getMaxHeight() {
-        return AllConfigs.server().fluids.fluidTankMaxHeight.get();
-    }
-
-    @Override
-    public LerpedFloat getFluidLevel() {
-        return fluidLevel;
-    }
-
-    @Override
-    public void setFluidLevel(LerpedFloat fluidLevel) {
-        this.fluidLevel = fluidLevel;
-    }
-
-    @Override
-    public void preventConnectivityUpdate() {
-        updateConnectivity = false;
     }
 
     @Override
     public void notifyMultiUpdated() {
         BlockState state = this.getBlockState();
-        if (isVessel(state)) { // safety
+        if (isVessel(state)) {
             Axis axis = getAxis();
             state = state.setValue(NEGATIVE, axis == Axis.X
                     ? getController().getX() == getBlockPos().getX()
@@ -531,7 +344,7 @@ public class FluidVesselBlockEntity extends FluidTankBlockEntity implements IHav
             state = state.setValue(POSITIVE, axis == Axis.X
                     ? getController().getX() + height - 1 == getBlockPos().getX()
                     : getController().getZ() + height - 1 == getBlockPos().getZ());
-            level.setBlock(getBlockPos(), state, 6);
+            level.setBlock(getBlockPos(), state, Block.UPDATE_CLIENTS | Block.UPDATE_INVISIBLE);
         }
         if (isController())
             setWindows(window);
@@ -558,10 +371,13 @@ public class FluidVesselBlockEntity extends FluidTankBlockEntity implements IHav
     }
 
     @Override
-    public Object modifyExtraData(Object data) {
+    @Nullable
+    public Object modifyExtraData(@Nullable Object data) {
         if (data == null || (data instanceof WindowType)) {
-            if (data != null && !window) return data;
-            if (window) return windowType;
+            if (data != null && !window)
+                return data;
+            if (window)
+                return windowType;
             return null;
         }
         return data;
@@ -574,43 +390,14 @@ public class FluidVesselBlockEntity extends FluidTankBlockEntity implements IHav
 
     @Override
     public int getMaxLength(Axis longAxis, int width) {
-        if (longAxis == Axis.Y) return getMaxWidth();
+        if (longAxis == Axis.Y)
+            return getMaxWidth();
         return getMaxHeight();
     }
 
     @Override
     public int getMaxWidth() {
-        return 3;
-    }
-
-    @Override
-    public int getHeight() {
-        return height;
-    }
-
-    @Override
-    public void setHeight(int height) {
-        this.height = height;
-    }
-
-    @Override
-    public int getWidth() {
-        return width;
-    }
-
-    @Override
-    public void setWidth(int width) {
-        this.width = width;
-    }
-
-    @Override
-    public int getTankSize(int tank) {
-        return getCapacityMultiplier();
-    }
-
-    @Override
-    public void setTankSize(int tank, int blocks) {
-        applyFluidTankSize(blocks);
+        return MAX_SIZE;
     }
 
     public boolean hasWindow() {

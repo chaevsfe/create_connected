@@ -2,17 +2,22 @@ package com.hlysine.create_connected.content.copycat.wall;
 
 import com.hlysine.create_connected.content.copycat.ICopycatWithWrappedBlock;
 import com.hlysine.create_connected.content.copycat.WaterloggedCopycatWrappedBlock;
-import com.simibubi.create.content.decoration.copycat.CopycatBlock;
-import net.createmod.catnip.data.Iterate;
+import com.zurrtum.create.catnip.data.Iterate;
+import com.zurrtum.create.content.decoration.copycat.CopycatBlock;
 import net.minecraft.core.BlockPos;
 import net.minecraft.core.Direction;
 import net.minecraft.core.Vec3i;
-import net.minecraft.world.entity.Entity;
+import net.minecraft.util.RandomSource;
 import net.minecraft.world.item.context.BlockPlaceContext;
-import net.minecraft.world.level.BlockAndTintGetter;
+import net.minecraft.world.level.BlockAndLightGetter;
 import net.minecraft.world.level.BlockGetter;
-import net.minecraft.world.level.LevelAccessor;
-import net.minecraft.world.level.block.*;
+import net.minecraft.world.level.LevelReader;
+import net.minecraft.world.level.ScheduledTickAccess;
+import net.minecraft.world.level.block.Block;
+import net.minecraft.world.level.block.Blocks;
+import net.minecraft.world.level.block.Mirror;
+import net.minecraft.world.level.block.Rotation;
+import net.minecraft.world.level.block.WallBlock;
 import net.minecraft.world.level.block.state.BlockState;
 import net.minecraft.world.level.block.state.StateDefinition;
 import net.minecraft.world.level.block.state.properties.EnumProperty;
@@ -20,13 +25,11 @@ import net.minecraft.world.level.block.state.properties.WallSide;
 import net.minecraft.world.level.pathfinder.PathComputationType;
 import net.minecraft.world.phys.shapes.CollisionContext;
 import net.minecraft.world.phys.shapes.VoxelShape;
-import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.util.Arrays;
 
 import static net.minecraft.core.Direction.Axis;
-import static net.minecraft.world.level.block.WallBlock.*;
 
 public class CopycatWallBlock extends WaterloggedCopycatWrappedBlock {
 
@@ -35,11 +38,11 @@ public class CopycatWallBlock extends WaterloggedCopycatWrappedBlock {
     public CopycatWallBlock(Properties properties) {
         super(properties);
         registerDefaultState(defaultBlockState()
-                .setValue(UP, true)
-                .setValue(NORTH_WALL, WallSide.NONE)
-                .setValue(SOUTH_WALL, WallSide.NONE)
-                .setValue(EAST_WALL, WallSide.NONE)
-                .setValue(WEST_WALL, WallSide.NONE)
+                .setValue(WallBlock.UP, true)
+                .setValue(WallBlock.NORTH, WallSide.NONE)
+                .setValue(WallBlock.SOUTH, WallSide.NONE)
+                .setValue(WallBlock.EAST, WallSide.NONE)
+                .setValue(WallBlock.WEST, WallSide.NONE)
         );
     }
 
@@ -49,60 +52,58 @@ public class CopycatWallBlock extends WaterloggedCopycatWrappedBlock {
     }
 
     @Override
-    protected void createBlockStateDefinition(StateDefinition.@NotNull Builder<Block, BlockState> pBuilder) {
-        super.createBlockStateDefinition(pBuilder.add(UP, NORTH_WALL, SOUTH_WALL, EAST_WALL, WEST_WALL));
+    protected void createBlockStateDefinition(StateDefinition.Builder<Block, BlockState> pBuilder) {
+        super.createBlockStateDefinition(pBuilder.add(WallBlock.UP, WallBlock.NORTH, WallBlock.SOUTH, WallBlock.EAST, WallBlock.WEST));
     }
 
     @Nullable
     @Override
-    public BlockState getStateForPlacement(@NotNull BlockPlaceContext pContext) {
+    public BlockState getStateForPlacement(BlockPlaceContext pContext) {
         BlockState state = wall.getStateForPlacement(pContext);
         if (state == null) return super.getStateForPlacement(pContext);
         return ICopycatWithWrappedBlock.copyState(state, super.getStateForPlacement(pContext), false);
     }
 
     @Override
-    public boolean collisionExtendsVertically(BlockState state, BlockGetter level, BlockPos pos, Entity collidingEntity) {
-        return true;
-    }
-
-    @Override
-    public @NotNull VoxelShape getShape(@NotNull BlockState pState, @NotNull BlockGetter pLevel, @NotNull BlockPos pPos, @NotNull CollisionContext pContext) {
+    public VoxelShape getShape(BlockState pState, BlockGetter pLevel, BlockPos pPos, CollisionContext pContext) {
         return ICopycatWithWrappedBlock.wrappedState(wall, pState).getShape(pLevel, pPos, pContext);
     }
 
     @Override
-    public @NotNull VoxelShape getCollisionShape(@NotNull BlockState pState, @NotNull BlockGetter pLevel, @NotNull BlockPos pPos, @NotNull CollisionContext pContext) {
+    public VoxelShape getCollisionShape(BlockState pState, BlockGetter pLevel, BlockPos pPos, CollisionContext pContext) {
         return ICopycatWithWrappedBlock.wrappedState(wall, pState).getCollisionShape(pLevel, pPos, pContext);
     }
 
     @Override
-    protected boolean isPathfindable(@NotNull BlockState pState, @NotNull PathComputationType pPathComputationType) {
+    protected boolean isPathfindable(BlockState pState, PathComputationType pPathComputationType) {
         return ICopycatWithWrappedBlock.wrappedState(wall, pState).isPathfindable(pPathComputationType);
     }
 
     @Override
-    public @NotNull BlockState updateShape(@NotNull BlockState pState, @NotNull Direction pDirection, @NotNull BlockState pNeighborState, @NotNull LevelAccessor pLevel, @NotNull BlockPos pCurrentPos, @NotNull BlockPos pNeighborPos) {
-        return migrateOnUpdate(pLevel.isClientSide(), ICopycatWithWrappedBlock.unwrapForOperation(wall, pState, state -> state.updateShape(pDirection, pNeighborState, pLevel, pCurrentPos, pNeighborPos)));
+    public BlockState updateShape(BlockState pState, LevelReader pLevel, ScheduledTickAccess tickView,
+                                  BlockPos pCurrentPos, Direction pDirection, BlockPos pNeighborPos,
+                                  BlockState pNeighborState, RandomSource random) {
+        return ICopycatWithWrappedBlock.unwrapForOperation(wall, pState, state -> state.updateShape(
+                pLevel, tickView, pCurrentPos, pDirection, pNeighborPos, pNeighborState, random));
     }
 
     @Override
-    public boolean propagatesSkylightDown(@NotNull BlockState pState, @NotNull BlockGetter pLevel, @NotNull BlockPos pPos) {
-        return ICopycatWithWrappedBlock.wrappedState(wall, pState).propagatesSkylightDown(pLevel, pPos);
+    protected boolean propagatesSkylightDown(BlockState pState) {
+        return !pState.getValue(WATERLOGGED);
     }
 
     @Override
-    public @NotNull BlockState rotate(@NotNull BlockState pState, @NotNull Rotation pRotation) {
+    public BlockState rotate(BlockState pState, Rotation pRotation) {
         return ICopycatWithWrappedBlock.unwrapForOperation(wall, pState, state -> state.rotate(pRotation));
     }
 
     @Override
-    public @NotNull BlockState mirror(@NotNull BlockState pState, @NotNull Mirror pMirror) {
+    public BlockState mirror(BlockState pState, Mirror pMirror) {
         return ICopycatWithWrappedBlock.unwrapForOperation(wall, pState, state -> state.mirror(pMirror));
     }
 
     @Override
-    public boolean isIgnoredConnectivitySide(BlockAndTintGetter reader, BlockState state, Direction face,
+    public boolean isIgnoredConnectivitySide(BlockAndLightGetter reader, BlockState state, Direction face,
                                              @Nullable BlockPos fromPos, @Nullable BlockPos toPos) {
         if (fromPos == null || toPos == null)
             return true;
@@ -121,14 +122,14 @@ public class CopycatWallBlock extends WaterloggedCopycatWrappedBlock {
     }
 
     @Override
-    public boolean canConnectTexturesToward(BlockAndTintGetter reader, BlockPos fromPos, BlockPos toPos, BlockState state) {
+    public boolean canConnectTexturesToward(BlockAndLightGetter reader, BlockPos fromPos, BlockPos toPos, BlockState state) {
         BlockState toState = reader.getBlockState(toPos);
         if (!toState.is(this)) return false;
 
         long sideCount = Arrays.stream(Iterate.horizontalDirections).filter(s -> state.getValue(byDirection(s)) != WallSide.NONE).count();
         if (sideCount > 2)
             return false;
-        if (sideCount == 2 && (state.getValue(NORTH_WALL) != state.getValue(SOUTH_WALL) || state.getValue(EAST_WALL) != state.getValue(WEST_WALL))) {
+        if (sideCount == 2 && (state.getValue(WallBlock.NORTH) != state.getValue(WallBlock.SOUTH) || state.getValue(WallBlock.EAST) != state.getValue(WallBlock.WEST))) {
             return false;
         }
 
@@ -136,7 +137,7 @@ public class CopycatWallBlock extends WaterloggedCopycatWrappedBlock {
         if (diff.equals(Vec3i.ZERO)) {
             return true;
         }
-        Direction face = Direction.fromDelta(diff.getX(), diff.getY(), diff.getZ());
+        Direction face = ICopycatWithWrappedBlock.fromDelta(diff);
         if (face == null) {
             if (diff.distManhattan(Vec3i.ZERO) > 2) return false;
             if (diff.getY() == 0) return false;
@@ -173,7 +174,7 @@ public class CopycatWallBlock extends WaterloggedCopycatWrappedBlock {
         if (face.getAxis().isHorizontal()) {
             WallSide side = state.getValue(byDirection(face));
             return side != WallSide.NONE &&
-                    !state.getValue(UP) &&
+                    !state.getValue(WallBlock.UP) &&
                     side == state.getValue(byDirection(face.getOpposite())) &&
                     state.getValue(byDirection(face.getClockWise())) == WallSide.NONE &&
                     state.getValue(byDirection(face.getCounterClockWise())) == WallSide.NONE;
@@ -186,35 +187,6 @@ public class CopycatWallBlock extends WaterloggedCopycatWrappedBlock {
         return !canFaceBeOccluded(state, face);
     }
 
-    @Override
-    public boolean supportsExternalFaceHiding(BlockState state) {
-        return true;
-    }
-
-    @Override
-    public boolean hidesNeighborFace(BlockGetter level, BlockPos pos, BlockState state, BlockState neighborState,
-                                     Direction dir) {
-        if (neighborState.getBlock() instanceof WallBlock || neighborState.getBlock() instanceof CopycatWallBlock) {
-            if (getMaterial(level, pos).skipRendering(getMaterial(level, pos.relative(dir)), dir.getOpposite())) {
-                if (dir.getAxis().isHorizontal()) {
-                    WallSide side = state.getValue(byDirection(dir));
-                    return side != WallSide.NONE && side == neighborState.getValue(byDirection(dir.getOpposite()));
-                } else {
-                    if (neighborState.getValue(UP) && !state.getValue(UP)) return false;
-                    return Arrays.stream(Iterate.horizontalDirections).allMatch(s -> {
-                        WallSide neighbor = neighborState.getValue(byDirection(s));
-                        WallSide self = state.getValue(byDirection(s));
-                        if (dir == Direction.UP && self == WallSide.LOW) return false;
-                        if (dir == Direction.DOWN && neighbor == WallSide.LOW) return false;
-                        return self == neighbor;
-                    });
-                }
-            }
-        }
-
-        return false;
-    }
-
     public static BlockState getMaterial(BlockGetter reader, BlockPos targetPos) {
         BlockState state = CopycatBlock.getMaterial(reader, targetPos);
         if (state.is(Blocks.AIR)) return reader.getBlockState(targetPos);
@@ -223,12 +195,11 @@ public class CopycatWallBlock extends WaterloggedCopycatWrappedBlock {
 
     public static EnumProperty<WallSide> byDirection(Direction direction) {
         return switch (direction) {
-            case NORTH -> NORTH_WALL;
-            case SOUTH -> SOUTH_WALL;
-            case WEST -> WEST_WALL;
-            case EAST -> EAST_WALL;
+            case NORTH -> WallBlock.NORTH;
+            case SOUTH -> WallBlock.SOUTH;
+            case WEST -> WallBlock.WEST;
+            case EAST -> WallBlock.EAST;
             default -> throw new IllegalArgumentException("Vertical directions not supported");
         };
     }
 }
-

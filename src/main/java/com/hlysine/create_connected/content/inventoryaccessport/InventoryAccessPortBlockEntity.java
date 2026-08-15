@@ -1,42 +1,33 @@
 package com.hlysine.create_connected.content.inventoryaccessport;
 
-import com.hlysine.create_connected.registries.CCBlockEntityTypes;
-import com.hlysine.create_connected.CreateConnected;
-import com.simibubi.create.content.redstone.DirectedDirectionalBlock;
-import com.simibubi.create.foundation.blockEntity.SmartBlockEntity;
-import com.simibubi.create.foundation.blockEntity.behaviour.BlockEntityBehaviour;
-import com.simibubi.create.foundation.blockEntity.behaviour.inventory.CapManipulationBehaviourBase;
-import com.simibubi.create.foundation.blockEntity.behaviour.inventory.InvManipulationBehaviour;
-import net.createmod.catnip.math.BlockFace;
+import com.zurrtum.create.api.behaviour.BlockEntityBehaviour;
+import com.zurrtum.create.catnip.math.BlockFace;
+import com.zurrtum.create.content.redstone.DirectedDirectionalBlock;
+import com.zurrtum.create.foundation.blockEntity.SmartBlockEntity;
+import com.zurrtum.create.foundation.blockEntity.behaviour.inventory.CapManipulationBehaviourBase;
+import com.zurrtum.create.foundation.blockEntity.behaviour.inventory.InvManipulationBehaviour;
 import net.minecraft.core.BlockPos;
-import net.minecraft.core.HolderLookup;
-import net.minecraft.nbt.CompoundTag;
+import net.minecraft.world.Container;
+import net.minecraft.world.entity.player.Player;
 import net.minecraft.world.item.ItemStack;
 import net.minecraft.world.level.block.entity.BlockEntityType;
 import net.minecraft.world.level.block.state.BlockState;
-import net.neoforged.bus.api.SubscribeEvent;
-import net.neoforged.fml.common.EventBusSubscriber;
-import net.neoforged.neoforge.capabilities.Capabilities;
-import net.neoforged.neoforge.capabilities.RegisterCapabilitiesEvent;
-import net.neoforged.neoforge.items.IItemHandler;
-import org.jetbrains.annotations.NotNull;
-import org.jetbrains.annotations.Nullable;
+import net.minecraft.world.level.storage.ValueInput;
+import net.minecraft.world.level.storage.ValueOutput;
+import org.jspecify.annotations.Nullable;
 
 import java.util.List;
 import java.util.function.Supplier;
 
 import static com.hlysine.create_connected.content.inventoryaccessport.InventoryAccessPortBlock.ATTACHED;
 
-@EventBusSubscriber(modid = CreateConnected.MODID)
 public class InventoryAccessPortBlockEntity extends SmartBlockEntity {
-    protected IItemHandler itemCapability;
+    protected final Container itemCapability = new InventoryAccessHandler();
     private InvManipulationBehaviour observedInventory;
     private boolean powered;
 
     public InventoryAccessPortBlockEntity(BlockEntityType<?> type, BlockPos pos, BlockState state) {
         super(type, pos, state);
-
-        itemCapability = null;
         powered = false;
     }
 
@@ -46,39 +37,32 @@ public class InventoryAccessPortBlockEntity extends SmartBlockEntity {
         updateConnectedInventory();
     }
 
-    @SubscribeEvent
-    public static void registerCapabilities(RegisterCapabilitiesEvent event) {
-        event.registerBlockEntity(
-                Capabilities.ItemHandler.BLOCK,
-                CCBlockEntityTypes.INVENTORY_ACCESS_PORT.get(),
-                (be, context) -> {
-                    if (be.itemCapability == null)
-                        be.refreshCapability();
-                    return be.itemCapability;
-                }
-        );
-    }
-
     @Override
-    public void addBehaviours(List<BlockEntityBehaviour> behaviours) {
+    public void addBehaviours(List<BlockEntityBehaviour<?>> behaviours) {
         CapManipulationBehaviourBase.InterfaceProvider towardBlockFacing =
                 (w, p, s) -> new BlockFace(p, DirectedDirectionalBlock.getTargetDirection(s));
         behaviours.add(observedInventory = new InvManipulationBehaviour(this, towardBlockFacing));
     }
 
-    public boolean isAttached() {
-        return !powered && observedInventory.hasInventory() && !(observedInventory.getInventory() instanceof WrappedItemHandler);
+    public Container getItemCapability() {
+        return itemCapability;
     }
 
-    public @Nullable BlockState getAttachedBlock() {
-        if (!isAttached()) return null;
+    public boolean isAttached() {
+        return !powered && observedInventory.hasInventory()
+                && !(observedInventory.getInventory() instanceof WrappedItemHandler);
+    }
+
+    @Nullable
+    public BlockState getAttachedBlock() {
+        if (!isAttached())
+            return null;
         return level.getBlockState(observedInventory.getTarget().getConnectedPos());
     }
 
     public void updateConnectedInventory() {
         observedInventory.findNewCapability();
         boolean previouslyPowered = powered;
-        assert level != null;
         powered = level.hasNeighborSignal(worldPosition);
         if (powered != previouslyPowered) {
             notifyUpdate();
@@ -90,27 +74,25 @@ public class InventoryAccessPortBlockEntity extends SmartBlockEntity {
     }
 
     @Override
-    protected void read(CompoundTag tag, HolderLookup.Provider registries, boolean clientPacket) {
-        super.read(tag, registries, clientPacket);
-        powered = tag.getBoolean("Powered");
+    protected void read(ValueInput view, boolean clientPacket) {
+        super.read(view, clientPacket);
+        powered = view.getBooleanOr("Powered", false);
     }
 
     @Override
-    protected void write(CompoundTag tag, HolderLookup.Provider registries, boolean clientPacket) {
-        super.write(tag, registries, clientPacket);
-        tag.putBoolean("Powered", powered);
+    protected void write(ValueOutput view, boolean clientPacket) {
+        super.write(view, clientPacket);
+        view.putBoolean("Powered", powered);
     }
 
-    private IItemHandler getConnectedItemHandler() {
-        if (powered) return null;
-        IItemHandler handler = observedInventory.getInventory();
-        if (handler instanceof WrappedItemHandler) return null;
+    @Nullable
+    private Container getConnectedContainer() {
+        if (powered)
+            return null;
+        Container handler = observedInventory.getInventory();
+        if (handler instanceof WrappedItemHandler)
+            return null;
         return handler;
-    }
-
-    private void refreshCapability() {
-        itemCapability = new InventoryAccessHandler();
-        invalidateCapabilities();
     }
 
     private class InventoryAccessHandler implements WrappedItemHandler {
@@ -118,7 +100,8 @@ public class InventoryAccessPortBlockEntity extends SmartBlockEntity {
         private final ThreadLocal<Boolean> recursionGuard = ThreadLocal.withInitial(() -> false);
 
         private <T> T preventRecursion(Supplier<T> value, T defaultValue) {
-            if (recursionGuard.get()) return defaultValue;
+            if (recursionGuard.get())
+                return defaultValue;
             recursionGuard.set(true);
             T result = value.get();
             recursionGuard.set(false);
@@ -126,50 +109,101 @@ public class InventoryAccessPortBlockEntity extends SmartBlockEntity {
         }
 
         @Override
-        public int getSlots() {
+        public int getContainerSize() {
             return preventRecursion(() -> {
-                IItemHandler handler = getConnectedItemHandler();
-                return handler == null ? 0 : handler.getSlots();
+                Container handler = getConnectedContainer();
+                return handler == null ? 0 : handler.getContainerSize();
             }, 0);
         }
 
         @Override
-        public @NotNull ItemStack getStackInSlot(int i) {
+        public boolean isEmpty() {
             return preventRecursion(() -> {
-                IItemHandler handler = getConnectedItemHandler();
-                return handler == null ? ItemStack.EMPTY : handler.getStackInSlot(i);
+                Container handler = getConnectedContainer();
+                return handler == null || handler.isEmpty();
+            }, true);
+        }
+
+        @Override
+        public ItemStack getItem(int slot) {
+            return preventRecursion(() -> {
+                Container handler = getConnectedContainer();
+                return handler == null ? ItemStack.EMPTY : handler.getItem(slot);
             }, ItemStack.EMPTY);
         }
 
         @Override
-        public @NotNull ItemStack insertItem(int i, @NotNull ItemStack itemStack, boolean b) {
+        public ItemStack removeItem(int slot, int amount) {
             return preventRecursion(() -> {
-                IItemHandler handler = getConnectedItemHandler();
-                return handler == null ? itemStack : handler.insertItem(i, itemStack, b);
-            }, itemStack);
-        }
-
-        @Override
-        public @NotNull ItemStack extractItem(int i, int i1, boolean b) {
-            return preventRecursion(() -> {
-                IItemHandler handler = getConnectedItemHandler();
-                return handler == null ? ItemStack.EMPTY : handler.extractItem(i, i1, b);
+                Container handler = getConnectedContainer();
+                return handler == null ? ItemStack.EMPTY : handler.removeItem(slot, amount);
             }, ItemStack.EMPTY);
         }
 
         @Override
-        public int getSlotLimit(int i) {
+        public ItemStack removeItemNoUpdate(int slot) {
             return preventRecursion(() -> {
-                IItemHandler handler = getConnectedItemHandler();
-                return handler == null ? 0 : handler.getSlotLimit(i);
+                Container handler = getConnectedContainer();
+                return handler == null ? ItemStack.EMPTY : handler.removeItemNoUpdate(slot);
+            }, ItemStack.EMPTY);
+        }
+
+        @Override
+        public void setItem(int slot, ItemStack stack) {
+            preventRecursion(() -> {
+                Container handler = getConnectedContainer();
+                if (handler != null)
+                    handler.setItem(slot, stack);
+                return null;
+            }, null);
+        }
+
+        @Override
+        public int getMaxStackSize() {
+            return preventRecursion(() -> {
+                Container handler = getConnectedContainer();
+                return handler == null ? 0 : handler.getMaxStackSize();
             }, 0);
         }
 
         @Override
-        public boolean isItemValid(int i, @NotNull ItemStack itemStack) {
+        public int getMaxStackSize(ItemStack stack) {
             return preventRecursion(() -> {
-                IItemHandler handler = getConnectedItemHandler();
-                return handler != null && handler.isItemValid(i, itemStack);
+                Container handler = getConnectedContainer();
+                return handler == null ? 0 : handler.getMaxStackSize(stack);
+            }, 0);
+        }
+
+        @Override
+        public void setChanged() {
+            preventRecursion(() -> {
+                Container handler = getConnectedContainer();
+                if (handler != null)
+                    handler.setChanged();
+                return null;
+            }, null);
+        }
+
+        @Override
+        public boolean stillValid(Player player) {
+            return Container.stillValidBlockEntity(InventoryAccessPortBlockEntity.this, player);
+        }
+
+        @Override
+        public void clearContent() {
+            preventRecursion(() -> {
+                Container handler = getConnectedContainer();
+                if (handler != null)
+                    handler.clearContent();
+                return null;
+            }, null);
+        }
+
+        @Override
+        public boolean canPlaceItem(int slot, ItemStack stack) {
+            return preventRecursion(() -> {
+                Container handler = getConnectedContainer();
+                return handler != null && handler.canPlaceItem(slot, stack);
             }, false);
         }
     }

@@ -2,8 +2,8 @@ package com.hlysine.create_connected.content.kineticbridge;
 
 import com.hlysine.create_connected.registries.CCBlockEntityTypes;
 import com.hlysine.create_connected.registries.CCBlocks;
-import com.simibubi.create.content.kinetics.base.DirectionalKineticBlock;
-import com.simibubi.create.foundation.block.IBE;
+import com.zurrtum.create.content.kinetics.base.DirectionalKineticBlock;
+import com.zurrtum.create.foundation.block.IBE;
 import net.minecraft.core.BlockPos;
 import net.minecraft.core.Direction;
 import net.minecraft.core.Direction.Axis;
@@ -16,6 +16,7 @@ import net.minecraft.world.level.Level;
 import net.minecraft.world.level.LevelReader;
 import net.minecraft.world.level.block.entity.BlockEntityType;
 import net.minecraft.world.level.block.state.BlockState;
+import org.jspecify.annotations.Nullable;
 
 public class KineticBridgeBlock extends DirectionalKineticBlock implements IBE<KineticBridgeBlockEntity> {
 
@@ -25,16 +26,17 @@ public class KineticBridgeBlock extends DirectionalKineticBlock implements IBE<K
 
     private BlockState getBaseStateForPlacement(BlockPlaceContext context) {
         Direction preferred = getPreferredFacing(context);
-        if (preferred == null || (context.getPlayer() != null && context.getPlayer()
-                .isShiftKeyDown())) {
+        if (preferred == null || (context.getPlayer() != null && context.getPlayer().isShiftKeyDown())) {
             Direction nearestLookingDirection = context.getNearestLookingDirection();
-            return defaultBlockState().setValue(FACING, context.getPlayer() != null && context.getPlayer()
-                    .isShiftKeyDown() ? nearestLookingDirection.getOpposite() : nearestLookingDirection);
+            return defaultBlockState().setValue(FACING, context.getPlayer() != null
+                    && context.getPlayer().isShiftKeyDown() ? nearestLookingDirection.getOpposite()
+                    : nearestLookingDirection);
         }
         return defaultBlockState().setValue(FACING, preferred.getOpposite());
     }
 
     @Override
+    @Nullable
     public BlockState getStateForPlacement(BlockPlaceContext context) {
         BlockState stateForPlacement = getBaseStateForPlacement(context);
         BlockPos pos = context.getClickedPos();
@@ -65,41 +67,41 @@ public class KineticBridgeBlock extends DirectionalKineticBlock implements IBE<K
     }
 
     @Override
-    public void onRemove(BlockState pState, Level pLevel, BlockPos pPos, BlockState pNewState, boolean pIsMoving) {
-        if (!pNewState.is(this)) {
-            Direction facing = pState.getValue(FACING);
-            BlockPos destinationPos = pPos.relative(facing);
+    protected void affectNeighborsAfterRemoval(BlockState state, ServerLevel level, BlockPos pos, boolean movedByPiston) {
+        if (!level.getBlockState(pos).is(this)) {
+            Direction facing = state.getValue(FACING);
+            BlockPos destinationPos = pos.relative(facing);
 
-            BlockState occupiedState = pLevel.getBlockState(destinationPos);
-            BlockState requiredStructure = CCBlocks.KINETIC_BRIDGE_DESTINATION.getDefaultState()
+            BlockState occupiedState = level.getBlockState(destinationPos);
+            BlockState requiredStructure = CCBlocks.KINETIC_BRIDGE_DESTINATION.defaultBlockState()
                     .setValue(KineticBridgeDestinationBlock.FACING, facing);
             if (occupiedState.equals(requiredStructure)) {
-                pLevel.destroyBlock(destinationPos, false);
+                level.destroyBlock(destinationPos, false);
             }
         }
-        super.onRemove(pState, pLevel, pPos, pNewState, pIsMoving);
+        super.affectNeighborsAfterRemoval(state, level, pos, movedByPiston);
     }
 
     @Override
-    public void tick(BlockState pState, ServerLevel pLevel, BlockPos pPos, RandomSource pRandom) {
-        Direction facing = pState.getValue(FACING);
-        BlockPos destinationPos = pPos.relative(facing);
+    public void tick(BlockState state, ServerLevel level, BlockPos pos, RandomSource random) {
+        Direction facing = state.getValue(FACING);
+        BlockPos destinationPos = pos.relative(facing);
 
-        BlockState occupiedState = pLevel.getBlockState(destinationPos);
-        BlockState requiredStructure = CCBlocks.KINETIC_BRIDGE_DESTINATION.getDefaultState()
+        BlockState occupiedState = level.getBlockState(destinationPos);
+        BlockState requiredStructure = CCBlocks.KINETIC_BRIDGE_DESTINATION.defaultBlockState()
                 .setValue(KineticBridgeDestinationBlock.FACING, facing);
         if (!occupiedState.equals(requiredStructure)) {
             if (!occupiedState.canBeReplaced()) {
-                pLevel.destroyBlock(pPos, true);
+                level.destroyBlock(pos, true);
                 return;
             }
-            pLevel.setBlockAndUpdate(destinationPos, requiredStructure);
+            level.setBlockAndUpdate(destinationPos, requiredStructure);
         }
     }
 
     @Override
     public BlockEntityType<? extends KineticBridgeBlockEntity> getBlockEntityType() {
-        return CCBlockEntityTypes.KINETIC_BRIDGE.get();
+        return CCBlockEntityTypes.KINETIC_BRIDGE;
     }
 
     @Override
@@ -117,4 +119,3 @@ public class KineticBridgeBlock extends DirectionalKineticBlock implements IBE<K
         return state.getValue(FACING).getAxis();
     }
 }
-

@@ -1,34 +1,43 @@
 package com.hlysine.create_connected.content.linkedtransmitter;
 
-import com.hlysine.create_connected.mixin.linkedtransmitter.AnalogLeverBlockEntityAccessor;
-import com.simibubi.create.content.redstone.analogLever.AnalogLeverBlockEntity;
-import com.simibubi.create.content.redstone.link.LinkBehaviour;
-import com.simibubi.create.foundation.blockEntity.behaviour.BlockEntityBehaviour;
-import com.simibubi.create.foundation.blockEntity.behaviour.ValueBoxTransform;
+import com.zurrtum.create.api.behaviour.BlockEntityBehaviour;
+import com.zurrtum.create.catnip.animation.LerpedFloat;
+import com.zurrtum.create.catnip.animation.LerpedFloat.Chaser;
+import com.zurrtum.create.content.redstone.link.ServerLinkBehaviour;
+import com.zurrtum.create.foundation.blockEntity.SmartBlockEntity;
 import net.minecraft.core.BlockPos;
+import net.minecraft.util.Mth;
 import net.minecraft.world.level.block.Block;
 import net.minecraft.world.level.block.entity.BlockEntityType;
 import net.minecraft.world.level.block.state.BlockState;
-import net.minecraft.world.level.block.state.properties.BlockStateProperties;
-import org.apache.commons.lang3.tuple.Pair;
+import net.minecraft.world.level.storage.ValueInput;
+import net.minecraft.world.level.storage.ValueOutput;
 
 import java.util.List;
 
-public class LinkedAnalogLeverBlockEntity extends AnalogLeverBlockEntity {
-    /**
-     * set to false if the module item is already returned to player via wrenching
-     */
+public class LinkedAnalogLeverBlockEntity extends SmartBlockEntity {
+
     public boolean containsBase = true;
-    private LinkBehaviour link;
+
+    int state;
+    int lastChange;
+    public LerpedFloat clientState;
+
+    private ServerLinkBehaviour link;
 
     public LinkedAnalogLeverBlockEntity(BlockEntityType<?> type, BlockPos pos, BlockState state) {
         super(type, pos, state);
+        clientState = LerpedFloat.linear();
     }
 
     @Override
-    public void addBehaviours(List<BlockEntityBehaviour> behaviours) {
+    public void addBehaviours(List<BlockEntityBehaviour<?>> behaviours) {
         createLink();
         behaviours.add(link);
+    }
+
+    protected void createLink() {
+        link = ServerLinkBehaviour.transmitter(this, this::getState);
     }
 
     @Override
@@ -37,30 +46,65 @@ public class LinkedAnalogLeverBlockEntity extends AnalogLeverBlockEntity {
         transmit();
     }
 
-    protected void createLink() {
-        Pair<ValueBoxTransform, ValueBoxTransform> slots =
-                ValueBoxTransform.Dual.makeSlots(LinkedTransmitterFrequencySlot::new);
-        link = LinkBehaviour.transmitter(this, slots, this::getState);
-    }
-
     public void transmit() {
         if (link != null)
             link.notifySignalChange();
     }
 
-    private int lastChange() {
-        return ((AnalogLeverBlockEntityAccessor) this).getLastChange();
+    @Override
+    public void write(ValueOutput view, boolean clientPacket) {
+        view.putInt("State", state);
+        view.putInt("ChangeTimer", lastChange);
+        super.write(view, clientPacket);
+    }
+
+    @Override
+    protected void read(ValueInput view, boolean clientPacket) {
+        state = view.getIntOr("State", 0);
+        lastChange = view.getIntOr("ChangeTimer", 0);
+        clientState.chase(state, 0.2f, Chaser.EXP);
+        super.read(view, clientPacket);
     }
 
     @Override
     public void tick() {
-        int prevTick = lastChange();
         super.tick();
-        if (prevTick > 0 && lastChange() == 0) {
-            if (!level.isClientSide) {
-                transmit();
-                level.setBlock(worldPosition, getBlockState().setValue(BlockStateProperties.POWERED, getState() > 0), Block.UPDATE_ALL);
+        if (lastChange > 0) {
+            lastChange--;
+            if (lastChange == 0) {
+                LinkedAnalogLeverBlock.updateNeighbors(getBlockState(), level, worldPosition);
+                if (!level.isClientSide()) {
+                    transmit();
+                    level.setBlock(worldPosition,
+                            getBlockState().setValue(LinkedAnalogLeverBlock.POWERED, state > 0), Block.UPDATE_ALL);
+                }
             }
         }
+        if (level.isClientSide()) {
+            clientState.tickChaser();
+        }
+    }
+
+    public void changeState(boolean back) {
+        int prevState = state;
+        state += back ? -1 : 1;
+        state = Mth.clamp(state, 0, 15);
+        if (prevState != state) {
+            lastChange = 15;
+        }
+        sendData();
+    }
+
+    public void setState(int value) {
+        state = Mth.clamp(value, 0, 15);
+        lastChange = 0;
+        clientState.chase(state, 0.2f, Chaser.EXP);
+        transmit();
+        setChanged();
+        sendData();
+    }
+
+    public int getState() {
+        return state;
     }
 }

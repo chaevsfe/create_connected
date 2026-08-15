@@ -1,8 +1,8 @@
 package com.hlysine.create_connected.content.contraption.noteblock;
 
-import com.simibubi.create.content.contraptions.AbstractContraptionEntity;
-import com.simibubi.create.content.contraptions.Contraption;
-import com.simibubi.create.content.contraptions.behaviour.SimpleBlockMovingInteraction;
+import com.zurrtum.create.content.contraptions.AbstractContraptionEntity;
+import com.zurrtum.create.content.contraptions.Contraption;
+import com.zurrtum.create.content.contraptions.behaviour.SimpleBlockMovingInteraction;
 import net.minecraft.core.BlockPos;
 import net.minecraft.stats.Stats;
 import net.minecraft.world.entity.player.Player;
@@ -10,7 +10,6 @@ import net.minecraft.world.level.Level;
 import net.minecraft.world.level.block.state.BlockState;
 import net.minecraft.world.level.gameevent.GameEvent;
 import net.minecraft.world.phys.Vec3;
-import net.neoforged.neoforge.common.CommonHooks;
 
 import static net.minecraft.world.level.block.NoteBlock.INSTRUMENT;
 import static net.minecraft.world.level.block.state.properties.BlockStateProperties.NOTE;
@@ -23,14 +22,7 @@ public class NoteBlockInteractionBehaviour extends SimpleBlockMovingInteraction 
         Level contraptionWorld = contraption.getContraptionWorld();
         Level realWorld = player.level();
         BlockPos realPos = BlockPos.containing(contraptionEntity.toGlobalVector(Vec3.atCenterOf(contraptionPos), 1));
-        int _new = CommonHooks.onNoteChange(contraptionWorld,
-                contraptionPos,
-                currentState,
-                currentState.getValue(NOTE),
-                currentState.cycle(NOTE).getValue(NOTE)
-        );
-        if (_new == -1) return currentState;
-        currentState = currentState.setValue(NOTE, _new);
+        currentState = currentState.cycle(NOTE);
 
         if (currentState.getValue(INSTRUMENT).worksAboveNoteBlock() || contraptionWorld.getBlockState(contraptionPos.above()).isAir()) {
             currentState.triggerEvent(realWorld, realPos, 0, 0);

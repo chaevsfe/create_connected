@@ -1,75 +1,53 @@
 package com.hlysine.create_connected.content.overstressclutch;
 
-import com.hlysine.create_connected.registries.CCBlocks;
-import com.hlysine.create_connected.ConnectedLang;
 import com.hlysine.create_connected.content.overstressclutch.OverstressClutchBlock.ClutchState;
-import com.hlysine.create_connected.datagen.advancements.AdvancementBehaviour;
-import com.hlysine.create_connected.datagen.advancements.CCAdvancements;
-import com.simibubi.create.content.kinetics.RotationPropagator;
-import com.simibubi.create.content.kinetics.base.IRotate;
-import com.simibubi.create.content.kinetics.transmission.SplitShaftBlockEntity;
-import com.simibubi.create.content.redstone.diodes.BrassDiodeBlock;
-import com.simibubi.create.foundation.blockEntity.SmartBlockEntity;
-import com.simibubi.create.foundation.blockEntity.behaviour.*;
-import com.simibubi.create.foundation.blockEntity.behaviour.scrollValue.ScrollValueBehaviour;
-import com.simibubi.create.foundation.item.TooltipHelper;
-import com.simibubi.create.foundation.utility.CreateLang;
-import net.createmod.catnip.lang.FontHelper;
+import com.hlysine.create_connected.foundation.advancement.AdvancementBehaviour;
+import com.hlysine.create_connected.foundation.advancement.CCAdvancements;
+import com.hlysine.create_connected.registries.CCBlocks;
+import com.zurrtum.create.api.behaviour.BlockEntityBehaviour;
+import com.zurrtum.create.content.kinetics.RotationPropagator;
+import com.zurrtum.create.content.kinetics.base.IRotate;
+import com.zurrtum.create.content.kinetics.transmission.SplitShaftBlockEntity;
+import com.zurrtum.create.foundation.blockEntity.SmartBlockEntity;
+import com.zurrtum.create.foundation.blockEntity.behaviour.ValueSettings;
+import com.zurrtum.create.foundation.blockEntity.behaviour.scrollValue.ServerScrollValueBehaviour;
 import net.minecraft.core.BlockPos;
 import net.minecraft.core.Direction;
-import net.minecraft.core.HolderLookup;
-import net.minecraft.nbt.CompoundTag;
-import net.minecraft.network.chat.Component;
-import net.minecraft.network.chat.MutableComponent;
 import net.minecraft.util.Mth;
-import net.minecraft.world.InteractionHand;
 import net.minecraft.world.entity.player.Player;
 import net.minecraft.world.level.block.entity.BlockEntityType;
 import net.minecraft.world.level.block.state.BlockState;
-import net.minecraft.world.phys.BlockHitResult;
+import net.minecraft.world.level.storage.ValueInput;
+import net.minecraft.world.level.storage.ValueOutput;
 import net.minecraft.world.ticks.TickPriority;
 
 import java.util.List;
 
 import static com.hlysine.create_connected.content.overstressclutch.OverstressClutchBlock.POWERED;
 import static com.hlysine.create_connected.content.overstressclutch.OverstressClutchBlock.STATE;
-import static net.minecraft.ChatFormatting.GOLD;
 
 public class OverstressClutchBlockEntity extends SplitShaftBlockEntity {
 
     public int delay;
-    public ScrollValueBehaviour maxDelay;
+    public ServerScrollValueBehaviour maxDelay;
 
     public OverstressClutchBlockEntity(BlockEntityType<?> type, BlockPos pos, BlockState state) {
         super(type, pos, state);
     }
 
     @Override
-    public void addBehaviours(List<BlockEntityBehaviour> behaviours) {
+    public void addBehaviours(List<BlockEntityBehaviour<?>> behaviours) {
         AdvancementBehaviour.registerAwardables(this, behaviours, CCAdvancements.OVERSTRESS_CLUTCH);
-        maxDelay = new TimeDelayScrollValueBehaviour(Component.translatable("create_connected.overstress_clutch.uncouple_delay"), this,
-                new CenteredSideValueBoxTransform((state, d) -> {
-                    Direction.Axis axis = d.getAxis();
-                    Direction.Axis bearingAxis = state.getValue(OverstressClutchBlock.AXIS);
-                    return bearingAxis != axis;
-                })).between(1, 60 * 20 * 60);
-        maxDelay.withFormatter(this::format);
-        maxDelay.withCallback(this::onMaxDelayChanged);
+        maxDelay = new TimeDelayScrollValueBehaviour(this);
+        maxDelay.between(1, 60 * 20 * 60);
         maxDelay.setValue(1);
+        maxDelay.withCallback(this::onMaxDelayChanged);
         behaviours.add(maxDelay);
     }
 
     private void onMaxDelayChanged(int newMax) {
         delay = Mth.clamp(delay, 0, newMax);
         sendData();
-    }
-
-    private String format(int value) {
-        if (value < 60)
-            return value + "t";
-        if (value < 20 * 60)
-            return (value / 20) + "s";
-        return (value / 20 / 60) + "m";
     }
 
     public boolean isIdle() {
@@ -119,29 +97,10 @@ public class OverstressClutchBlockEntity extends SplitShaftBlockEntity {
         return 1;
     }
 
-    @Override
-    public boolean addToTooltip(List<Component> tooltip, boolean isPlayerSneaking) {
-        boolean added = super.addToTooltip(tooltip, isPlayerSneaking);
-
-        if (getBlockState().getValue(STATE) == ClutchState.UNCOUPLED) {
-            ConnectedLang.translate("gui.overstress_clutch.uncoupled")
-                    .style(GOLD)
-                    .forGoggles(tooltip);
-            Component hint = ConnectedLang.translateDirect("gui.overstress_clutch.uncoupled_explanation");
-            List<Component> cutString = TooltipHelper.cutTextComponent(hint, FontHelper.Palette.GRAY_AND_WHITE);
-            for (Component component : cutString)
-                ConnectedLang.builder()
-                        .add(component.copy())
-                        .forGoggles(tooltip);
-            added = true;
-        }
-
-        return added;
-    }
-
     public void resetClutch() {
         if (getBlockState().getValue(STATE) == ClutchState.UNCOUPLED && !isOverStressed()) {
-            assert level != null;
+            if (level == null)
+                return;
             level.setBlock(getBlockPos(), getBlockState().setValue(STATE, ClutchState.COUPLED), 3);
             RotationPropagator.handleRemoved(level, getBlockPos(), this);
             RotationPropagator.handleAdded(level, getBlockPos(), this);
@@ -151,41 +110,27 @@ public class OverstressClutchBlockEntity extends SplitShaftBlockEntity {
     @Override
     public void tick() {
         super.tick();
-        if (getBlockState().getValue(STATE) == ClutchState.UNCOUPLING && level != null && !level.isClientSide) {
-            level.scheduleTick(getBlockPos(), CCBlocks.OVERSTRESS_CLUTCH.get(), 0, TickPriority.EXTREMELY_HIGH);
+        if (getBlockState().getValue(STATE) == ClutchState.UNCOUPLING && level != null && !level.isClientSide()) {
+            level.scheduleTick(getBlockPos(), CCBlocks.OVERSTRESS_CLUTCH, 0, TickPriority.EXTREMELY_HIGH);
         }
     }
 
     @Override
-    protected void read(CompoundTag compound, HolderLookup.Provider registries, boolean clientPacket) {
-        delay = compound.getInt("Delay");
-        super.read(compound, registries, clientPacket);
+    protected void read(ValueInput view, boolean clientPacket) {
+        delay = view.getIntOr("Delay", 0);
+        super.read(view, clientPacket);
     }
 
     @Override
-    protected void write(CompoundTag compound, HolderLookup.Provider registries, boolean clientPacket) {
-        compound.putInt("Delay", delay);
-        super.write(compound, registries, clientPacket);
+    protected void write(ValueOutput view, boolean clientPacket) {
+        view.putInt("Delay", delay);
+        super.write(view, clientPacket);
     }
 
-    public static class TimeDelayScrollValueBehaviour extends ScrollValueBehaviour {
+    public static class TimeDelayScrollValueBehaviour extends ServerScrollValueBehaviour {
 
-        public TimeDelayScrollValueBehaviour(Component label, SmartBlockEntity be, ValueBoxTransform slot) {
-            super(label, be, slot);
-        }
-
-        @Override
-        public ValueSettingsBoard createBoard(Player player, BlockHitResult hitResult) {
-            return new ValueSettingsBoard(label, 60, 10,
-                    CreateLang.translatedOptions("generic.unit", "ticks", "seconds", "minutes"),
-                    new ValueSettingsFormatter(this::formatSettings));
-        }
-
-        @Override
-        public void onShortInteract(Player player, InteractionHand hand, Direction side, BlockHitResult hitResult) {
-            BlockState blockState = blockEntity.getBlockState();
-            if (blockState.getBlock() instanceof BrassDiodeBlock bdb)
-                bdb.toggle(getWorld(), getPos(), blockState, player, hand);
+        public TimeDelayScrollValueBehaviour(SmartBlockEntity be) {
+            super(be);
         }
 
         @Override
@@ -217,15 +162,6 @@ public class OverstressClutchBlockEntity extends SplitShaftBlockEntity {
             return new ValueSettings(row, value);
         }
 
-        public MutableComponent formatSettings(ValueSettings settings) {
-            int value = Math.max(1, settings.value());
-            return Component.literal(switch (settings.row()) {
-                case 0 -> value + "t";
-                case 1 -> "0:" + (value < 10 ? "0" : "") + value;
-                default -> value + ":00";
-            });
-        }
-
         @Override
         public String getClipboardKey() {
             return "Timings";
@@ -233,4 +169,3 @@ public class OverstressClutchBlockEntity extends SplitShaftBlockEntity {
 
     }
 }
-

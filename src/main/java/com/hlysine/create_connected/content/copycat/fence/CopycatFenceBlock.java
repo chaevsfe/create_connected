@@ -2,27 +2,34 @@ package com.hlysine.create_connected.content.copycat.fence;
 
 import com.hlysine.create_connected.content.copycat.ICopycatWithWrappedBlock;
 import com.hlysine.create_connected.content.copycat.WaterloggedCopycatWrappedBlock;
-import com.simibubi.create.content.decoration.copycat.CopycatBlock;
-import net.createmod.catnip.data.Iterate;
+import com.zurrtum.create.catnip.data.Iterate;
+import com.zurrtum.create.content.decoration.copycat.CopycatBlock;
 import net.minecraft.core.BlockPos;
 import net.minecraft.core.Direction;
-import net.minecraft.world.entity.Entity;
+import net.minecraft.util.RandomSource;
 import net.minecraft.world.item.context.BlockPlaceContext;
-import net.minecraft.world.level.BlockAndTintGetter;
+import net.minecraft.world.level.BlockAndLightGetter;
 import net.minecraft.world.level.BlockGetter;
-import net.minecraft.world.level.LevelAccessor;
-import net.minecraft.world.level.block.*;
+import net.minecraft.world.level.LevelReader;
+import net.minecraft.world.level.ScheduledTickAccess;
+import net.minecraft.world.level.block.Block;
+import net.minecraft.world.level.block.Blocks;
+import net.minecraft.world.level.block.FenceBlock;
+import net.minecraft.world.level.block.Mirror;
+import net.minecraft.world.level.block.PipeBlock;
+import net.minecraft.world.level.block.Rotation;
 import net.minecraft.world.level.block.state.BlockState;
 import net.minecraft.world.level.block.state.StateDefinition;
 import net.minecraft.world.level.block.state.properties.BooleanProperty;
-import net.minecraft.world.level.block.state.properties.Property;
 import net.minecraft.world.level.pathfinder.PathComputationType;
 import net.minecraft.world.phys.shapes.CollisionContext;
 import net.minecraft.world.phys.shapes.VoxelShape;
-import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import static net.minecraft.world.level.block.CrossCollisionBlock.*;
+import static net.minecraft.world.level.block.CrossCollisionBlock.EAST;
+import static net.minecraft.world.level.block.CrossCollisionBlock.NORTH;
+import static net.minecraft.world.level.block.CrossCollisionBlock.SOUTH;
+import static net.minecraft.world.level.block.CrossCollisionBlock.WEST;
 
 public class CopycatFenceBlock extends WaterloggedCopycatWrappedBlock {
 
@@ -44,70 +51,63 @@ public class CopycatFenceBlock extends WaterloggedCopycatWrappedBlock {
     }
 
     @Override
-    protected void createBlockStateDefinition(StateDefinition.@NotNull Builder<Block, BlockState> pBuilder) {
+    protected void createBlockStateDefinition(StateDefinition.Builder<Block, BlockState> pBuilder) {
         super.createBlockStateDefinition(pBuilder.add(NORTH, SOUTH, EAST, WEST));
     }
 
     @Nullable
     @Override
-    public BlockState getStateForPlacement(@NotNull BlockPlaceContext pContext) {
+    public BlockState getStateForPlacement(BlockPlaceContext pContext) {
         BlockState state = fence.getStateForPlacement(pContext);
         if (state == null) return super.getStateForPlacement(pContext);
         return ICopycatWithWrappedBlock.copyState(state, super.getStateForPlacement(pContext), false);
     }
 
     @Override
-    public boolean collisionExtendsVertically(BlockState state, BlockGetter level, BlockPos pos, Entity collidingEntity) {
-        return true;
+    protected boolean propagatesSkylightDown(BlockState pState) {
+        return !pState.getValue(WATERLOGGED);
     }
 
     @Override
-    public boolean propagatesSkylightDown(@NotNull BlockState pState, @NotNull BlockGetter pLevel, @NotNull BlockPos pPos) {
-        return ICopycatWithWrappedBlock.wrappedState(fence, pState).propagatesSkylightDown(pLevel, pPos);
-    }
-
-    @Override
-    public @NotNull VoxelShape getShape(@NotNull BlockState pState, @NotNull BlockGetter pLevel, @NotNull BlockPos pPos, @NotNull CollisionContext pContext) {
+    public VoxelShape getShape(BlockState pState, BlockGetter pLevel, BlockPos pPos, CollisionContext pContext) {
         return ICopycatWithWrappedBlock.wrappedState(fence, pState).getShape(pLevel, pPos, pContext);
     }
 
     @Override
-    public @NotNull BlockState rotate(@NotNull BlockState pState, @NotNull Rotation pRotation) {
+    public BlockState rotate(BlockState pState, Rotation pRotation) {
         return ICopycatWithWrappedBlock.unwrapForOperation(fence, pState, state -> state.rotate(pRotation));
     }
 
     @Override
-    public @NotNull BlockState mirror(@NotNull BlockState pState, @NotNull Mirror pMirror) {
+    public BlockState mirror(BlockState pState, Mirror pMirror) {
         return ICopycatWithWrappedBlock.unwrapForOperation(fence, pState, state -> state.mirror(pMirror));
     }
 
     @Override
-    public @NotNull VoxelShape getCollisionShape(@NotNull BlockState pState, @NotNull BlockGetter pLevel, @NotNull BlockPos pPos, @NotNull CollisionContext pContext) {
+    public VoxelShape getCollisionShape(BlockState pState, BlockGetter pLevel, BlockPos pPos, CollisionContext pContext) {
         return ICopycatWithWrappedBlock.wrappedState(fence, pState).getCollisionShape(pLevel, pPos, pContext);
     }
 
     @Override
-    public @NotNull VoxelShape getOcclusionShape(@NotNull BlockState pState, @NotNull BlockGetter pLevel, @NotNull BlockPos pPos) {
-        return ICopycatWithWrappedBlock.wrappedState(fence, pState).getOcclusionShape(pLevel, pPos);
-    }
-
-    @Override
-    public @NotNull VoxelShape getVisualShape(@NotNull BlockState pState, @NotNull BlockGetter pReader, @NotNull BlockPos pPos, @NotNull CollisionContext pContext) {
+    protected VoxelShape getVisualShape(BlockState pState, BlockGetter pReader, BlockPos pPos, CollisionContext pContext) {
         return ICopycatWithWrappedBlock.wrappedState(fence, pState).getVisualShape(pReader, pPos, pContext);
     }
 
     @Override
-    protected boolean isPathfindable(@NotNull BlockState pState, @NotNull PathComputationType pPathComputationType) {
+    protected boolean isPathfindable(BlockState pState, PathComputationType pPathComputationType) {
         return ICopycatWithWrappedBlock.wrappedState(fence, pState).isPathfindable(pPathComputationType);
     }
 
     @Override
-    public @NotNull BlockState updateShape(@NotNull BlockState pState, @NotNull Direction pDirection, @NotNull BlockState pNeighborState, @NotNull LevelAccessor pLevel, @NotNull BlockPos pCurrentPos, @NotNull BlockPos pNeighborPos) {
-        return migrateOnUpdate(pLevel.isClientSide(), ICopycatWithWrappedBlock.unwrapForOperation(fence, pState, state -> state.updateShape(pDirection, pNeighborState, pLevel, pCurrentPos, pNeighborPos)));
+    public BlockState updateShape(BlockState pState, LevelReader pLevel, ScheduledTickAccess tickView,
+                                  BlockPos pCurrentPos, Direction pDirection, BlockPos pNeighborPos,
+                                  BlockState pNeighborState, RandomSource random) {
+        return ICopycatWithWrappedBlock.unwrapForOperation(fence, pState, state -> state.updateShape(
+                pLevel, tickView, pCurrentPos, pDirection, pNeighborPos, pNeighborState, random));
     }
 
     @Override
-    public boolean isIgnoredConnectivitySide(BlockAndTintGetter reader, BlockState state, Direction face,
+    public boolean isIgnoredConnectivitySide(BlockAndLightGetter reader, BlockState state, Direction face,
                                              @Nullable BlockPos fromPos, @Nullable BlockPos toPos) {
         if (fromPos == null || toPos == null)
             return true;
@@ -118,7 +118,7 @@ public class CopycatFenceBlock extends WaterloggedCopycatWrappedBlock {
     }
 
     @Override
-    public boolean canConnectTexturesToward(BlockAndTintGetter reader, BlockPos fromPos, BlockPos toPos, BlockState state) {
+    public boolean canConnectTexturesToward(BlockAndLightGetter reader, BlockPos fromPos, BlockPos toPos, BlockState state) {
         if (toPos.getX() == fromPos.getX() && toPos.getZ() == fromPos.getZ()) {
             BlockState toState = reader.getBlockState(toPos);
             if (toState.is(this)) {
@@ -145,23 +145,6 @@ public class CopycatFenceBlock extends WaterloggedCopycatWrappedBlock {
         return true;
     }
 
-    @Override
-    public boolean supportsExternalFaceHiding(BlockState state) {
-        return true;
-    }
-
-    @Override
-    public boolean hidesNeighborFace(BlockGetter level, BlockPos pos, BlockState state, BlockState neighborState,
-                                     Direction dir) {
-        if (neighborState.getBlock() instanceof FenceBlock || neighborState.getBlock() instanceof CopycatFenceBlock) {
-            if (getMaterial(level, pos).skipRendering(getMaterial(level, pos.relative(dir)), dir.getOpposite()))
-                if (dir.getAxis().isHorizontal())
-                    return state.getValue(byDirection(dir)) && neighborState.getValue(byDirection(dir.getOpposite()));
-        }
-
-        return false;
-    }
-
     public static BlockState getMaterial(BlockGetter reader, BlockPos targetPos) {
         BlockState state = CopycatBlock.getMaterial(reader, targetPos);
         if (state.is(Blocks.AIR)) return reader.getBlockState(targetPos);
@@ -172,4 +155,3 @@ public class CopycatFenceBlock extends WaterloggedCopycatWrappedBlock {
         return PipeBlock.PROPERTY_BY_DIRECTION.get(direction);
     }
 }
-

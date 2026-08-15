@@ -1,19 +1,11 @@
 package com.hlysine.create_connected.content.kineticbattery;
 
-
-import com.hlysine.create_connected.ConnectedLang;
-import com.simibubi.create.content.redstone.displayLink.DisplayLinkContext;
-import com.simibubi.create.content.redstone.displayLink.source.PercentOrProgressBarDisplaySource;
-import com.simibubi.create.content.trains.display.FlapDisplayBlockEntity;
-import com.simibubi.create.foundation.gui.ModularGuiLineBuilder;
-import com.simibubi.create.foundation.utility.CreateLang;
-import net.createmod.catnip.lang.LangBuilder;
+import com.zurrtum.create.content.redstone.displayLink.DisplayLinkContext;
+import com.zurrtum.create.content.redstone.displayLink.source.PercentOrProgressBarDisplaySource;
+import com.zurrtum.create.content.trains.display.FlapDisplayBlockEntity;
 import net.minecraft.network.chat.Component;
 import net.minecraft.network.chat.MutableComponent;
-import net.minecraft.util.Mth;
 import net.minecraft.world.level.block.entity.BlockEntity;
-import net.neoforged.api.distmarker.Dist;
-import net.neoforged.api.distmarker.OnlyIn;
 
 public class KineticBatteryDisplaySource extends PercentOrProgressBarDisplaySource {
 
@@ -23,45 +15,31 @@ public class KineticBatteryDisplaySource extends PercentOrProgressBarDisplaySour
     }
 
     @Override
-    protected boolean allowsLabeling(DisplayLinkContext context) {
+    public boolean allowsLabeling(DisplayLinkContext context) {
         return true;
     }
 
     @Override
     protected Float getProgress(DisplayLinkContext context) {
         BlockEntity entity = context.getSourceBlockEntity();
-        if (!(entity instanceof KineticBatteryBlockEntity kbe)) return null;
+        if (!(entity instanceof KineticBatteryBlockEntity kbe))
+            return null;
         return (float) (kbe.getBatteryLevel() / KineticBatteryBlockEntity.getMaxBatteryLevel());
     }
 
     @Override
     protected MutableComponent formatNumeric(DisplayLinkContext context, Float currentLevel) {
-        if (context.sourceConfig().getInt("Mode") == 1)
+        if (context.sourceConfig().getIntOr("Mode", 0) == 1)
             return super.formatNumeric(context, currentLevel);
-        LangBuilder builder = ConnectedLang.number(Math.round(currentLevel * KineticBatteryBlockEntity.getMaxBatteryLevel() / 3600 / 20));
+        MutableComponent value = Component.literal(
+                String.valueOf(Math.round(currentLevel * KineticBatteryBlockEntity.getMaxBatteryLevel() / 3600 / 20)));
         if (context.getTargetBlockEntity() instanceof FlapDisplayBlockEntity)
-            builder.space();
-        return builder.translate("generic.unit.su_hours")
-                .component();
+            value.append(Component.literal(" "));
+        return value.append(KineticBatteryBlockEntity.translate("generic.unit.su_hours"));
     }
 
     @Override
     protected boolean progressBarActive(DisplayLinkContext context) {
-        return context.sourceConfig()
-                .getInt("Mode") == 2;
+        return context.sourceConfig().getIntOr("Mode", 0) == 2;
     }
-
-    @Override
-    @OnlyIn(Dist.CLIENT)
-    public void initConfigurationWidgets(DisplayLinkContext context, ModularGuiLineBuilder builder, boolean isFirstLine) {
-        super.initConfigurationWidgets(context, builder, isFirstLine);
-        if (isFirstLine)
-            return;
-        builder.addSelectionScrollInput(0, 120,
-                (si, l) -> si.forOptions(ConnectedLang.translatedOptions("display_source.kinetic_battery", "number", "percentage", "progress_bar"))
-                        .titled(ConnectedLang.translateDirect("display_source.kinetic_battery.display")),
-                "Mode");
-    }
-
 }
-

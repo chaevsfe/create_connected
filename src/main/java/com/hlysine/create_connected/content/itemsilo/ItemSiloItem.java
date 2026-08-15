@@ -1,10 +1,11 @@
 package com.hlysine.create_connected.content.itemsilo;
 
 import com.hlysine.create_connected.registries.CCBlockEntityTypes;
-import com.simibubi.create.api.connectivity.ConnectivityHandler;
-import com.simibubi.create.content.equipment.symmetryWand.SymmetryWandItem;
-import com.simibubi.create.foundation.block.IBE;
-import net.createmod.catnip.math.VecHelper;
+import com.zurrtum.create.api.connectivity.ConnectivityHandler;
+import com.zurrtum.create.catnip.math.VecHelper;
+import com.zurrtum.create.content.equipment.symmetryWand.SymmetryWandItem;
+import com.zurrtum.create.foundation.block.IBE;
+import com.zurrtum.create.foundation.item.ItemPlacementSoundContext;
 import net.minecraft.core.BlockPos;
 import net.minecraft.core.Direction;
 import net.minecraft.core.Direction.Axis;
@@ -16,12 +17,13 @@ import net.minecraft.world.InteractionResult;
 import net.minecraft.world.entity.player.Player;
 import net.minecraft.world.item.BlockItem;
 import net.minecraft.world.item.ItemStack;
-import net.minecraft.world.item.component.CustomData;
+import net.minecraft.world.item.component.TypedEntityData;
 import net.minecraft.world.item.context.BlockPlaceContext;
 import net.minecraft.world.level.Level;
 import net.minecraft.world.level.block.Block;
-import net.minecraft.world.level.block.entity.BlockEntity;
+import net.minecraft.world.level.block.entity.BlockEntityType;
 import net.minecraft.world.level.block.state.BlockState;
+import org.jetbrains.annotations.Nullable;
 
 public class ItemSiloItem extends BlockItem {
 
@@ -39,20 +41,20 @@ public class ItemSiloItem extends BlockItem {
     }
 
     @Override
-    protected boolean updateCustomBlockEntityTag(BlockPos blockPos, Level level, Player player,
+    protected boolean updateCustomBlockEntityTag(BlockPos blockPos, Level level, @Nullable Player player,
                                                  ItemStack itemStack, BlockState blockState) {
         MinecraftServer minecraftserver = level.getServer();
         if (minecraftserver == null)
             return false;
-        CustomData blockEntityData = itemStack.get(DataComponents.BLOCK_ENTITY_DATA);
-        if (blockEntityData != null) {
-            CompoundTag nbt = blockEntityData.copyTag();
+        TypedEntityData<BlockEntityType<?>> data = itemStack.get(DataComponents.BLOCK_ENTITY_DATA);
+        if (data != null) {
+            CompoundTag nbt = data.copyTagWithoutId();
             nbt.remove("Length");
             nbt.remove("Size");
             nbt.remove("Controller");
             nbt.remove("LastKnownPos");
-            BlockEntity.addEntityType(nbt, ((IBE<?>) this.getBlock()).getBlockEntityType());
-            itemStack.set(DataComponents.BLOCK_ENTITY_DATA, CustomData.of(nbt));
+            itemStack.set(DataComponents.BLOCK_ENTITY_DATA,
+                    TypedEntityData.of(((IBE<?>) getBlock()).getBlockEntityType(), nbt));
         }
         return super.updateCustomBlockEntityTag(blockPos, level, player, itemStack, blockState);
     }
@@ -74,7 +76,7 @@ public class ItemSiloItem extends BlockItem {
             return;
         if (SymmetryWandItem.presentInHotbar(player))
             return;
-        ItemSiloBlockEntity tankAt = ConnectivityHandler.partAt(CCBlockEntityTypes.ITEM_SILO.get(), world, placedOnPos);
+        ItemSiloBlockEntity tankAt = ConnectivityHandler.partAt(CCBlockEntityTypes.ITEM_SILO, world, placedOnPos);
         if (tankAt == null)
             return;
         ItemSiloBlockEntity controllerBE = tankAt.getControllerBE();
@@ -103,8 +105,7 @@ public class ItemSiloItem extends BlockItem {
 
         for (int xOffset = 0; xOffset < width; xOffset++) {
             for (int zOffset = 0; zOffset < width; zOffset++) {
-                BlockPos offsetPos = vaultBlockAxis == Axis.X ? startPos.offset(0, xOffset, zOffset)
-                        : startPos.offset(xOffset, zOffset, 0);
+                BlockPos offsetPos = startPos.offset(xOffset, 0, zOffset);
                 BlockState blockState = world.getBlockState(offsetPos);
                 if (ItemSiloBlock.isVault(blockState))
                     continue;
@@ -117,18 +118,14 @@ public class ItemSiloItem extends BlockItem {
         if (!player.isCreative() && stack.getCount() < tanksToPlace)
             return;
 
+        ItemPlacementSoundContext context = new ItemPlacementSoundContext(ctx, 0.1f, 1.5f, null);
         for (int xOffset = 0; xOffset < width; xOffset++) {
             for (int zOffset = 0; zOffset < width; zOffset++) {
                 BlockPos offsetPos = startPos.offset(xOffset, 0, zOffset);
                 BlockState blockState = world.getBlockState(offsetPos);
                 if (ItemSiloBlock.isVault(blockState))
                     continue;
-                BlockPlaceContext context = BlockPlaceContext.at(ctx, offsetPos, face);
-                player.getPersistentData()
-                        .putBoolean("SilenceVaultSound", true);
-                super.place(context);
-                player.getPersistentData()
-                        .remove("SilenceVaultSound");
+                super.place(context.offset(offsetPos, face));
             }
         }
     }

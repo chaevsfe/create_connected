@@ -1,18 +1,19 @@
 package com.hlysine.create_connected.content.crossconnector;
 
-import com.hlysine.create_connected.registries.CCShapes;
 import com.hlysine.create_connected.content.IConnectionForwardingBlock;
 import com.hlysine.create_connected.content.KineticHelper;
-import com.simibubi.create.content.decoration.encasing.EncasableBlock;
-import com.simibubi.create.content.equipment.wrench.IWrenchable;
-import com.simibubi.create.content.kinetics.base.IRotate;
-import com.simibubi.create.content.kinetics.base.KineticBlockEntity;
-import net.createmod.catnip.data.Iterate;
+import com.hlysine.create_connected.registries.CCShapes;
+import com.zurrtum.create.catnip.data.Iterate;
+import com.zurrtum.create.content.decoration.encasing.EncasableBlock;
+import com.zurrtum.create.content.equipment.wrench.IWrenchable;
+import com.zurrtum.create.content.kinetics.base.IRotate;
+import com.zurrtum.create.content.kinetics.base.KineticBlockEntity;
 import net.minecraft.core.BlockPos;
 import net.minecraft.core.Direction;
 import net.minecraft.core.Vec3i;
+import net.minecraft.server.level.ServerLevel;
 import net.minecraft.world.InteractionHand;
-import net.minecraft.world.ItemInteractionResult;
+import net.minecraft.world.InteractionResult;
 import net.minecraft.world.entity.player.Player;
 import net.minecraft.world.item.ItemStack;
 import net.minecraft.world.item.context.BlockPlaceContext;
@@ -29,7 +30,7 @@ import net.minecraft.world.level.block.state.properties.EnumProperty;
 import net.minecraft.world.phys.BlockHitResult;
 import net.minecraft.world.phys.shapes.CollisionContext;
 import net.minecraft.world.phys.shapes.VoxelShape;
-import org.jetbrains.annotations.NotNull;
+import org.jspecify.annotations.Nullable;
 
 public class CrossConnectorBlock extends Block implements IWrenchable, IConnectionForwardingBlock, IRotate, EncasableBlock {
 
@@ -42,7 +43,7 @@ public class CrossConnectorBlock extends Block implements IWrenchable, IConnecti
     }
 
     @Override
-    public @NotNull BlockState rotate(@NotNull BlockState state, Rotation rot) {
+    public BlockState rotate(BlockState state, Rotation rot) {
         return switch (rot) {
             case COUNTERCLOCKWISE_90, CLOCKWISE_90 -> switch (state.getValue(AXIS)) {
                 case X -> state.setValue(AXIS, Direction.Axis.Z);
@@ -53,21 +54,19 @@ public class CrossConnectorBlock extends Block implements IWrenchable, IConnecti
         };
     }
 
-    public static Direction.Axis getPreferredAxis(BlockPlaceContext context) {
+    public static Direction.@Nullable Axis getPreferredAxis(BlockPlaceContext context) {
         Direction.Axis prefferedAxis = null;
         for (Direction side : Iterate.directions) {
-            BlockState blockState = context.getLevel()
-                    .getBlockState(context.getClickedPos()
-                            .relative(side));
-            if (blockState.getBlock() instanceof IRotate) {
-                if (((IRotate) blockState.getBlock()).hasShaftTowards(context.getLevel(), context.getClickedPos()
-                        .relative(side), blockState, side.getOpposite()))
+            BlockState blockState = context.getLevel().getBlockState(context.getClickedPos().relative(side));
+            if (blockState.getBlock() instanceof IRotate rotate) {
+                if (rotate.hasShaftTowards(context.getLevel(), context.getClickedPos().relative(side), blockState,
+                        side.getOpposite())) {
                     if (prefferedAxis != null && prefferedAxis != side.getAxis()) {
                         prefferedAxis = null;
                         break;
-                    } else {
-                        prefferedAxis = side.getAxis();
                     }
+                    prefferedAxis = side.getAxis();
+                }
             }
         }
         return prefferedAxis;
@@ -79,15 +78,14 @@ public class CrossConnectorBlock extends Block implements IWrenchable, IConnecti
     }
 
     @Override
-    public BlockState getStateForPlacement(@NotNull BlockPlaceContext context) {
+    public BlockState getStateForPlacement(BlockPlaceContext context) {
         Direction.Axis preferredAxis = getPreferredAxis(context);
         if (preferredAxis != null && (context.getPlayer() == null || !context.getPlayer().isShiftKeyDown())) {
             Direction.Axis lookingAxis = context.getNearestLookingDirection().getAxis();
             if (lookingAxis == preferredAxis)
                 return this.defaultBlockState()
                         .setValue(AXIS, preferredAxis.isVertical() ? Direction.Axis.X : Direction.Axis.Y);
-            return this.defaultBlockState()
-                    .setValue(AXIS, lookingAxis);
+            return this.defaultBlockState().setValue(AXIS, lookingAxis);
         }
         return this.defaultBlockState()
                 .setValue(AXIS, preferredAxis != null && context.getPlayer().isShiftKeyDown()
@@ -96,55 +94,59 @@ public class CrossConnectorBlock extends Block implements IWrenchable, IConnecti
     }
 
     @Override
-    protected @NotNull ItemInteractionResult useItemOn(@NotNull ItemStack stack,
-                                                       @NotNull BlockState state,
-                                                       @NotNull Level level,
-                                                       @NotNull BlockPos pos,
-                                                       Player player,
-                                                       @NotNull InteractionHand hand,
-                                                       @NotNull BlockHitResult hitResult) {
+    protected InteractionResult useItemOn(
+            ItemStack stack,
+            BlockState state,
+            Level level,
+            BlockPos pos,
+            Player player,
+            InteractionHand hand,
+            BlockHitResult hitResult
+    ) {
         if (player.isShiftKeyDown() || !player.mayBuild())
-            return ItemInteractionResult.PASS_TO_DEFAULT_BLOCK_INTERACTION;
+            return InteractionResult.TRY_WITH_EMPTY_HAND;
 
         return tryEncase(state, level, pos, stack, player, hand, hitResult);
     }
 
     @Override
-    protected @NotNull VoxelShape getShape(BlockState state, @NotNull BlockGetter level, @NotNull BlockPos pos, @NotNull CollisionContext context) {
+    protected VoxelShape getShape(BlockState state, BlockGetter level, BlockPos pos, CollisionContext context) {
         return CCShapes.CROSS_CONNECTOR.get(state.getValue(AXIS));
     }
 
     public void updateConnections(Level level, BlockPos pos, BlockState state) {
-        if (!level.isClientSide()) {
-            Direction.Axis axis = state.getValue(AXIS);
-            for (Direction direction : Iterate.directions) {
-                if (direction.getAxis() == axis)
-                    continue;
-                BlockPos sourcePos = pos;
-                BlockPos neighborPos = pos.relative(direction);
-                while (sourcePos != neighborPos && level.getBlockState(neighborPos).getBlock() instanceof IConnectionForwardingBlock forwardingBlock) {
-                    BlockPos tempSource = sourcePos;
-                    sourcePos = neighborPos;
-                    neighborPos = forwardingBlock.forwardConnection(level, tempSource, tempSource.equals(pos) ? state : level.getBlockState(tempSource), neighborPos);
-                }
-                BlockEntity neighbourTE = level.getBlockEntity(neighborPos);
-                if (neighbourTE instanceof KineticBlockEntity kineticTE) {
-                    KineticHelper.updateKineticBlock(kineticTE);
-                }
+        if (level.isClientSide())
+            return;
+        Direction.Axis axis = state.getValue(AXIS);
+        for (Direction direction : Iterate.directions) {
+            if (direction.getAxis() == axis)
+                continue;
+            BlockPos sourcePos = pos;
+            BlockPos neighborPos = pos.relative(direction);
+            while (sourcePos != neighborPos
+                    && level.getBlockState(neighborPos).getBlock() instanceof IConnectionForwardingBlock forwardingBlock) {
+                BlockPos tempSource = sourcePos;
+                sourcePos = neighborPos;
+                neighborPos = forwardingBlock.forwardConnection(level, tempSource,
+                        tempSource.equals(pos) ? state : level.getBlockState(tempSource), neighborPos);
+            }
+            BlockEntity neighbourTE = level.getBlockEntity(neighborPos);
+            if (neighbourTE instanceof KineticBlockEntity kineticTE) {
+                KineticHelper.updateKineticBlock(kineticTE);
             }
         }
     }
 
     @Override
-    protected void onPlace(@NotNull BlockState state, @NotNull Level level, @NotNull BlockPos pos, @NotNull BlockState oldState, boolean movedByPiston) {
+    protected void onPlace(BlockState state, Level level, BlockPos pos, BlockState oldState, boolean movedByPiston) {
         super.onPlace(state, level, pos, oldState, movedByPiston);
         updateConnections(level, pos, state);
     }
 
     @Override
-    protected void onRemove(@NotNull BlockState state, @NotNull Level level, @NotNull BlockPos pos, @NotNull BlockState newState, boolean movedByPiston) {
+    protected void affectNeighborsAfterRemoval(BlockState state, ServerLevel level, BlockPos pos, boolean movedByPiston) {
         updateConnections(level, pos, state);
-        super.onRemove(state, level, pos, newState, movedByPiston);
+        super.affectNeighborsAfterRemoval(state, level, pos, movedByPiston);
     }
 
     @Override
@@ -156,7 +158,7 @@ public class CrossConnectorBlock extends Block implements IWrenchable, IConnecti
         Vec3i offset = neighbourPos.subtract(sourcePos);
         if (!(sourceState.getBlock() instanceof IRotate rotatingBlock))
             return neighbourPos;
-        Direction offsetDirection = Direction.fromDelta(offset.getX(), offset.getY(), offset.getZ());
+        Direction offsetDirection = Direction.getNearest(offset.getX(), offset.getY(), offset.getZ(), null);
         if (offsetDirection == null)
             return neighbourPos;
         if (!rotatingBlock.hasShaftTowards(level, sourcePos, sourceState, offsetDirection))

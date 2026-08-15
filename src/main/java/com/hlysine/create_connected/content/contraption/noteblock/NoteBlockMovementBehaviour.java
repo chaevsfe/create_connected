@@ -1,8 +1,8 @@
 package com.hlysine.create_connected.content.contraption.noteblock;
 
 import com.hlysine.create_connected.content.contraption.AutoPlayMovementBehaviour;
-import com.simibubi.create.content.contraptions.ContraptionWorld;
-import com.simibubi.create.content.contraptions.behaviour.MovementContext;
+import com.zurrtum.create.content.contraptions.ContraptionWorld;
+import com.zurrtum.create.content.contraptions.behaviour.MovementContext;
 import net.minecraft.core.BlockPos;
 import net.minecraft.world.level.Level;
 import net.minecraft.world.level.block.state.BlockState;
@@ -22,4 +22,3 @@ public class NoteBlockMovementBehaviour extends AutoPlayMovementBehaviour {
         }
     }
 }
-

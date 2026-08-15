@@ -1,48 +1,42 @@
 package com.hlysine.create_connected.content.linkedtransmitter;
 
-import com.simibubi.create.content.redstone.link.LinkBehaviour;
-import com.simibubi.create.foundation.blockEntity.SmartBlockEntity;
-import com.simibubi.create.foundation.blockEntity.behaviour.BlockEntityBehaviour;
-import com.simibubi.create.foundation.blockEntity.behaviour.ValueBoxTransform;
+import com.zurrtum.create.api.behaviour.BlockEntityBehaviour;
+import com.zurrtum.create.content.redstone.link.ServerLinkBehaviour;
+import com.zurrtum.create.foundation.blockEntity.SmartBlockEntity;
 import net.minecraft.core.BlockPos;
-import net.minecraft.core.HolderLookup;
-import net.minecraft.nbt.CompoundTag;
 import net.minecraft.world.level.block.HorizontalDirectionalBlock;
 import net.minecraft.world.level.block.entity.BlockEntityType;
 import net.minecraft.world.level.block.state.BlockState;
-import org.apache.commons.lang3.tuple.Pair;
+import net.minecraft.world.level.storage.ValueInput;
+import net.minecraft.world.level.storage.ValueOutput;
 
 import java.util.List;
 
 public class LinkedTransmitterBlockEntity extends SmartBlockEntity {
 
     private int transmittedSignal;
-    /**
-     * set to false if the module item is already returned to player via wrenching
-     */
     public boolean containsBase = true;
-    private LinkBehaviour link;
+    private ServerLinkBehaviour link;
 
     public LinkedTransmitterBlockEntity(BlockEntityType<?> type, BlockPos pos, BlockState state) {
         super(type, pos, state);
     }
 
     @Override
-    public void addBehaviours(List<BlockEntityBehaviour> behaviours) {
+    public void addBehaviours(List<BlockEntityBehaviour<?>> behaviours) {
         createLink();
         behaviours.add(link);
     }
 
     protected void createLink() {
-        Pair<ValueBoxTransform, ValueBoxTransform> slots =
-                ValueBoxTransform.Dual.makeSlots(LinkedTransmitterFrequencySlot::new);
-        link = LinkBehaviour.transmitter(this, slots, this::getSignal);
+        link = ServerLinkBehaviour.transmitter(this, this::getSignal);
     }
 
     @Override
     public void initialize() {
         super.initialize();
-        transmit(getBlockState().getSignal(getLevel(), getBlockPos(), getBlockState().getValue(HorizontalDirectionalBlock.FACING)));
+        transmit(getBlockState().getSignal(getLevel(), getBlockPos(),
+                getBlockState().getValue(HorizontalDirectionalBlock.FACING)));
     }
 
     public int getSignal() {
@@ -56,15 +50,15 @@ public class LinkedTransmitterBlockEntity extends SmartBlockEntity {
     }
 
     @Override
-    protected void write(CompoundTag tag, HolderLookup.Provider registries, boolean clientPacket) {
-        tag.putInt("Transmit", transmittedSignal);
-        super.write(tag, registries, clientPacket);
+    protected void write(ValueOutput view, boolean clientPacket) {
+        view.putInt("Transmit", transmittedSignal);
+        super.write(view, clientPacket);
     }
 
     @Override
-    protected void read(CompoundTag tag, HolderLookup.Provider registries, boolean clientPacket) {
-        super.read(tag, registries, clientPacket);
-        if (level == null || level.isClientSide || !link.newPosition)
-            transmittedSignal = tag.getInt("Transmit");
+    protected void read(ValueInput view, boolean clientPacket) {
+        super.read(view, clientPacket);
+        if (level == null || level.isClientSide() || !link.newPosition)
+            transmittedSignal = view.getIntOr("Transmit", 0);
     }
 }

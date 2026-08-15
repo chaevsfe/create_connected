@@ -1,10 +1,10 @@
 package com.hlysine.create_connected.content.centrifugalclutch;
 
-import com.hlysine.create_connected.registries.CCBlockEntityTypes;
 import com.hlysine.create_connected.content.CCBlockStateProperties;
-import com.simibubi.create.content.kinetics.RotationPropagator;
-import com.simibubi.create.content.kinetics.base.DirectionalKineticBlock;
-import com.simibubi.create.foundation.block.IBE;
+import com.hlysine.create_connected.registries.CCBlockEntityTypes;
+import com.zurrtum.create.content.kinetics.RotationPropagator;
+import com.zurrtum.create.content.kinetics.base.DirectionalKineticBlock;
+import com.zurrtum.create.foundation.block.IBE;
 import net.minecraft.core.BlockPos;
 import net.minecraft.core.Direction;
 import net.minecraft.server.level.ServerLevel;
@@ -17,7 +17,6 @@ import net.minecraft.world.level.block.entity.BlockEntityType;
 import net.minecraft.world.level.block.state.BlockState;
 import net.minecraft.world.level.block.state.StateDefinition;
 import net.minecraft.world.level.block.state.properties.BooleanProperty;
-import org.jetbrains.annotations.NotNull;
 
 public class CentrifugalClutchBlock extends DirectionalKineticBlock implements IBE<CentrifugalClutchBlockEntity> {
 
@@ -41,7 +40,7 @@ public class CentrifugalClutchBlock extends DirectionalKineticBlock implements I
 
     @Override
     public BlockEntityType<? extends CentrifugalClutchBlockEntity> getBlockEntityType() {
-        return CCBlockEntityTypes.CENTRIFUGAL_CLUTCH.get();
+        return CCBlockEntityTypes.CENTRIFUGAL_CLUTCH;
     }
 
     @Override
@@ -54,27 +53,24 @@ public class CentrifugalClutchBlock extends DirectionalKineticBlock implements I
         return face.getAxis() == state.getValue(FACING).getAxis();
     }
 
-    @SuppressWarnings("deprecation")
     @Override
-    public boolean hasAnalogOutputSignal(@NotNull BlockState state) {
+    public boolean hasAnalogOutputSignal(BlockState state) {
         return true;
     }
 
-    @SuppressWarnings("deprecation")
     @Override
-    public int getAnalogOutputSignal(@NotNull BlockState pState, @NotNull Level pLevel, @NotNull BlockPos pPos) {
-        return pState.getValue(UNCOUPLED) ? 0 : 15;
+    public int getAnalogOutputSignal(BlockState state, Level level, BlockPos pos, Direction direction) {
+        return state.getValue(UNCOUPLED) ? 0 : 15;
     }
 
-    @SuppressWarnings("deprecation")
     @Override
-    public void tick(@NotNull BlockState pState, @NotNull ServerLevel pLevel, @NotNull BlockPos pPos, @NotNull RandomSource pRandom) {
-        BlockEntity be = pLevel.getBlockEntity(pPos);
+    public void tick(BlockState state, ServerLevel level, BlockPos pos, RandomSource random) {
+        BlockEntity be = level.getBlockEntity(pos);
         if (!(be instanceof CentrifugalClutchBlockEntity kte))
             return;
 
         if (kte.reattachNextTick) {
-            RotationPropagator.handleRemoved(pLevel, pPos, kte);
+            RotationPropagator.handleRemoved(level, pos, kte);
         }
     }
 }

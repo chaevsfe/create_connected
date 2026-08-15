@@ -1,11 +1,11 @@
 package com.hlysine.create_connected.mixin.kineticbattery;
 
-import com.simibubi.create.content.kinetics.KineticNetwork;
+import com.zurrtum.create.content.kinetics.KineticNetwork;
 import org.spongepowered.asm.mixin.Mixin;
 import org.spongepowered.asm.mixin.gen.Accessor;
 
-@Mixin(KineticNetwork.class)
+@Mixin(value = KineticNetwork.class, remap = false)
 public interface KineticNetworkAccessor {
-    @Accessor
+    @Accessor("unloadedStress")
     float getUnloadedStress();
 }

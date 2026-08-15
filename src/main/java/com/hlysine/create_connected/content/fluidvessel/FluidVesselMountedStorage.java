@@ -1,25 +1,23 @@
 package com.hlysine.create_connected.content.fluidvessel;
 
-
-import com.hlysine.create_connected.registries.CCMountedStorageTypes;
+import com.hlysine.create_connected.registries.CCRegistration;
 import com.mojang.serialization.MapCodec;
 import com.mojang.serialization.codecs.RecordCodecBuilder;
-import com.simibubi.create.api.contraption.storage.SyncedMountedStorage;
-import com.simibubi.create.api.contraption.storage.fluid.MountedFluidStorageType;
-import com.simibubi.create.api.contraption.storage.fluid.WrapperMountedFluidStorage;
-import com.simibubi.create.content.contraptions.Contraption;
-import com.simibubi.create.content.fluids.tank.FluidTankBlockEntity;
-import net.createmod.catnip.animation.LerpedFloat;
+import com.zurrtum.create.AllClientHandle;
+import com.zurrtum.create.api.contraption.storage.SyncedMountedStorage;
+import com.zurrtum.create.api.contraption.storage.fluid.MountedFluidStorageType;
+import com.zurrtum.create.api.contraption.storage.fluid.WrapperMountedFluidStorage;
+import com.zurrtum.create.catnip.animation.LerpedFloat;
+import com.zurrtum.create.content.contraptions.Contraption;
+import com.zurrtum.create.content.fluids.tank.FluidTankBlockEntity;
+import com.zurrtum.create.foundation.fluid.FluidTank;
+import com.zurrtum.create.infrastructure.fluids.FluidStack;
 import net.minecraft.core.BlockPos;
-import net.minecraft.core.HolderLookup;
-import net.minecraft.nbt.CompoundTag;
 import net.minecraft.util.ExtraCodecs;
 import net.minecraft.world.level.Level;
 import net.minecraft.world.level.block.entity.BlockEntity;
 import net.minecraft.world.level.block.state.BlockState;
-import net.neoforged.neoforge.fluids.FluidStack;
-import net.neoforged.neoforge.fluids.capability.templates.FluidTank;
-import org.jetbrains.annotations.Nullable;
+import org.jspecify.annotations.Nullable;
 
 public class FluidVesselMountedStorage extends WrapperMountedFluidStorage<FluidVesselMountedStorage.Handler> implements SyncedMountedStorage {
     public static final MapCodec<FluidVesselMountedStorage> CODEC = RecordCodecBuilder.mapCodec(i -> i.group(
@@ -30,80 +28,74 @@ public class FluidVesselMountedStorage extends WrapperMountedFluidStorage<FluidV
     private boolean dirty;
 
     protected FluidVesselMountedStorage(MountedFluidStorageType<?> type, int capacity, FluidStack stack) {
-        super(type, new FluidVesselMountedStorage.Handler(capacity, stack));
-        this.wrapped.onChange = () -> this.dirty = true;
+        super(type);
+        wrapped = new Handler(capacity, stack);
     }
 
     protected FluidVesselMountedStorage(int capacity, FluidStack stack) {
-        this(CCMountedStorageTypes.FLUID_VESSEL.get(), capacity, stack);
+        this(CCRegistration.FLUID_VESSEL, capacity, stack);
     }
 
     @Override
     public void unmount(Level level, BlockState state, BlockPos pos, @Nullable BlockEntity be) {
         if (be instanceof FluidTankBlockEntity tank && tank.isController()) {
             FluidTank inventory = tank.getTankInventory();
-            // capacity shouldn't change, leave it
-            inventory.setFluid(this.wrapped.getFluid());
+            inventory.setFluid(wrapped.getFluid());
         }
     }
 
     public FluidStack getFluid() {
-        return this.wrapped.getFluid();
+        return wrapped.getFluid();
     }
 
     public int getCapacity() {
-        return this.wrapped.getCapacity();
+        return wrapped.getMaxAmountPerStack();
     }
 
     @Override
     public boolean isDirty() {
-        return this.dirty;
+        return dirty;
     }
 
     @Override
     public void markClean() {
-        this.dirty = false;
+        dirty = false;
+    }
+
+    @Override
+    public void markDirty() {
+        dirty = true;
     }
 
     @Override
     public void afterSync(Contraption contraption, BlockPos localPos) {
-        BlockEntity be = contraption.getBlockEntityClientSide(localPos);
+        BlockEntity be = AllClientHandle.INSTANCE.getBlockEntityClientSide(contraption, localPos);
         if (!(be instanceof FluidTankBlockEntity tank))
             return;
 
         FluidTank inv = tank.getTankInventory();
-        inv.setFluid(this.getFluid());
-        float fillLevel = inv.getFluidAmount() / (float) inv.getCapacity();
+        inv.setFluid(getFluid());
+        float fillLevel = inv.getFluid().getAmount() / (float) inv.getMaxAmountPerStack();
         if (tank.getFluidLevel() == null) {
             tank.setFluidLevel(LerpedFloat.linear().startWithValue(fillLevel));
         }
         tank.getFluidLevel().chase(fillLevel, 0.5, LerpedFloat.Chaser.EXP);
     }
 
-    public static FluidVesselMountedStorage fromTank(FluidTankBlockEntity tank) {
-        // tank has update callbacks, make an isolated copy
-        FluidTank inventory = tank.getTankInventory();
-        return new FluidVesselMountedStorage(inventory.getCapacity(), inventory.getFluid().copy());
+    public static FluidVesselMountedStorage fromVessel(FluidTankBlockEntity vessel) {
+        FluidTank inventory = vessel.getTankInventory();
+        return new FluidVesselMountedStorage(inventory.getMaxAmountPerStack(), inventory.getFluid().copy());
     }
 
-    public static FluidVesselMountedStorage fromLegacy(HolderLookup.Provider registries, CompoundTag nbt) {
-        int capacity = nbt.getInt("Capacity");
-        FluidStack fluid = FluidStack.parseOptional(registries, nbt);
-        return new FluidVesselMountedStorage(capacity, fluid);
-    }
-
-    public static final class Handler extends FluidTank {
-        private Runnable onChange = () -> {};
-
+    public final class Handler extends FluidTank {
         public Handler(int capacity, FluidStack stack) {
             super(capacity);
-            this.setFluid(stack);
+            setFluid(stack);
         }
 
         @Override
-        protected void onContentsChanged() {
-            this.onChange.run();
+        public void markDirty() {
+            dirty = true;
         }
     }
 }
-

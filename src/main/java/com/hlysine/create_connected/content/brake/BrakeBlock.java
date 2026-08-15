@@ -1,9 +1,9 @@
 package com.hlysine.create_connected.content.brake;
 
 import com.hlysine.create_connected.registries.CCBlockEntityTypes;
-import com.simibubi.create.content.kinetics.base.AbstractEncasedShaftBlock;
-import com.simibubi.create.content.kinetics.base.KineticBlockEntity;
-import com.simibubi.create.foundation.block.IBE;
+import com.zurrtum.create.content.kinetics.base.AbstractEncasedShaftBlock;
+import com.zurrtum.create.content.kinetics.base.KineticBlockEntity;
+import com.zurrtum.create.foundation.block.IBE;
 import net.minecraft.core.BlockPos;
 import net.minecraft.world.item.context.BlockPlaceContext;
 import net.minecraft.world.level.Level;
@@ -13,7 +13,8 @@ import net.minecraft.world.level.block.state.BlockState;
 import net.minecraft.world.level.block.state.StateDefinition;
 import net.minecraft.world.level.block.state.properties.BlockStateProperties;
 import net.minecraft.world.level.block.state.properties.BooleanProperty;
-import org.jetbrains.annotations.NotNull;
+import net.minecraft.world.level.redstone.Orientation;
+import org.jspecify.annotations.Nullable;
 
 public class BrakeBlock extends AbstractEncasedShaftBlock implements IBE<BrakeBlockEntity> {
 
@@ -38,21 +39,21 @@ public class BrakeBlock extends AbstractEncasedShaftBlock implements IBE<BrakeBl
 
     @Override
     protected boolean areStatesKineticallyEquivalent(BlockState oldState, BlockState newState) {
-        if (!super.areStatesKineticallyEquivalent(oldState, newState)) return false;
-        if (oldState.getValue(POWERED) != newState.getValue(POWERED)) return false;
-        return true;
+        if (!super.areStatesKineticallyEquivalent(oldState, newState))
+            return false;
+        return oldState.getValue(POWERED) == newState.getValue(POWERED);
     }
 
-    @SuppressWarnings("deprecation")
     @Override
     public void neighborChanged(
-            @NotNull BlockState state,
+            BlockState state,
             Level worldIn,
-            @NotNull BlockPos pos,
-            @NotNull Block blockIn,
-            @NotNull BlockPos fromPos,
-            boolean isMoving) {
-        if (worldIn.isClientSide)
+            BlockPos pos,
+            Block blockIn,
+            @Nullable Orientation wireOrientation,
+            boolean isMoving
+    ) {
+        if (worldIn.isClientSide())
             return;
 
         boolean previouslyPowered = state.getValue(POWERED);
@@ -68,6 +69,6 @@ public class BrakeBlock extends AbstractEncasedShaftBlock implements IBE<BrakeBl
 
     @Override
     public BlockEntityType<? extends BrakeBlockEntity> getBlockEntityType() {
-        return CCBlockEntityTypes.BRAKE.get();
+        return CCBlockEntityTypes.BRAKE;
     }
 }

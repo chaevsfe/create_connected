@@ -1,24 +1,24 @@
 package com.hlysine.create_connected.content.copycat.verticalstep;
 
+import com.hlysine.create_connected.content.copycat.ICopycatWithWrappedBlock;
+import com.hlysine.create_connected.content.copycat.MigratingWaterloggedCopycatBlock;
 import com.hlysine.create_connected.registries.CCBlocks;
 import com.hlysine.create_connected.registries.CCShapes;
-import com.hlysine.create_connected.content.copycat.MigratingWaterloggedCopycatBlock;
-import com.simibubi.create.foundation.placement.PoleHelper;
-import net.createmod.catnip.data.Iterate;
-import net.createmod.catnip.data.Pair;
-import net.createmod.catnip.placement.IPlacementHelper;
-import net.createmod.catnip.placement.PlacementHelpers;
-import net.minecraft.MethodsReturnNonnullByDefault;
+import com.zurrtum.create.catnip.data.Iterate;
+import com.zurrtum.create.catnip.data.Pair;
+import com.zurrtum.create.catnip.placement.IPlacementHelper;
+import com.zurrtum.create.catnip.placement.PlacementHelpers;
+import com.zurrtum.create.foundation.placement.PoleHelper;
 import net.minecraft.core.BlockPos;
 import net.minecraft.core.Direction;
 import net.minecraft.core.Vec3i;
 import net.minecraft.world.InteractionHand;
-import net.minecraft.world.ItemInteractionResult;
+import net.minecraft.world.InteractionResult;
 import net.minecraft.world.entity.player.Player;
 import net.minecraft.world.item.BlockItem;
 import net.minecraft.world.item.ItemStack;
 import net.minecraft.world.item.context.BlockPlaceContext;
-import net.minecraft.world.level.BlockAndTintGetter;
+import net.minecraft.world.level.BlockAndLightGetter;
 import net.minecraft.world.level.BlockGetter;
 import net.minecraft.world.level.Level;
 import net.minecraft.world.level.block.Block;
@@ -27,12 +27,11 @@ import net.minecraft.world.level.block.Rotation;
 import net.minecraft.world.level.block.state.BlockState;
 import net.minecraft.world.level.block.state.StateDefinition;
 import net.minecraft.world.level.block.state.properties.BlockStateProperties;
-import net.minecraft.world.level.block.state.properties.DirectionProperty;
+import net.minecraft.world.level.block.state.properties.EnumProperty;
 import net.minecraft.world.level.pathfinder.PathComputationType;
 import net.minecraft.world.phys.BlockHitResult;
 import net.minecraft.world.phys.shapes.CollisionContext;
 import net.minecraft.world.phys.shapes.VoxelShape;
-import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.util.HashMap;
@@ -43,7 +42,7 @@ import static net.minecraft.core.Direction.Axis;
 
 public class CopycatVerticalStepBlock extends MigratingWaterloggedCopycatBlock {
 
-    public static final DirectionProperty FACING = BlockStateProperties.HORIZONTAL_FACING;
+    public static final EnumProperty<Direction> FACING = BlockStateProperties.HORIZONTAL_FACING;
 
     private static final int placementHelperId = PlacementHelpers.register(new PlacementHelper());
 
@@ -53,16 +52,14 @@ public class CopycatVerticalStepBlock extends MigratingWaterloggedCopycatBlock {
                 .setValue(FACING, Direction.NORTH));
     }
 
-
     @Override
-    protected @NotNull ItemInteractionResult useItemOn(ItemStack stack, BlockState state, Level level, BlockPos pos, Player player, InteractionHand hand, BlockHitResult hitResult) {
+    protected InteractionResult useItemOn(ItemStack stack, BlockState state, Level level, BlockPos pos, Player player, InteractionHand hand, BlockHitResult hitResult) {
         if (!player.isShiftKeyDown() && player.mayBuild()) {
             ItemStack heldItem = player.getItemInHand(hand);
             IPlacementHelper placementHelper = PlacementHelpers.get(placementHelperId);
             if (placementHelper.matchesItem(heldItem)) {
-                placementHelper.getOffset(player, level, state, pos, hitResult)
-                        .placeInWorld(level, (BlockItem) heldItem.getItem(), player, hand, hitResult);
-                return ItemInteractionResult.SUCCESS;
+                return placementHelper.getOffset(player, level, state, pos, hitResult)
+                        .placeInWorld(level, (BlockItem) heldItem.getItem(), player, hand);
             }
         }
 
@@ -70,7 +67,7 @@ public class CopycatVerticalStepBlock extends MigratingWaterloggedCopycatBlock {
     }
 
     @Override
-    public boolean isIgnoredConnectivitySide(BlockAndTintGetter reader, BlockState state, Direction face,
+    public boolean isIgnoredConnectivitySide(BlockAndLightGetter reader, BlockState state, Direction face,
                                              @Nullable BlockPos fromPos, @Nullable BlockPos toPos) {
         if (fromPos == null || toPos == null)
             return true;
@@ -79,16 +76,14 @@ public class CopycatVerticalStepBlock extends MigratingWaterloggedCopycatBlock {
         BlockState toState = reader.getBlockState(toPos);
 
         if (toState.is(this)) {
-            // connecting to another copycat beam
             return toState.getValue(FACING) != direction;
         } else {
-            // doesn't connect to any other blocks
             return true;
         }
     }
 
     @Override
-    public boolean canConnectTexturesToward(BlockAndTintGetter reader, BlockPos fromPos, BlockPos toPos,
+    public boolean canConnectTexturesToward(BlockAndLightGetter reader, BlockPos fromPos, BlockPos toPos,
                                             BlockState state) {
         Direction facing = state.getValue(FACING);
         BlockState toState = reader.getBlockState(toPos);
@@ -97,7 +92,7 @@ public class CopycatVerticalStepBlock extends MigratingWaterloggedCopycatBlock {
         if (diff.equals(Vec3i.ZERO)) {
             return true;
         }
-        Direction face = Direction.fromDelta(diff.getX(), diff.getY(), diff.getZ());
+        Direction face = ICopycatWithWrappedBlock.fromDelta(diff);
         if (face == null) {
             return false;
         }
@@ -110,7 +105,7 @@ public class CopycatVerticalStepBlock extends MigratingWaterloggedCopycatBlock {
     }
 
     @Override
-    protected boolean isPathfindable(@NotNull BlockState state, @NotNull PathComputationType pathComputationType) {
+    protected boolean isPathfindable(BlockState state, PathComputationType pathComputationType) {
         return false;
     }
 
@@ -146,9 +141,8 @@ public class CopycatVerticalStepBlock extends MigratingWaterloggedCopycatBlock {
     }
 
     @Override
-    public BlockState getStateForPlacement(@NotNull BlockPlaceContext context) {
+    public BlockState getStateForPlacement(BlockPlaceContext context) {
         BlockState stateForPlacement = super.getStateForPlacement(context);
-        assert stateForPlacement != null;
 
         int xOffset = context.getClickLocation().x - context.getClickedPos().getX() > 0.5 ? 1 : -1;
         int zOffset = context.getClickLocation().z - context.getClickedPos().getZ() > 0.5 ? 1 : -1;
@@ -168,34 +162,17 @@ public class CopycatVerticalStepBlock extends MigratingWaterloggedCopycatBlock {
     }
 
     @Override
-    public @NotNull VoxelShape getShape(BlockState pState, @NotNull BlockGetter pLevel, @NotNull BlockPos pPos, @NotNull CollisionContext pContext) {
+    public VoxelShape getShape(BlockState pState, BlockGetter pLevel, BlockPos pPos, CollisionContext pContext) {
         return CCShapes.CASING_8PX_VERTICAL.get(pState.getValue(FACING));
     }
 
     @Override
-    public boolean supportsExternalFaceHiding(BlockState state) {
-        return true;
-    }
-
-    @Override
-    public boolean hidesNeighborFace(BlockGetter level, BlockPos pos, BlockState state, BlockState neighborState,
-                                     Direction dir) {
-        if (state.is(this) == neighborState.is(this)) {
-            if (getMaterial(level, pos).skipRendering(getMaterial(level, pos.relative(dir)), dir.getOpposite())) {
-                return dir.getAxis().isVertical() && neighborState.getValue(FACING) == state.getValue(FACING);
-            }
-        }
-
-        return false;
-    }
-
-    @Override
-    public @NotNull BlockState rotate(@NotNull BlockState pState, Rotation pRot) {
+    public BlockState rotate(BlockState pState, Rotation pRot) {
         return pState.setValue(FACING, pRot.rotate(pState.getValue(FACING)));
     }
 
     @Override
-    public @NotNull BlockState mirror(@NotNull BlockState pState, @NotNull Mirror pMirror) {
+    public BlockState mirror(BlockState pState, Mirror pMirror) {
         Axis mirrorAxis = null;
         for (Axis axis : Iterate.axes) {
             if (pMirror.rotation().inverts(axis)) {
@@ -214,11 +191,10 @@ public class CopycatVerticalStepBlock extends MigratingWaterloggedCopycatBlock {
         }
     }
 
-    @MethodsReturnNonnullByDefault
     private static class PlacementHelper extends PoleHelper<Direction> {
 
         private PlacementHelper() {
-            super(CCBlocks.COPYCAT_VERTICAL_STEP::has, $ -> Axis.Y, FACING);
+            super(state -> state.is(CCBlocks.COPYCAT_VERTICAL_STEP), $ -> Axis.Y, FACING);
         }
 
         @Override
@@ -230,4 +206,3 @@ public class CopycatVerticalStepBlock extends MigratingWaterloggedCopycatBlock {
     }
 
 }
-

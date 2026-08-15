@@ -1,14 +1,15 @@
 package com.hlysine.create_connected.content.kineticbridge;
 
 import com.hlysine.create_connected.content.KineticHelper;
-import com.simibubi.create.content.kinetics.base.GeneratingKineticBlockEntity;
+import com.zurrtum.create.content.kinetics.base.GeneratingKineticBlockEntity;
 import net.minecraft.core.BlockPos;
-import net.minecraft.core.HolderLookup;
-import net.minecraft.nbt.CompoundTag;
 import net.minecraft.world.level.block.entity.BlockEntity;
 import net.minecraft.world.level.block.entity.BlockEntityType;
 import net.minecraft.world.level.block.state.BlockState;
+import net.minecraft.world.level.storage.ValueInput;
+import net.minecraft.world.level.storage.ValueOutput;
 import net.minecraft.world.phys.AABB;
+import org.jspecify.annotations.Nullable;
 
 import java.lang.ref.WeakReference;
 
@@ -21,6 +22,7 @@ public class KineticBridgeDestinationBlockEntity extends GeneratingKineticBlockE
         super(type, pos, state);
     }
 
+    @Nullable
     private KineticBridgeBlockEntity getSource() {
         KineticBridgeBlockEntity source = sourceBE.get();
         BlockPos sourcePos = KineticBridgeDestinationBlock.getSource(getBlockPos(), getBlockState());
@@ -75,14 +77,14 @@ public class KineticBridgeDestinationBlockEntity extends GeneratingKineticBlockE
     }
 
     @Override
-    protected void write(CompoundTag compound, HolderLookup.Provider registries, boolean clientPacket) {
-        super.write(compound, registries, clientPacket);
-        compound.putBoolean("UpdateKineticNextTick", updateKineticsNextTick);
+    protected void write(ValueOutput view, boolean clientPacket) {
+        super.write(view, clientPacket);
+        view.putBoolean("UpdateKineticNextTick", updateKineticsNextTick);
     }
 
     @Override
-    protected void read(CompoundTag compound, HolderLookup.Provider registries, boolean clientPacket) {
-        super.read(compound, registries, clientPacket);
-        updateKineticsNextTick = compound.getBoolean("UpdateKineticNextTick");
+    protected void read(ValueInput view, boolean clientPacket) {
+        super.read(view, clientPacket);
+        updateKineticsNextTick = view.getBooleanOr("UpdateKineticNextTick", false);
     }
 }

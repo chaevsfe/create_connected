@@ -1,26 +1,24 @@
 package com.hlysine.create_connected.content.brasschute;
 
 import com.hlysine.create_connected.registries.CCBlockEntityTypes;
-import com.simibubi.create.AllBlocks;
-import com.simibubi.create.content.logistics.chute.ChuteBlock;
-import com.simibubi.create.content.logistics.chute.ChuteBlockEntity;
+import com.zurrtum.create.AllBlocks;
+import com.zurrtum.create.AllItems;
+import com.zurrtum.create.content.logistics.chute.ChuteBlock;
+import com.zurrtum.create.content.logistics.chute.ChuteBlockEntity;
 import net.minecraft.core.BlockPos;
 import net.minecraft.core.Direction;
 import net.minecraft.sounds.SoundEvents;
 import net.minecraft.sounds.SoundSource;
 import net.minecraft.world.InteractionHand;
 import net.minecraft.world.InteractionResult;
-import net.minecraft.world.ItemInteractionResult;
 import net.minecraft.world.entity.player.Player;
 import net.minecraft.world.item.ItemStack;
 import net.minecraft.world.item.context.UseOnContext;
 import net.minecraft.world.level.Level;
-import net.minecraft.world.level.block.Block;
 import net.minecraft.world.level.block.LevelEvent;
 import net.minecraft.world.level.block.entity.BlockEntityType;
 import net.minecraft.world.level.block.state.BlockState;
 import net.minecraft.world.phys.BlockHitResult;
-import org.jetbrains.annotations.NotNull;
 
 public class BrassChuteBlock extends ChuteBlock {
     public BrassChuteBlock(Properties properties) {
@@ -34,12 +32,12 @@ public class BrassChuteBlock extends ChuteBlock {
         if (shape == Shape.INTERSECTION)
             return InteractionResult.PASS;
         Level level = context.getLevel();
-        if (level.isClientSide)
+        if (level.isClientSide())
             return InteractionResult.SUCCESS;
         if (shape == Shape.ENCASED) {
             level.setBlockAndUpdate(context.getClickedPos(), state.setValue(SHAPE, Shape.NORMAL));
             level.levelEvent(LevelEvent.PARTICLES_DESTROY_BLOCK, context.getClickedPos(),
-                    Block.getId(AllBlocks.BRASS_BLOCK.getDefaultState()));
+                    getId(AllBlocks.BRASS_BLOCK.defaultBlockState()));
             return InteractionResult.SUCCESS;
         }
         if (down)
@@ -48,40 +46,40 @@ public class BrassChuteBlock extends ChuteBlock {
         return InteractionResult.SUCCESS;
     }
 
-    protected ItemInteractionResult retrieveItem(ItemStack stack, BlockState state, Level level, BlockPos pos, Player player,
-                                                 InteractionHand hand, BlockHitResult hitResult) {
+    @Override
+    protected InteractionResult useItemOn(ItemStack stack, BlockState state, Level level, BlockPos pos, Player player, InteractionHand hand, BlockHitResult hitResult) {
+        Shape shape = state.getValue(SHAPE);
+        if (!stack.is(AllItems.BRASS_BLOCK))
+            return retrieveItem(stack, state, level, pos, player, hand, hitResult);
+        if (shape == Shape.INTERSECTION || shape == Shape.ENCASED)
+            return retrieveItem(stack, state, level, pos, player, hand, hitResult);
+        if (player == null || level.isClientSide())
+            return InteractionResult.SUCCESS;
+
+        level.setBlockAndUpdate(pos, state.setValue(SHAPE, Shape.ENCASED));
+        level.playSound(null, pos, SoundEvents.NETHERITE_BLOCK_HIT, SoundSource.BLOCKS, 0.5f, 1.05f);
+        return InteractionResult.SUCCESS;
+    }
+
+    protected InteractionResult retrieveItem(ItemStack stack, BlockState state, Level level, BlockPos pos, Player player,
+                                             InteractionHand hand, BlockHitResult hitResult) {
         if (!stack.isEmpty())
-            return ItemInteractionResult.PASS_TO_DEFAULT_BLOCK_INTERACTION;
-        if (level.isClientSide)
-            return ItemInteractionResult.SUCCESS;
+            return InteractionResult.TRY_WITH_EMPTY_HAND;
+        if (level.isClientSide())
+            return InteractionResult.SUCCESS;
 
         return onBlockEntityUseItemOn(level, pos, be -> {
             if (be.getItem().isEmpty())
-                return ItemInteractionResult.PASS_TO_DEFAULT_BLOCK_INTERACTION;
+                return InteractionResult.TRY_WITH_EMPTY_HAND;
             player.getInventory()
                     .placeItemBackInInventory(be.getItem());
             be.setItem(ItemStack.EMPTY);
-            return ItemInteractionResult.SUCCESS;
+            return InteractionResult.SUCCESS;
         });
     }
 
     @Override
-    protected @NotNull ItemInteractionResult useItemOn(ItemStack stack, BlockState state, Level level, BlockPos pos, Player player, InteractionHand hand, BlockHitResult hitResult) {
-        Shape shape = state.getValue(SHAPE);
-        if (!AllBlocks.BRASS_BLOCK.isIn(stack))
-            return retrieveItem(stack, state, level, pos, player, hand, hitResult);
-        if (shape == Shape.INTERSECTION || shape == Shape.ENCASED)
-            return retrieveItem(stack, state, level, pos, player, hand, hitResult);
-        if (player == null || level.isClientSide)
-            return ItemInteractionResult.SUCCESS;
-
-        level.setBlockAndUpdate(pos, state.setValue(SHAPE, Shape.ENCASED));
-        level.playSound(null, pos, SoundEvents.NETHERITE_BLOCK_HIT, SoundSource.BLOCKS, 0.5f, 1.05f);
-        return ItemInteractionResult.SUCCESS;
-    }
-
-    @Override
     public BlockEntityType<? extends ChuteBlockEntity> getBlockEntityType() {
-        return CCBlockEntityTypes.BRASS_CHUTE.get();
+        return CCBlockEntityTypes.BRASS_CHUTE;
     }
 }

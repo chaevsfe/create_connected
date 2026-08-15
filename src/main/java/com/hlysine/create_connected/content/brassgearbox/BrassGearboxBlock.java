@@ -2,14 +2,13 @@ package com.hlysine.create_connected.content.brassgearbox;
 
 import com.hlysine.create_connected.registries.CCBlockEntityTypes;
 import com.hlysine.create_connected.registries.CCItems;
-import com.simibubi.create.content.kinetics.base.KineticBlockEntity;
-import com.simibubi.create.content.kinetics.base.RotatedPillarKineticBlock;
-import com.simibubi.create.foundation.block.IBE;
+import com.zurrtum.create.content.kinetics.base.KineticBlockEntity;
+import com.zurrtum.create.content.kinetics.base.RotatedPillarKineticBlock;
+import com.zurrtum.create.foundation.block.IBE;
 import net.minecraft.core.BlockPos;
 import net.minecraft.core.Direction;
 import net.minecraft.core.Direction.Axis;
 import net.minecraft.world.InteractionResult;
-import net.minecraft.world.entity.player.Player;
 import net.minecraft.world.item.ItemStack;
 import net.minecraft.world.item.context.BlockPlaceContext;
 import net.minecraft.world.item.context.UseOnContext;
@@ -21,10 +20,8 @@ import net.minecraft.world.level.block.entity.BlockEntityType;
 import net.minecraft.world.level.block.state.BlockState;
 import net.minecraft.world.level.block.state.StateDefinition;
 import net.minecraft.world.level.block.state.properties.BooleanProperty;
-import net.minecraft.world.level.material.PushReaction;
 import net.minecraft.world.level.storage.loot.LootParams;
-import net.minecraft.world.phys.HitResult;
-import org.jetbrains.annotations.NotNull;
+import org.jspecify.annotations.Nullable;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -35,6 +32,8 @@ public class BrassGearboxBlock extends RotatedPillarKineticBlock implements IBE<
     public static final BooleanProperty FACE_2_FLIPPED = BooleanProperty.create("face_2_flipped");
     public static final BooleanProperty FACE_3_FLIPPED = BooleanProperty.create("face_3_flipped");
     public static final BooleanProperty FACE_4_FLIPPED = BooleanProperty.create("face_4_flipped");
+
+    private static final List<Direction> DIRECTIONS = Direction.stream().toList();
 
     public BrassGearboxBlock(Properties properties) {
         super(properties);
@@ -56,23 +55,17 @@ public class BrassGearboxBlock extends RotatedPillarKineticBlock implements IBE<
     }
 
     @Override
-    public PushReaction getPistonPushReaction(BlockState state) {
-        return PushReaction.PUSH_ONLY;
-    }
-
-    @SuppressWarnings("deprecation")
-    @Override
-    public @NotNull List<ItemStack> getDrops(BlockState state, @NotNull LootParams.Builder builder) {
+    public List<ItemStack> getDrops(BlockState state, LootParams.Builder builder) {
         if (state.getValue(AXIS).isVertical())
             return super.getDrops(state, builder);
-        return List.of(new ItemStack(CCItems.VERTICAL_BRASS_GEARBOX.get()));
+        return List.of(new ItemStack(CCItems.VERTICAL_BRASS_GEARBOX));
     }
 
     @Override
-    public ItemStack getCloneItemStack(BlockState state, HitResult target, LevelReader level, BlockPos pos, Player player) {
+    protected ItemStack getCloneItemStack(LevelReader level, BlockPos pos, BlockState state, boolean includeData) {
         if (state.getValue(AXIS).isVertical())
-            return super.getCloneItemStack(state, target, level, pos, player);
-        return new ItemStack(CCItems.VERTICAL_BRASS_GEARBOX.get());
+            return super.getCloneItemStack(level, pos, state, includeData);
+        return new ItemStack(CCItems.VERTICAL_BRASS_GEARBOX);
     }
 
     @Override
@@ -82,21 +75,27 @@ public class BrassGearboxBlock extends RotatedPillarKineticBlock implements IBE<
 
     @Override
     public InteractionResult onWrenched(BlockState state, UseOnContext context) {
-        if (state.getBlock() != this) return InteractionResult.PASS;
+        if (state.getBlock() != this)
+            return InteractionResult.PASS;
         int face = getFaceId(context.getClickedFace(), state.getValue(AXIS));
-        if (face == 0) return InteractionResult.PASS;
-        KineticBlockEntity.switchToBlockState(context.getLevel(), context.getClickedPos(), setFaceFlipped(face, state, !isFaceFlipped(face, state)));
+        if (face == 0)
+            return InteractionResult.PASS;
+        KineticBlockEntity.switchToBlockState(context.getLevel(), context.getClickedPos(),
+                setFaceFlipped(face, state, !isFaceFlipped(face, state)));
         return InteractionResult.SUCCESS;
     }
 
     @Override
     protected boolean areStatesKineticallyEquivalent(BlockState oldState, BlockState newState) {
-        if (!super.areStatesKineticallyEquivalent(oldState, newState)) return false;
-        if (oldState.getValue(FACE_1_FLIPPED) != newState.getValue(FACE_1_FLIPPED)) return false;
-        if (oldState.getValue(FACE_2_FLIPPED) != newState.getValue(FACE_2_FLIPPED)) return false;
-        if (oldState.getValue(FACE_3_FLIPPED) != newState.getValue(FACE_3_FLIPPED)) return false;
-        if (oldState.getValue(FACE_4_FLIPPED) != newState.getValue(FACE_4_FLIPPED)) return false;
-        return true;
+        if (!super.areStatesKineticallyEquivalent(oldState, newState))
+            return false;
+        if (oldState.getValue(FACE_1_FLIPPED) != newState.getValue(FACE_1_FLIPPED))
+            return false;
+        if (oldState.getValue(FACE_2_FLIPPED) != newState.getValue(FACE_2_FLIPPED))
+            return false;
+        if (oldState.getValue(FACE_3_FLIPPED) != newState.getValue(FACE_3_FLIPPED))
+            return false;
+        return oldState.getValue(FACE_4_FLIPPED) == newState.getValue(FACE_4_FLIPPED);
     }
 
     @Override
@@ -116,22 +115,19 @@ public class BrassGearboxBlock extends RotatedPillarKineticBlock implements IBE<
 
     @Override
     public BlockEntityType<? extends BrassGearboxBlockEntity> getBlockEntityType() {
-        return CCBlockEntityTypes.BRASS_GEARBOX.get();
+        return CCBlockEntityTypes.BRASS_GEARBOX;
     }
 
     @Override
-    public @NotNull BlockState rotate(BlockState state, Rotation rot) {
+    public BlockState rotate(BlockState state, Rotation rot) {
         BlockState newState = super.rotate(state, rot);
         Axis axis = state.getValue(AXIS);
         Axis newAxis = newState.getValue(AXIS);
 
-        // For each old face direction, determine its new face direction after rotation,
-        // then carry the flip state over.
         List<Direction> directions = new ArrayList<>(DIRECTIONS);
         directions.removeIf(d -> d.getAxis() == axis);
 
-        // Start with all flips false, then assign from old state
-        boolean[] newFlips = new boolean[5]; // 1-indexed, [0] unused
+        boolean[] newFlips = new boolean[5];
 
         for (Direction oldDir : directions) {
             int oldFaceId = getFaceId(oldDir, axis);
@@ -145,13 +141,11 @@ public class BrassGearboxBlock extends RotatedPillarKineticBlock implements IBE<
             }
         }
 
-        newState = newState
+        return newState
                 .setValue(FACE_1_FLIPPED, newFlips[1])
                 .setValue(FACE_2_FLIPPED, newFlips[2])
                 .setValue(FACE_3_FLIPPED, newFlips[3])
                 .setValue(FACE_4_FLIPPED, newFlips[4]);
-
-        return newState;
     }
 
     @Override
@@ -185,15 +179,14 @@ public class BrassGearboxBlock extends RotatedPillarKineticBlock implements IBE<
                 .setValue(FACE_4_FLIPPED, newFlips[4]);
     }
 
+    @Nullable
     private static Axis getMirrorAxis(Mirror mirror) {
         return switch (mirror) {
             case LEFT_RIGHT -> Axis.Z;
             case FRONT_BACK -> Axis.X;
-            default -> null; // Mirror.NONE
+            default -> null;
         };
     }
-
-    private static final List<Direction> DIRECTIONS = Direction.stream().toList();
 
     public static int getFaceId(Direction face, Axis blockAxis) {
         List<Direction> directions = new ArrayList<>(DIRECTIONS);
@@ -207,8 +200,7 @@ public class BrassGearboxBlock extends RotatedPillarKineticBlock implements IBE<
             case 2 -> state.getValue(FACE_2_FLIPPED);
             case 3 -> state.getValue(FACE_3_FLIPPED);
             case 4 -> state.getValue(FACE_4_FLIPPED);
-            default -> false; // throw new IllegalStateException("Unexpected value: " + faceId);
-            // cannot throw here, possibly due to mod incompatibility
+            default -> false;
         };
     }
 
