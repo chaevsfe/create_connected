@@ -8,8 +8,8 @@ import org.spongepowered.asm.mixin.gen.Accessor;
 @Mixin(LinkBehaviour.class)
 public interface LinkBehaviourAccessor {
     @Accessor("firstSlot")
-    void setFirstSlot(ValueBoxTransform slot);
+    void create_connected$setFirstSlot(ValueBoxTransform slot);
 
     @Accessor("secondSlot")
-    void setSecondSlot(ValueBoxTransform slot);
+    void create_connected$setSecondSlot(ValueBoxTransform slot);
 }

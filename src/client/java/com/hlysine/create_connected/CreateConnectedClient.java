@@ -248,8 +248,8 @@ public class CreateConnectedClient implements ClientModInitializer {
         Pair<ValueBoxTransform, ValueBoxTransform> slots =
                 ValueBoxTransform.Dual.makeSlots(LinkedTransmitterFrequencySlot::new);
         LinkBehaviourAccessor accessor = (LinkBehaviourAccessor) behaviour;
-        accessor.setFirstSlot(slots.getLeft());
-        accessor.setSecondSlot(slots.getRight());
+        accessor.create_connected$setFirstSlot(slots.getLeft());
+        accessor.create_connected$setSecondSlot(slots.getRight());
         return behaviour;
     }
 

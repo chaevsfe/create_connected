@@ -2,12 +2,15 @@ package com.hlysine.create_connected.content.chaincogwheel;
 
 import com.zurrtum.create.client.AllPartialModels;
 import com.zurrtum.create.client.catnip.render.CachedBuffers;
+import com.zurrtum.create.client.catnip.render.SuperByteBufferRenderState;
 import com.zurrtum.create.client.content.kinetics.base.KineticBlockEntityRenderer;
 import com.zurrtum.create.client.content.kinetics.simpleRelays.encased.EncasedSmallCogRenderer;
 import com.zurrtum.create.client.foundation.blockEntity.renderer.SmartBlockEntityRenderer;
+import com.zurrtum.create.content.kinetics.base.IRotate;
 import com.zurrtum.create.content.kinetics.simpleRelays.SimpleKineticBlockEntity;
 import net.minecraft.client.renderer.blockentity.BlockEntityRendererProvider;
 import net.minecraft.client.renderer.feature.ModelFeatureRenderer;
+import net.minecraft.core.BlockPos;
 import net.minecraft.core.Direction;
 import net.minecraft.world.level.CardinalLighting;
 import net.minecraft.world.level.Level;
@@ -34,11 +37,34 @@ public class ChainCogwheelRenderer extends EncasedSmallCogRenderer {
         Direction.Axis axis = KineticBlockEntityRenderer.getRotationAxisOf(blockState);
         Direction facing = axis.getPositive();
 
+        int color = KineticBlockEntityRenderer.getTintColor(blockEntity);
+        IRotate block = (IRotate) blockState.getBlock();
+        BlockPos pos = blockEntity.getBlockPos();
+
         state.angle = KineticBlockEntityRenderer.getRotateAngleWithoutBeOffset(axis, facing, blockEntity, state, level);
         state.model = CachedBuffers.partialFacingVertical(AllPartialModels.SHAFTLESS_COGWHEEL, blockState, facing)
                 .cardinalLighting(cardinalLighting)
                 .light(state.lightCoords)
-                .color(KineticBlockEntityRenderer.getTintColor(blockEntity))
+                .color(color)
+                .extractRenderState();
+
+        if (block.hasShaftTowards(level, pos, blockState, facing))
+            state.top = shaft(blockState, facing, cardinalLighting, state.lightCoords, color);
+        if (block.hasShaftTowards(level, pos, blockState, facing.getOpposite()))
+            state.bottom = shaft(blockState, facing.getOpposite(), cardinalLighting, state.lightCoords, color);
+    }
+
+    private static SuperByteBufferRenderState shaft(
+            BlockState blockState,
+            Direction direction,
+            CardinalLighting cardinalLighting,
+            int lightCoords,
+            int color
+    ) {
+        return CachedBuffers.partialFacing(AllPartialModels.SHAFT_HALF, blockState, direction)
+                .cardinalLighting(cardinalLighting)
+                .light(lightCoords)
+                .color(color)
                 .extractRenderState();
     }
 }
