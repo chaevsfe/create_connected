@@ -40,3 +40,5 @@ Requires JDK 25.
 - **Create Fly** by ZurrTum
 - **Create** by the Create Team
 
+## Reporting Bugs
+When reporting bugs, always include the version number of the mod.  If you're reporting a crash, include your client or server log depending on where the crash occurred.
