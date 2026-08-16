@@ -1,6 +1,7 @@
 package com.hlysine.create_connected;
 
 import com.hlysine.create_connected.config.CCConfigs;
+import com.hlysine.create_connected.content.redstonelinkwildcard.LinkWildcardNetworkHandler;
 import com.hlysine.create_connected.foundation.advancement.CCAdvancements;
 import com.hlysine.create_connected.foundation.advancement.CCTriggers;
 import com.hlysine.create_connected.foundation.condition.CCCraftingConditions;
@@ -36,6 +37,7 @@ public class CreateConnected implements ModInitializer {
         CCCraftingConditions.register();
         CCConfigs.register();
         CCNetwork.register();
+        LinkWildcardNetworkHandler.register();
     }
 
     public static Identifier asResource(String path) {
