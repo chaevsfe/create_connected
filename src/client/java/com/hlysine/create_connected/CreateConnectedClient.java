@@ -21,6 +21,7 @@ import com.hlysine.create_connected.content.kineticbridge.KineticBridgeRenderer;
 import com.hlysine.create_connected.content.kineticbridge.KineticBridgeStressScrollBehaviour;
 import com.hlysine.create_connected.content.kineticbridge.KineticBridgeVisual;
 import com.hlysine.create_connected.content.linkedtransmitter.LinkedAnalogLeverRenderer;
+import com.hlysine.create_connected.content.linkedtransmitter.LinkedTransmitterFrequencySlot;
 import com.hlysine.create_connected.content.overstressclutch.OverstressClutchScrollValueBehaviour;
 import com.hlysine.create_connected.content.overstressclutch.OverstressClutchTooltipBehaviour;
 import com.hlysine.create_connected.content.parallelgearbox.ParallelGearboxRenderer;
@@ -31,6 +32,7 @@ import com.hlysine.create_connected.content.shearpin.ShearPinVisual;
 import com.hlysine.create_connected.content.sixwaygearbox.SixWayGearboxRenderer;
 import com.hlysine.create_connected.content.sixwaygearbox.SixWayGearboxVisual;
 import com.hlysine.create_connected.mixin.featuretoggle.CreativeModeTabsAccessor;
+import com.hlysine.create_connected.mixin.linkedtransmitter.LinkBehaviourAccessor;
 import com.hlysine.create_connected.network.CCClientNetwork;
 import com.hlysine.create_connected.registries.CCBlockEntityTypes;
 import com.hlysine.create_connected.registries.CCColorHandlers;
@@ -47,6 +49,8 @@ import com.zurrtum.create.client.content.kinetics.simpleRelays.encased.EncasedCo
 import com.zurrtum.create.client.content.kinetics.transmission.SplitShaftRenderer;
 import com.zurrtum.create.client.content.kinetics.transmission.SplitShaftVisual;
 import com.zurrtum.create.client.content.logistics.chute.ChuteRenderer;
+import com.zurrtum.create.client.content.redstone.link.LinkBehaviour;
+import com.zurrtum.create.client.foundation.blockEntity.behaviour.ValueBoxTransform;
 import com.zurrtum.create.client.foundation.blockEntity.behaviour.audio.HandCrankAudioBehaviour;
 import com.zurrtum.create.client.foundation.blockEntity.behaviour.audio.KineticAudioBehaviour;
 import com.zurrtum.create.client.foundation.blockEntity.behaviour.filtering.SidedFilteringBehaviour;
@@ -58,11 +62,13 @@ import com.zurrtum.create.client.foundation.blockEntity.behaviour.tooltip.Kineti
 import com.zurrtum.create.client.foundation.blockEntity.renderer.SmartBlockEntityRenderer;
 import com.zurrtum.create.client.foundation.utility.CreateLang;
 import com.zurrtum.create.client.ponder.foundation.PonderIndex;
+import com.zurrtum.create.foundation.blockEntity.SmartBlockEntity;
 import net.fabricmc.api.ClientModInitializer;
 import net.minecraft.core.registries.BuiltInRegistries;
 import net.minecraft.resources.ResourceKey;
 import net.minecraft.world.item.CreativeModeTab;
 import net.minecraft.world.item.Item;
+import org.apache.commons.lang3.tuple.Pair;
 
 import java.util.Map;
 
@@ -233,6 +239,18 @@ public class CreateConnectedClient implements ClientModInitializer {
                 CCBlockEntityTypes.INVENTORY_BRIDGE,
                 be -> new SidedFilteringBehaviour(be, new InventoryBridgeFilterSlot())
         );
+        AllBlockEntityBehaviours.add(CCBlockEntityTypes.LINKED_TRANSMITTER, CreateConnectedClient::linkBehaviour);
+        AllBlockEntityBehaviours.add(CCBlockEntityTypes.LINKED_ANALOG_LEVER, CreateConnectedClient::linkBehaviour);
+    }
+
+    private static LinkBehaviour linkBehaviour(SmartBlockEntity blockEntity) {
+        LinkBehaviour behaviour = new LinkBehaviour(blockEntity);
+        Pair<ValueBoxTransform, ValueBoxTransform> slots =
+                ValueBoxTransform.Dual.makeSlots(LinkedTransmitterFrequencySlot::new);
+        LinkBehaviourAccessor accessor = (LinkBehaviourAccessor) behaviour;
+        accessor.setFirstSlot(slots.getLeft());
+        accessor.setSecondSlot(slots.getRight());
+        return behaviour;
     }
 
     private static void registerItemTooltips() {

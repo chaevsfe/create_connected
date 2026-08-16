@@ -9,6 +9,7 @@
   "mixins": [
     "copycat.fence.ValueBoxRendererMixin",
     "featuretoggle.CreativeModeTabsAccessor",
+    "linkedtransmitter.LinkBehaviourAccessor",
     "nestedschematics.ClientSchematicLoaderMixin",
     "sequencedgearshift.SequencedGearshiftScreenMixin"
   ]
