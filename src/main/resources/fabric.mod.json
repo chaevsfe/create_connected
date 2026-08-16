@@ -2,7 +2,7 @@
   "schemaVersion": 1,
   "id": "create_connected",
   "version": "${version}",
-  "name": "Create: Connected",
+  "name": "Create Fly: Connected (Unofficial Port)",
   "description": "Create: Connected port for Create Fly 26.2. Quality-of-life blocks that you wish existed in Create.",
   "authors": [
     "hlysine",
@@ -12,14 +12,15 @@
     "chaevsfe"
   ],
   "contact": {
-    "homepage": "https://modrinth.com/mod/create-connected",
+    "homepage": "https://modrinth.com/project/Ph8gFiiY",
     "sources": "https://github.com/chaevsfe/create_connected",
-    "issues": "https://github.com/chaevsfe/create_connected/issues"
+    "issues": "https://github.com/chaevsfe/create_connected/issues",
+    "upstream": "https://modrinth.com/mod/create-connected"
   },
   "license": [
     "AGPL-3.0-or-later"
   ],
-  "icon": "create_connected_icon.png",
+  "icon": "create_connected_fly_icon.png",
   "environment": "*",
   "entrypoints": {
     "main": [

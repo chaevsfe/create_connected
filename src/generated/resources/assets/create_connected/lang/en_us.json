@@ -11,7 +11,7 @@
   "advancement.create_connected.overstress_clutch.desc": "Trigger an Overstress Clutch",
   "advancement.create_connected.pulse_generator_infinite_loop": "Infinite Loop",
   "advancement.create_connected.pulse_generator_infinite_loop.desc": "Overload a Sequenced Pulse Generator with a buggy program\n§7(Hidden Advancement)",
-  "advancement.create_connected.root": "Welcome to Create: Connected",
+  "advancement.create_connected.root": "Welcome to Create Fly: Connected",
   "advancement.create_connected.root.desc": "Gadgets for all situations",
   "advancement.create_connected.sequenced_pulse_generator": "Computational Supremacy",
   "advancement.create_connected.sequenced_pulse_generator.desc": "Place down a Sequenced Pulse Generator",
@@ -420,5 +420,5 @@
   "item.create_connected.vertical_parallel_gearbox": "Vertical Parallel Gearbox",
   "item.create_connected.vertical_six_way_gearbox": "Vertical 6-way Gearbox",
   "item.create_connected.vertical_six_way_gearbox.tooltip.summary": "A gearbox with shafts on _all 6 sides_. Top and bottom spin at _half speed_.",
-  "itemGroup.create_connected.main": "Create: Connected"
+  "itemGroup.create_connected.main": "Create Fly: Connected"
 }

@@ -76,4 +76,10 @@ tasks.processResources {
 
 tasks.jar {
     from("LICENSE")
+    from("NOTICE")
+}
+
+tasks.named<Jar>("sourcesJar") {
+    from("LICENSE")
+    from("NOTICE")
 }

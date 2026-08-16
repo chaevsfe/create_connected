@@ -1,0 +1,37 @@
+NOTICE
+======
+
+Create Fly: Connected — unofficial Create Fly port
+
+Based on Create: Connected by hlysine, version 1.3.2.
+  Upstream source:  https://github.com/hlysine/create_connected
+  Upstream project: https://modrinth.com/mod/create-connected
+  This port:        https://modrinth.com/project/Ph8gFiiY
+
+Modified by chaevsfe in 2026 to run on Minecraft 26.2 with the Fabric mod
+loader, built against Create Fly by ZurrTum rather than the original Create mod.
+
+Nature of the modifications:
+  - retargeted from the Create mod to Create Fly (package com.zurrtum.create)
+  - block and item registration moved into Create Fly's create_plugin
+    early-registration entrypoint
+  - block entity serialization migrated to the ValueInput/ValueOutput API
+  - block entity rendering migrated to the Minecraft 26.2 render-state model
+  - data pack directories renamed to their 1.21.2+ singular forms
+  - recipes updated for renamed conventional tags and removed Create items
+  - ported from the NeoForge loader to Fabric
+
+This is an UNOFFICIAL port. It is not endorsed by or affiliated with the
+original authors. Please report problems with the port to this repository,
+not to the upstream project.
+
+As required by the additional terms of the licence, this port is
+distributed under a distinct name and a distinct icon to avoid confusion
+with the original program.
+
+Licence
+-------
+The original work is licensed under the GNU Affero General Public License v3.0 or later (AGPL-3.0-or-later),
+with additional terms — see the end of the LICENSE file.
+This modified version is distributed under the same licence. The full text
+accompanies this file as LICENSE.
