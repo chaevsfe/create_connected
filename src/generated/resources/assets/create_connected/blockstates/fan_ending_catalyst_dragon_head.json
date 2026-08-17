@@ -1,14 +1,7 @@
 {
-  "multipart": [
-    {
-      "apply": {
-        "model": "create_connected:block/fan_catalyst/empty"
-      }
-    },
-    {
-      "apply": {
-        "model": "create_connected:block/fan_ending_catalyst_dragon_head/dragon_head"
-      }
+  "variants": {
+    "": {
+      "model": "create_connected:block/fan_catalyst/empty"
     }
-  ]
+  }
 }
