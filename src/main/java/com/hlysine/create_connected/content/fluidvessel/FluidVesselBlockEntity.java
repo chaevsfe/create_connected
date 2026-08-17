@@ -4,6 +4,8 @@ import com.zurrtum.create.api.connectivity.ConnectivityHandler;
 import com.zurrtum.create.catnip.animation.LerpedFloat;
 import com.zurrtum.create.content.fluids.tank.FluidTankBlockEntity;
 import com.zurrtum.create.infrastructure.fluids.FluidStack;
+import net.fabricmc.fabric.api.transfer.v1.fluid.FluidVariant;
+import net.fabricmc.fabric.api.transfer.v1.fluid.FluidVariantAttributes;
 import net.minecraft.core.BlockPos;
 import net.minecraft.core.Direction;
 import net.minecraft.core.Direction.Axis;
@@ -47,6 +49,12 @@ public class FluidVesselBlockEntity extends FluidTankBlockEntity {
         return getBlockState().getValue(AXIS);
     }
 
+    public static boolean isLighterThanAir(FluidStack fluidStack) {
+        return FluidVariantAttributes.isLighterThanAir(
+                FluidVariant.of(fluidStack.getFluid(), fluidStack.getComponentChanges())
+        );
+    }
+
     @Override
     protected void onFluidStackChanged(FluidStack newFluidStack) {
         if (!hasLevel())
@@ -58,9 +66,10 @@ public class FluidVesselBlockEntity extends FluidTankBlockEntity {
                 .getLightEmission() / 1.2f);
         int maxY = (int) ((getFillState() * width) + 1);
         Axis axis = getAxis();
+        boolean reversed = isLighterThanAir(newFluidStack);
 
         for (int yOffset = 0; yOffset < width; yOffset++) {
-            boolean isBright = yOffset < maxY;
+            boolean isBright = reversed ? (width - yOffset <= maxY) : (yOffset < maxY);
             int actualLuminosity = isBright ? luminosity : luminosity > 0 ? 1 : 0;
 
             for (int lengthOffset = 0; lengthOffset < height; lengthOffset++) {

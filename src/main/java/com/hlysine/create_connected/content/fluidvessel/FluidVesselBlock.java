@@ -254,6 +254,8 @@ public class FluidVesselBlock extends Block implements IWrenchable, IBE<FluidVes
                     BlockParticleOption blockParticleData =
                             new BlockParticleOption(ParticleTypes.BLOCK, fluidState);
                     float fluidLevel = (float) fluidInVessel.getAmount() / vesselCapability.getMaxAmountPerStack();
+                    if (FluidVesselBlockEntity.isLighterThanAir(fluidInVessel))
+                        fluidLevel = 1 - fluidLevel;
 
                     Vec3 vec = hitResult.getLocation();
                     vec = new Vec3(vec.x, controllerBE.getBlockPos()

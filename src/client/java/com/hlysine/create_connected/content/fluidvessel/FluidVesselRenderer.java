@@ -111,6 +111,10 @@ public class FluidVesselRenderer implements BlockEntityRenderer<FluidVesselBlock
             : xMin + be.getWidth() - 2 * TANK_HULL_SIZE;
         float yMin = totalHeight + TANK_HULL_SIZE + MIN_PUDDLE_HEIGHT - clampedLevel;
         float yMax = yMin + clampedLevel;
+        if (FluidVesselBlockEntity.isLighterThanAir(fluidStack)) {
+            yMin += totalHeight - clampedLevel;
+            yMax += totalHeight - clampedLevel;
+        }
         float zMin = axis == Direction.Axis.Z ? CAP_SIZE : TANK_HULL_SIZE;
         float zMax = axis == Direction.Axis.Z
             ? zMin + be.getHeight() - 2 * CAP_SIZE
