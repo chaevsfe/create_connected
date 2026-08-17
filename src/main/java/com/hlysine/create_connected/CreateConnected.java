@@ -1,6 +1,7 @@
 package com.hlysine.create_connected;
 
 import com.hlysine.create_connected.config.CCConfigs;
+import com.hlysine.create_connected.content.brasschute.BrassChuteBlockEntity;
 import com.hlysine.create_connected.content.redstonelinkwildcard.LinkWildcardNetworkHandler;
 import com.hlysine.create_connected.foundation.advancement.CCAdvancements;
 import com.hlysine.create_connected.foundation.advancement.CCTriggers;
@@ -38,6 +39,7 @@ public class CreateConnected implements ModInitializer {
         CCConfigs.register();
         CCNetwork.register();
         LinkWildcardNetworkHandler.register();
+        BrassChuteBlockEntity.registerTransfer();
     }
 
     public static Identifier asResource(String path) {

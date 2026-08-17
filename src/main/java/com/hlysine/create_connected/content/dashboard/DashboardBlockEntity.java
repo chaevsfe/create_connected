@@ -17,6 +17,8 @@ import net.minecraft.world.level.block.entity.SignText;
 import net.minecraft.world.level.block.state.BlockState;
 import net.minecraft.world.level.storage.ValueInput;
 import net.minecraft.world.level.storage.ValueOutput;
+import net.minecraft.world.phys.Vec3;
+import java.util.function.Supplier;
 import org.jetbrains.annotations.Nullable;
 
 import java.util.ArrayList;
@@ -26,9 +28,16 @@ public class DashboardBlockEntity extends SmartBlockEntity implements DisplayHol
 
     SignText text = new SignText().setColor(DyeColor.WHITE);
     private @Nullable CompoundTag displayLink;
+    int cycleTimer = 0;
+    boolean wasDisplaying;
+    private static final int LAZY_TICK_RATE = 4;
+    private static final int CYCLE_INTERVAL = 40;
+
+    public static Supplier<@Nullable Player> clientPlayer = () -> null;
 
     public DashboardBlockEntity(BlockEntityType<?> type, BlockPos pos, BlockState state) {
         super(type, pos, state);
+        setLazyTickRate(LAZY_TICK_RATE);
     }
 
     @Override
@@ -118,6 +127,49 @@ public class DashboardBlockEntity extends SmartBlockEntity implements DisplayHol
             }
         }
         return list;
+    }
+
+    private boolean displayStatus() {
+        BlockPos seatPos = getSeatPos();
+        if (seatPos == null)
+            return false;
+
+        Player player = clientPlayer.get();
+        if (player == null)
+            return false;
+        if (!player.isPassenger())
+            return false;
+
+        Vec3 center = Vec3.atCenterOf(seatPos);
+        if (player.distanceToSqr(center) > 1.2)
+            return false;
+        List<Component> list = getAllDisplays(seatPos);
+        if (list == null || list.isEmpty())
+            return false;
+
+        Component status = list.get((cycleTimer / CYCLE_INTERVAL) % list.size());
+        player.sendOverlayMessage(status);
+        cycleTimer += LAZY_TICK_RATE;
+        return true;
+    }
+
+    @Override
+    public void lazyTick() {
+        super.lazyTick();
+
+        if (getLevel().isClientSide()) {
+            boolean success = displayStatus();
+            if (!success && wasDisplaying) {
+                Player player = clientPlayer.get();
+                if (player != null) {
+                    if (!getBlockState().getValue(DashboardBlock.OPEN))
+                        displayOpenStatus(player, false);
+                    else
+                        player.sendOverlayMessage(Component.empty());
+                }
+            }
+            wasDisplaying = success;
+        }
     }
 
     public static void displayOpenStatus(Player player, boolean open) {

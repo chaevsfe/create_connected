@@ -7,6 +7,8 @@ import com.hlysine.create_connected.content.brassgearbox.BrassGearboxRenderer;
 import com.hlysine.create_connected.content.brassgearbox.BrassGearboxVisual;
 import com.hlysine.create_connected.content.chaincogwheel.ChainCogwheelRenderer;
 import com.hlysine.create_connected.content.crankwheel.CrankWheelVisual;
+import com.hlysine.create_connected.content.dashboard.ClientPlayerAccess;
+import com.hlysine.create_connected.content.dashboard.DashboardBlockEntity;
 import com.hlysine.create_connected.content.dashboard.DashboardRenderer;
 import com.hlysine.create_connected.content.fancatalyst.FanCatalystRotatingHeadRenderer;
 import com.hlysine.create_connected.content.fluidvessel.FluidVesselRenderer;
@@ -40,6 +42,9 @@ import com.hlysine.create_connected.registries.CCModels;
 import com.hlysine.create_connected.registries.CCPartialModels;
 import com.hlysine.create_connected.registries.CCPonderPlugin;
 import com.zurrtum.create.client.AllBlockEntityBehaviours;
+import com.hlysine.create_connected.registries.CCRegistration;
+import com.zurrtum.create.client.AllDisplaySourceRenders;
+import com.zurrtum.create.client.content.redstone.displayLink.source.FillLevelDisplaySourceRender;
 import com.zurrtum.create.client.AllBlockEntityRenders;
 import com.zurrtum.create.client.AllItemTooltips;
 import com.zurrtum.create.client.catnip.gui.ScreenOpener;
@@ -80,11 +85,13 @@ public class CreateConnectedClient implements ClientModInitializer {
         CCModels.register();
         registerBlockEntityRenders();
         registerBlockEntityBehaviours();
+        registerDisplaySourceRenders();
         registerItemTooltips();
         CCColorHandlers.register();
         KineticBatteryOverrides.register();
         KineticBridgePlacementPreview.register();
         CCClientNetwork.register();
+        DashboardBlockEntity.clientPlayer = ClientPlayerAccess::getPlayer;
         PonderIndex.addPlugin(new CCPonderPlugin());
         SequencedPulseGeneratorBlock.setScreenOpener(be -> ScreenOpener.open(new SequencedPulseGeneratorScreen(be)));
         FeatureToggle.addVisibilityListener(CreateConnectedClient::rebuildCreativeTabs);
@@ -251,6 +258,10 @@ public class CreateConnectedClient implements ClientModInitializer {
         accessor.create_connected$setFirstSlot(slots.getLeft());
         accessor.create_connected$setSecondSlot(slots.getRight());
         return behaviour;
+    }
+
+    private static void registerDisplaySourceRenders() {
+        AllDisplaySourceRenders.register(CCRegistration.KINETIC_BATTERY_SOURCE, FillLevelDisplaySourceRender::new);
     }
 
     private static void registerItemTooltips() {
