@@ -1,5 +1,6 @@
 package com.hlysine.create_connected.content.crossconnector;
 
+import com.hlysine.create_connected.foundation.ClientHitResult;
 import com.hlysine.create_connected.registries.CCBlocks;
 import com.zurrtum.create.api.schematic.requirement.SpecialBlockItemRequirement;
 import com.zurrtum.create.content.decoration.encasing.EncasedBlock;
@@ -51,6 +52,9 @@ public class EncasedCrossConnectorBlock extends CrossConnectorBlock implements S
 
     @Override
     protected ItemStack getCloneItemStack(LevelReader level, BlockPos pos, BlockState state, boolean includeData) {
+        BlockHitResult hit = ClientHitResult.at(pos);
+        if (hit != null && hit.getDirection().getAxis() == getRotationAxis(state))
+            return CCBlocks.CROSS_CONNECTOR.asItem().getDefaultInstance();
         return getCasing().asItem().getDefaultInstance();
     }
 

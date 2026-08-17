@@ -1,5 +1,6 @@
 package com.hlysine.create_connected.content.linkedtransmitter;
 
+import com.hlysine.create_connected.foundation.ClientHitResult;
 import com.hlysine.create_connected.mixin.ButtonBlockAccessor;
 import com.hlysine.create_connected.registries.CCBlockEntityTypes;
 import com.hlysine.create_connected.registries.CCItems;
@@ -177,6 +178,9 @@ public class LinkedButtonBlock extends ButtonBlock
 
     @Override
     protected ItemStack getCloneItemStack(LevelReader level, BlockPos pos, BlockState state, boolean includeData) {
+        BlockHitResult hit = ClientHitResult.at(pos);
+        if (hit != null && isHittingBase(state, level, pos, hit))
+            return new ItemStack(base);
         return new ItemStack(CCItems.LINKED_TRANSMITTER);
     }
 

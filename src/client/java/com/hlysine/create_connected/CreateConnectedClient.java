@@ -8,6 +8,8 @@ import com.hlysine.create_connected.content.brassgearbox.BrassGearboxVisual;
 import com.hlysine.create_connected.content.chaincogwheel.ChainCogwheelRenderer;
 import com.hlysine.create_connected.content.crankwheel.CrankWheelVisual;
 import com.hlysine.create_connected.content.dashboard.ClientPlayerAccess;
+import com.hlysine.create_connected.foundation.ClientHitResult;
+import com.hlysine.create_connected.foundation.ClientHitResultAccess;
 import com.hlysine.create_connected.content.dashboard.DashboardBlockEntity;
 import com.hlysine.create_connected.content.dashboard.DashboardRenderer;
 import com.hlysine.create_connected.content.fancatalyst.FanCatalystRotatingHeadRenderer;
@@ -92,6 +94,7 @@ public class CreateConnectedClient implements ClientModInitializer {
         KineticBridgePlacementPreview.register();
         CCClientNetwork.register();
         DashboardBlockEntity.clientPlayer = ClientPlayerAccess::getPlayer;
+        ClientHitResult.setSupplier(ClientHitResultAccess::getHitResult);
         PonderIndex.addPlugin(new CCPonderPlugin());
         SequencedPulseGeneratorBlock.setScreenOpener(be -> ScreenOpener.open(new SequencedPulseGeneratorScreen(be)));
         FeatureToggle.addVisibilityListener(CreateConnectedClient::rebuildCreativeTabs);
