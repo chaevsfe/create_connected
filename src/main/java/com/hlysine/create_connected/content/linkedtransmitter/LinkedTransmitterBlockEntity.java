@@ -2,8 +2,11 @@ package com.hlysine.create_connected.content.linkedtransmitter;
 
 import com.zurrtum.create.api.behaviour.BlockEntityBehaviour;
 import com.zurrtum.create.content.redstone.link.ServerLinkBehaviour;
+import com.hlysine.create_connected.registries.CCItems;
 import com.zurrtum.create.foundation.blockEntity.SmartBlockEntity;
 import net.minecraft.core.BlockPos;
+import net.minecraft.world.item.ItemStack;
+import net.minecraft.world.level.block.Block;
 import net.minecraft.world.level.block.HorizontalDirectionalBlock;
 import net.minecraft.world.level.block.entity.BlockEntityType;
 import net.minecraft.world.level.block.state.BlockState;
@@ -20,6 +23,16 @@ public class LinkedTransmitterBlockEntity extends SmartBlockEntity {
 
     public LinkedTransmitterBlockEntity(BlockEntityType<?> type, BlockPos pos, BlockState state) {
         super(type, pos, state);
+    }
+
+    @Override
+    public void preRemoveSideEffects(BlockPos pos, BlockState oldState) {
+        super.preRemoveSideEffects(pos, oldState);
+        if (level == null || level.isClientSide())
+            return;
+        if (containsBase)
+            Block.popResource(level, pos, new ItemStack(CCItems.LINKED_TRANSMITTER));
+        transmit(0);
     }
 
     @Override

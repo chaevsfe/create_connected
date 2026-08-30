@@ -164,19 +164,6 @@ public class LinkedAnalogLeverBlock extends FaceAttachedHorizontalDirectionalBlo
         });
     }
 
-    @Override
-    protected void affectNeighborsAfterRemoval(BlockState state, ServerLevel level, BlockPos pos, boolean movedByPiston) {
-        if (movedByPiston)
-            return;
-        if (getBlockEntityOptional(level, pos).map(be -> be.containsBase).orElse(false))
-            Block.popResource(level, pos, new ItemStack(CCItems.LINKED_TRANSMITTER));
-        withBlockEntityDo(level, pos, be -> {
-            if (be.getState() != 0)
-                updateNeighbors(state, level, pos);
-        });
-        level.removeBlockEntity(pos);
-    }
-
     private static void addParticles(BlockState state, LevelAccessor worldIn, BlockPos pos, float alpha) {
         Direction direction = state.getValue(FACING).getOpposite();
         Direction direction1 = getConnectedDirection(state).getOpposite();

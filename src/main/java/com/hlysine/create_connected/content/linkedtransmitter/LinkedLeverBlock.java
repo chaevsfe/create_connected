@@ -107,10 +107,6 @@ public class LinkedLeverBlock extends LeverBlock
 
     @Override
     protected void affectNeighborsAfterRemoval(BlockState state, ServerLevel level, BlockPos pos, boolean movedByPiston) {
-        if (!movedByPiston && getBlockEntityOptional(level, pos).map(be -> be.containsBase).orElse(false)) {
-            Block.popResource(level, pos, new ItemStack(CCItems.LINKED_TRANSMITTER));
-        }
-        withBlockEntityDo(level, pos, be -> be.transmit(0));
         base.defaultBlockState().affectNeighborsAfterRemoval(level, pos, movedByPiston);
     }
 
