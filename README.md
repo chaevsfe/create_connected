@@ -21,6 +21,7 @@ Quality-of-life additions for Create: gearboxes, clutches, item silos, fluid ves
 ## Download
 
 - [Modrinth](https://modrinth.com/project/Ph8gFiiY)
+- [CurseForge](https://www.curseforge.com/minecraft/mc-mods/create-fly-connected)
 - [GitHub releases](https://github.com/chaevsfe/create_connected/releases)
 
 
