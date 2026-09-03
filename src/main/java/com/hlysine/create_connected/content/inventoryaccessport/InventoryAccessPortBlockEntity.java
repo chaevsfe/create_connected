@@ -1,7 +1,9 @@
 package com.hlysine.create_connected.content.inventoryaccessport;
 
 import com.zurrtum.create.api.behaviour.BlockEntityBehaviour;
+import com.zurrtum.create.api.packager.InventoryIdentifier;
 import com.zurrtum.create.catnip.math.BlockFace;
+import com.zurrtum.create.content.logistics.packager.IdentifiedInventory;
 import com.zurrtum.create.content.redstone.DirectedDirectionalBlock;
 import com.zurrtum.create.foundation.blockEntity.SmartBlockEntity;
 import com.zurrtum.create.foundation.blockEntity.behaviour.inventory.CapManipulationBehaviourBase;
@@ -71,6 +73,12 @@ public class InventoryAccessPortBlockEntity extends SmartBlockEntity {
             BlockState state = getBlockState().cycle(ATTACHED);
             level.setBlockAndUpdate(worldPosition, state);
         }
+    }
+
+    @Nullable
+    public InventoryIdentifier getInventoryId() {
+        IdentifiedInventory inv = observedInventory.getIdentifiedInventory();
+        return inv == null ? null : inv.identifier();
     }
 
     @Override

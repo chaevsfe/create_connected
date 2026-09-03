@@ -2,7 +2,9 @@ package com.hlysine.create_connected.content.inventorybridge;
 
 import com.hlysine.create_connected.content.inventoryaccessport.WrappedItemHandler;
 import com.zurrtum.create.api.behaviour.BlockEntityBehaviour;
+import com.zurrtum.create.api.packager.InventoryIdentifier;
 import com.zurrtum.create.catnip.math.BlockFace;
+import com.zurrtum.create.content.logistics.packager.IdentifiedInventory;
 import com.zurrtum.create.foundation.blockEntity.SmartBlockEntity;
 import com.zurrtum.create.foundation.blockEntity.behaviour.filtering.ServerFilteringBehaviour;
 import com.zurrtum.create.foundation.blockEntity.behaviour.filtering.ServerSidedFilteringBehaviour;
@@ -114,6 +116,12 @@ public class InventoryBridgeBlockEntity extends SmartBlockEntity {
                     .setValue(ATTACHED_POSITIVE, attachedPositive);
             level.setBlockAndUpdate(worldPosition, state);
         }
+    }
+
+    @Nullable
+    public InventoryIdentifier getInventoryId() {
+        IdentifiedInventory inv = negativeInventory.getIdentifiedInventory();
+        return inv == null ? null : inv.identifier();
     }
 
     @Override
