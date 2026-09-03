@@ -111,9 +111,11 @@ public class InventoryAccessPortBlockEntity extends SmartBlockEntity {
             if (recursionGuard.get())
                 return defaultValue;
             recursionGuard.set(true);
-            T result = value.get();
-            recursionGuard.set(false);
-            return result;
+            try {
+                return value.get();
+            } finally {
+                recursionGuard.set(false);
+            }
         }
 
         @Override
