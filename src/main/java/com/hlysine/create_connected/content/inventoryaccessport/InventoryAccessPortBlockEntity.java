@@ -77,6 +77,8 @@ public class InventoryAccessPortBlockEntity extends SmartBlockEntity {
 
     @Nullable
     public InventoryIdentifier getInventoryId() {
+        if (getConnectedContainer() == null)
+            return null;
         IdentifiedInventory inv = observedInventory.getIdentifiedInventory();
         return inv == null ? null : inv.identifier();
     }
