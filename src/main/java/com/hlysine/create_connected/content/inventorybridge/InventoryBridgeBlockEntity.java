@@ -120,7 +120,17 @@ public class InventoryBridgeBlockEntity extends SmartBlockEntity {
 
     @Nullable
     public InventoryIdentifier getInventoryId() {
-        IdentifiedInventory inv = negativeInventory.getIdentifiedInventory();
+        Container negative = getNegativeHandler();
+        Container positive = getPositiveHandler();
+        if (negative == null && positive == null)
+            return null;
+        if (negative != null && positive != null)
+            return null;
+        if (!negativeFilter.getFilter().isEmpty() || !positiveFilter.getFilter().isEmpty())
+            return null;
+        IdentifiedInventory inv = negative != null
+                ? negativeInventory.getIdentifiedInventory()
+                : positiveInventory.getIdentifiedInventory();
         return inv == null ? null : inv.identifier();
     }
 
