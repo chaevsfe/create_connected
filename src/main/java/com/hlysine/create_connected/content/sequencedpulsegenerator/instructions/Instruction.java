@@ -148,10 +148,11 @@ public abstract class Instruction {
         Instruction instance = create(id);
         if (instance == null) return null;
         if (instance.hasSignal) {
-            instance.signal = view.getIntOr("Signal", instance.signal);
+            instance.signal = Math.clamp(view.getIntOr("Signal", instance.signal), 0, 15);
         }
         if (instance.paramConfig != null) {
-            instance.param = view.getIntOr("Value", instance.param);
+            instance.param = Math.clamp(view.getIntOr("Value", instance.param),
+                    instance.paramConfig.minValue(), instance.paramConfig.maxValue());
         }
         instance.readState(view);
         return instance;
@@ -166,6 +167,11 @@ public abstract class Instruction {
     public static Vector<Instruction> readAll(ValueInput.ValueInputList list) {
         Vector<Instruction> instructions = new Vector<>(INSTRUCTION_CAPACITY);
         for (ValueInput entry : list) {
+            if (instructions.size() >= INSTRUCTION_CAPACITY) {
+                CreateConnected.LOGGER.error("Discarding sequenced pulse generator instructions beyond the {} the block holds",
+                        INSTRUCTION_CAPACITY);
+                break;
+            }
             Instruction instruction = read(entry);
             if (instruction == null) {
                 CreateConnected.LOGGER.error("Discarding an unreadable sequenced pulse generator instruction (id {})",
