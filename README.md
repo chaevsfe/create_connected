@@ -1,4 +1,4 @@
-# Create Fly: Connected (Unofficial Port)
+# Create Fly: Connected
 
 Quality-of-life additions for Create: gearboxes, clutches, item silos, fluid vessels, kinetic batteries, copycat blocks and fan catalysts.
 
