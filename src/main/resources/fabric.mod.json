@@ -51,6 +51,8 @@
     "java": ">=25"
   },
   "suggests": {
-    "jei": "*"
+    "jei": "*",
+    "createreiviewer": "*",
+    "roughlyenoughitems": "*"
   }
 }

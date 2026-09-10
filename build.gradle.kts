@@ -19,7 +19,12 @@ repositories {
     maven("https://maven.blamejared.com/") {
         content { includeGroup("mezz.jei") }
     }
+    flatDir {
+        dirs("libs", "../../create-rei/CreateReiViewer-Fly/build/libs")
+    }
 }
+
+val recipeViewer = ":CreateReiViewer:${property("createreiviewer_version")}+fabric-mc${property("minecraft_version")}"
 
 loom {
     splitEnvironmentSourceSets()
@@ -45,6 +50,7 @@ dependencies {
 
     compileOnly("com.google.code.findbugs:jsr305:3.0.2")
     "clientCompileOnly"("mezz.jei:jei-26.2-fabric:30.24.0.165")
+    include(recipeViewer)
 }
 
 java {
