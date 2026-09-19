@@ -33,7 +33,7 @@ public class ContraptionMusicManager {
 
         if (song != null) {
             if (!silent) {
-                mc.gui.hud.setNowPlaying(song.description());
+                mc.gui.setNowPlaying(song.description());
             }
 
             SoundInstance newInstance = new ContraptionRecordSoundInstance(
