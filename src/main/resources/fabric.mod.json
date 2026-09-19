@@ -20,6 +20,7 @@
   "license": [
     "AGPL-3.0-or-later"
   ],
+  "accessWidener": "create_connected.accesswidener",
   "icon": "create_connected_fly_icon.png",
   "environment": "*",
   "entrypoints": {

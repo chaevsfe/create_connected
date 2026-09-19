@@ -27,6 +27,7 @@ repositories {
 val recipeViewer = ":CreateReiViewer:${property("createreiviewer_version")}+fabric-mc${property("minecraft_version")}"
 
 loom {
+    accessWidenerPath = file("src/main/resources/create_connected.accesswidener")
     splitEnvironmentSourceSets()
     mods {
         create("create_connected") {

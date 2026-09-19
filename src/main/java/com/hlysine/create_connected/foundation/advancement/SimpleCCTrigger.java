@@ -4,10 +4,10 @@ import com.hlysine.create_connected.CreateConnected;
 import com.mojang.serialization.Codec;
 import com.mojang.serialization.MapCodec;
 import net.minecraft.advancements.CriterionTriggerInstance;
-import net.minecraft.advancements.triggers.CriterionTrigger;
+import net.minecraft.advancements.CriterionTrigger;
 import net.minecraft.resources.Identifier;
 import net.minecraft.server.PlayerAdvancements;
-import net.minecraft.server.PlayerAdvancements.TriggerInstanceKey;
+import net.minecraft.advancements.CriterionTrigger.Listener;
 import net.minecraft.server.level.ServerPlayer;
 import net.minecraft.world.level.storage.loot.ValidationContextSource;
 
@@ -33,10 +33,10 @@ public class SimpleCCTrigger implements CriterionTrigger<SimpleCCTrigger.Instanc
 
     public void trigger(ServerPlayer player) {
         PlayerAdvancements advancements = player.getAdvancements();
-        Map<TriggerInstanceKey, Instance> listeners = advancements.getTriggerMapForType(this);
+        Map<Listener, Instance> listeners = advancements.getTriggerMapForType(this);
         if (listeners == null)
             return;
-        for (TriggerInstanceKey criterion : List.copyOf(listeners.keySet()))
+        for (Listener criterion : List.copyOf(listeners.keySet()))
             advancements.award(criterion.advancement(), criterion.criterion());
     }
 

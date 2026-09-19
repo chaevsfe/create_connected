@@ -314,14 +314,14 @@ public class CCBlocks {
 
     public static final FluidVesselBlock FLUID_VESSEL = toggle(
             registerBlock("fluid_vessel", FluidVesselBlock::regular,
-                    Properties.ofFullCopy(Blocks.COPPER_BLOCK.weathering().unaffected()).noOcclusion()
+                    Properties.ofFullCopy(Blocks.COPPER_BLOCK).noOcclusion()
                             .isRedstoneConductor((state, level, pos) -> true),
                     FluidVesselItem::new, new Item.Properties()),
             FeatureCategory.LOGISTICS);
 
     public static final FluidVesselBlock CREATIVE_FLUID_VESSEL = dependent(
             registerBlock("creative_fluid_vessel", FluidVesselBlock::creative,
-                    Properties.ofFullCopy(Blocks.COPPER_BLOCK.weathering().unaffected()).noOcclusion()
+                    Properties.ofFullCopy(Blocks.COPPER_BLOCK).noOcclusion()
                             .mapColor(MapColor.COLOR_PURPLE),
                     FluidVesselItem::new, new Item.Properties().rarity(Rarity.EPIC)),
             FLUID_VESSEL);
