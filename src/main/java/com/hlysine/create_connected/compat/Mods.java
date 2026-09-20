@@ -15,6 +15,7 @@ public enum Mods {
     JEI("jei"),
     COPYCATS("copycats"),
     DIAGONAL_FENCES("diagonalfences"),
+    DIAGONAL_BLOCKS("diagonalblocks"),
     DREAMS_DESIRES("dndesires"),
     NUCLEAR("createnuclear"),
     ADDITIONAL_PLACEMENTS("additionalplacements"),
