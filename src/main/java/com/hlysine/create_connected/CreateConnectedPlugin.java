@@ -1,5 +1,6 @@
 package com.hlysine.create_connected;
 
+import com.hlysine.create_connected.compat.DiagonalBlocksCompat;
 import com.hlysine.create_connected.registries.CCBlocks;
 import com.zurrtum.create.api.registry.CreateRegisterPlugin;
 
@@ -11,6 +12,7 @@ public final class CreateConnectedPlugin implements CreateRegisterPlugin {
         if (blocksRegistered) {
             throw new IllegalStateException("Create Fly invoked Create: Connected block registration more than once");
         }
+        DiagonalBlocksCompat.disableWrappedFenceVariant();
         CCBlocks.register();
         blocksRegistered = true;
     }
