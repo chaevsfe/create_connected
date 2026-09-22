@@ -1,5 +1,6 @@
 package com.hlysine.create_connected.foundation.condition;
 
+import com.hlysine.create_connected.compat.CopycatsManager;
 import com.mojang.serialization.MapCodec;
 import com.mojang.serialization.codecs.RecordCodecBuilder;
 import net.fabricmc.fabric.api.resource.conditions.v1.ResourceCondition;
@@ -20,7 +21,7 @@ public record FeatureEnabledInCopycatsCondition(Identifier feature) implements R
 
     @Override
     public boolean test(RegistryOps.RegistryInfoLookup registryLookup) {
-        return false;
+        return CopycatsManager.isFeatureEnabled(feature);
     }
 
     @Override
