@@ -1,6 +1,12 @@
 {
   "model": {
     "type": "minecraft:model",
-    "model": "create_connected:item/fan_splashing_catalyst"
+    "model": "create_connected:item/fan_splashing_catalyst",
+    "tints": [
+      {
+        "type": "minecraft:constant",
+        "value": -12618012
+      }
+    ]
   }
 }
