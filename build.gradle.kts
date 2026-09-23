@@ -53,6 +53,7 @@ dependencies {
 
     compileOnly("com.google.code.findbugs:jsr305:3.0.2")
     "clientCompileOnly"("mezz.jei:jei-26.2-fabric:30.24.0.165")
+    "clientCompileOnly"("maven.modrinth:rei:26.2.820+fabric")
     include(recipeViewer)
 }
 
