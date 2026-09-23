@@ -35,6 +35,9 @@
     ],
     "jei_mod_plugin": [
       "com.hlysine.create_connected.compat.jei.CreateConnectedJEI"
+    ],
+    "rei_client": [
+      "com.hlysine.create_connected.compat.rei.CreateConnectedREI"
     ]
   },
   "mixins": [
