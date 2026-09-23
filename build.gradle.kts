@@ -108,6 +108,7 @@ val allowedJarPrefixes = listOf(
     "data/dndesires/tags/",
     "data/create_more_catalysts/tags/",
     "data/create_shimmer/tags/",
+    "data/create_dragons_plus/tags/",
     "data/createnuclear/tags/",
     "data/createnetherindustry/tags/",
     "data/diagonalfences/tags/",
