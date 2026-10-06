@@ -6,12 +6,14 @@ import com.zurrtum.create.content.redstone.DirectedDirectionalBlock;
 import com.zurrtum.create.foundation.block.IBE;
 import com.zurrtum.create.foundation.item.ItemHelper;
 import com.zurrtum.create.infrastructure.items.ItemInventoryProvider;
+import com.zurrtum.create.infrastructure.items.SidedInventoryWrapper;
 import net.minecraft.core.BlockPos;
 import net.minecraft.core.Direction;
 import net.minecraft.core.Direction.Axis;
 import net.minecraft.server.level.ServerLevel;
 import net.minecraft.util.RandomSource;
 import net.minecraft.world.Container;
+import net.minecraft.world.WorldlyContainer;
 import net.minecraft.world.item.context.BlockPlaceContext;
 import net.minecraft.world.level.Level;
 import net.minecraft.world.level.LevelAccessor;
@@ -51,6 +53,13 @@ public class InventoryAccessPortBlock extends DirectedDirectionalBlock
             @Nullable Direction context
     ) {
         return blockEntity.getItemCapability();
+    }
+
+    @Override
+    @Nullable
+    public WorldlyContainer getContainer(BlockState state, LevelAccessor world, BlockPos pos) {
+        Container inventory = getInventory(state, world, pos, null, null);
+        return inventory == null ? null : new SidedInventoryWrapper(inventory);
     }
 
     @Override
