@@ -69,10 +69,12 @@ public class InventoryAccessPortBlockEntity extends SmartBlockEntity {
         if (powered != previouslyPowered) {
             notifyUpdate();
         }
-        if (isAttached() != getBlockState().getValue(ATTACHED)) {
-            BlockState state = getBlockState().cycle(ATTACHED);
-            level.setBlockAndUpdate(worldPosition, state);
-        }
+        BlockState state = level.getBlockState(worldPosition);
+        if (!state.is(getBlockState().getBlock()))
+            return;
+        boolean attached = isAttached();
+        if (attached != state.getValue(ATTACHED))
+            level.setBlockAndUpdate(worldPosition, state.setValue(ATTACHED, attached));
     }
 
     @Nullable

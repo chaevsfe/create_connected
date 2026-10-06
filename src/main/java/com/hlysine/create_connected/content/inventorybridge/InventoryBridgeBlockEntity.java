@@ -107,14 +107,16 @@ public class InventoryBridgeBlockEntity extends SmartBlockEntity {
         if (powered != previouslyPowered) {
             notifyUpdate();
         }
+        BlockState state = level.getBlockState(worldPosition);
+        if (!state.is(getBlockState().getBlock()))
+            return;
         boolean attachedNegative = isAttachedNegative();
         boolean attachedPositive = isAttachedPositive();
-        if (attachedNegative != getBlockState().getValue(ATTACHED_NEGATIVE)
-                || attachedPositive != getBlockState().getValue(ATTACHED_POSITIVE)) {
-            BlockState state = getBlockState()
+        if (attachedNegative != state.getValue(ATTACHED_NEGATIVE)
+                || attachedPositive != state.getValue(ATTACHED_POSITIVE)) {
+            level.setBlockAndUpdate(worldPosition, state
                     .setValue(ATTACHED_NEGATIVE, attachedNegative)
-                    .setValue(ATTACHED_POSITIVE, attachedPositive);
-            level.setBlockAndUpdate(worldPosition, state);
+                    .setValue(ATTACHED_POSITIVE, attachedPositive));
         }
     }
 
