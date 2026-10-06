@@ -4,12 +4,13 @@ import com.hlysine.create_connected.registries.CCBlockEntityTypes;
 import com.zurrtum.create.content.equipment.wrench.IWrenchable;
 import com.zurrtum.create.content.redstone.DirectedDirectionalBlock;
 import com.zurrtum.create.foundation.block.IBE;
-import com.zurrtum.create.foundation.block.NeighborUpdateListeningBlock;
 import com.zurrtum.create.foundation.item.ItemHelper;
 import com.zurrtum.create.infrastructure.items.ItemInventoryProvider;
 import net.minecraft.core.BlockPos;
 import net.minecraft.core.Direction;
 import net.minecraft.core.Direction.Axis;
+import net.minecraft.server.level.ServerLevel;
+import net.minecraft.util.RandomSource;
 import net.minecraft.world.Container;
 import net.minecraft.world.item.context.BlockPlaceContext;
 import net.minecraft.world.level.Level;
@@ -21,10 +22,11 @@ import net.minecraft.world.level.block.state.StateDefinition;
 import net.minecraft.world.level.block.state.properties.AttachFace;
 import net.minecraft.world.level.block.state.properties.BlockStateProperties;
 import net.minecraft.world.level.block.state.properties.BooleanProperty;
+import net.minecraft.world.level.redstone.Orientation;
 import org.jspecify.annotations.Nullable;
 
 public class InventoryAccessPortBlock extends DirectedDirectionalBlock
-        implements IBE<InventoryAccessPortBlockEntity>, IWrenchable, NeighborUpdateListeningBlock,
+        implements IBE<InventoryAccessPortBlockEntity>, IWrenchable,
         ItemInventoryProvider<InventoryAccessPortBlockEntity> {
 
     public static BooleanProperty ATTACHED = BlockStateProperties.ATTACHED;
@@ -84,15 +86,24 @@ public class InventoryAccessPortBlock extends DirectedDirectionalBlock
     }
 
     @Override
-    public void neighborUpdate(
+    protected void neighborChanged(
             BlockState state,
-            Level world,
+            Level level,
             BlockPos pos,
-            Block sourceBlock,
-            BlockPos fromPos,
+            Block block,
+            @Nullable Orientation orientation,
             boolean isMoving
     ) {
-        withBlockEntityDo(world, pos, InventoryAccessPortBlockEntity::updateConnectedInventory);
+        super.neighborChanged(state, level, pos, block, orientation, isMoving);
+        if (level.isClientSide())
+            return;
+        if (!level.getBlockTicks().willTickThisTick(pos, this))
+            level.scheduleTick(pos, this, 1);
+    }
+
+    @Override
+    protected void tick(BlockState state, ServerLevel level, BlockPos pos, RandomSource random) {
+        withBlockEntityDo(level, pos, InventoryAccessPortBlockEntity::updateConnectedInventory);
     }
 
     @Override

@@ -3,13 +3,13 @@ package com.hlysine.create_connected.content.inventorybridge;
 import com.hlysine.create_connected.registries.CCBlockEntityTypes;
 import com.zurrtum.create.content.equipment.wrench.IWrenchable;
 import com.zurrtum.create.foundation.block.IBE;
-import com.zurrtum.create.foundation.block.NeighborUpdateListeningBlock;
 import com.zurrtum.create.foundation.item.ItemHelper;
 import com.zurrtum.create.infrastructure.items.ItemInventoryProvider;
 import net.minecraft.core.BlockPos;
 import net.minecraft.core.Direction;
 import net.minecraft.core.Direction.Axis;
-import net.minecraft.core.Vec3i;
+import net.minecraft.server.level.ServerLevel;
+import net.minecraft.util.RandomSource;
 import net.minecraft.world.Container;
 import net.minecraft.world.item.context.BlockPlaceContext;
 import net.minecraft.world.level.Level;
@@ -21,10 +21,11 @@ import net.minecraft.world.level.block.state.StateDefinition;
 import net.minecraft.world.level.block.state.properties.BlockStateProperties;
 import net.minecraft.world.level.block.state.properties.BooleanProperty;
 import net.minecraft.world.level.block.state.properties.EnumProperty;
+import net.minecraft.world.level.redstone.Orientation;
 import org.jspecify.annotations.Nullable;
 
 public class InventoryBridgeBlock extends Block
-        implements IBE<InventoryBridgeBlockEntity>, IWrenchable, NeighborUpdateListeningBlock,
+        implements IBE<InventoryBridgeBlockEntity>, IWrenchable,
         ItemInventoryProvider<InventoryBridgeBlockEntity> {
 
     public static BooleanProperty ATTACHED_POSITIVE = BooleanProperty.create("attached_positive");
@@ -83,21 +84,24 @@ public class InventoryBridgeBlock extends Block
     }
 
     @Override
-    public void neighborUpdate(
+    protected void neighborChanged(
             BlockState state,
             Level level,
             BlockPos pos,
-            Block sourceBlock,
-            BlockPos fromPos,
+            Block block,
+            @Nullable Orientation orientation,
             boolean isMoving
     ) {
+        super.neighborChanged(state, level, pos, block, orientation, isMoving);
+        if (level.isClientSide())
+            return;
+        if (!level.getBlockTicks().willTickThisTick(pos, this))
+            level.scheduleTick(pos, this, 1);
+    }
+
+    @Override
+    protected void tick(BlockState state, ServerLevel level, BlockPos pos, RandomSource random) {
         withBlockEntityDo(level, pos, InventoryBridgeBlockEntity::updateConnectedInventory);
-        Vec3i diff = fromPos.subtract(pos);
-        Direction fromSide = Direction.getNearest(diff.getX(), diff.getY(), diff.getZ(), null);
-        if (fromSide == null)
-            level.updateNeighborsAt(pos, this, null);
-        else
-            level.updateNeighborsAtExceptFromFacing(pos, this, fromSide, null);
     }
 
     public static Direction getNegativeTarget(BlockState state) {
