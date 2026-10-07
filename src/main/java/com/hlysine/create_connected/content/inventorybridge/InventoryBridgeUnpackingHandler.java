@@ -3,12 +3,12 @@ package com.hlysine.create_connected.content.inventorybridge;
 import com.zurrtum.create.AllBlocks;
 import com.zurrtum.create.AllUnpackingHandlers;
 import com.zurrtum.create.api.packager.unpacking.UnpackingHandler;
-import com.zurrtum.create.foundation.blockEntity.behaviour.filtering.ServerFilteringBehaviour;
 import com.zurrtum.create.infrastructure.component.PackageOrderWithCrafts;
 import net.minecraft.core.BlockPos;
 import net.minecraft.core.Direction;
 import net.minecraft.world.item.ItemStack;
 import net.minecraft.world.level.Level;
+import net.minecraft.world.level.block.entity.BlockEntity;
 import net.minecraft.world.level.block.state.BlockState;
 import org.jspecify.annotations.Nullable;
 
@@ -28,52 +28,47 @@ public enum InventoryBridgeUnpackingHandler implements UnpackingHandler {
             @Nullable PackageOrderWithCrafts orderContext,
             boolean simulate
     ) {
-        if (state.getBlock() instanceof InventoryBridgeBlock
-                && level.getBlockEntity(pos) instanceof InventoryBridgeBlockEntity bridge) {
-            if (bridge.isAttachedNegative()) {
-                Direction negativeTarget = InventoryBridgeBlock.getNegativeTarget(state);
-                if (unpacksIntoCrafter(level, pos.relative(negativeTarget), negativeTarget, bridge.negativeFilter, items, orderContext))
-                    return unpackIntoCrafter(level, pos.relative(negativeTarget), negativeTarget, items, orderContext, simulate);
+        BlockEntity be = level.getBlockEntity(pos);
+        if (!(be instanceof InventoryBridgeBlockEntity bridgeBE))
+            return AllUnpackingHandlers.DEFAULT.unpack(level, pos, state, side, items, orderContext, simulate);
+
+        Direction negativeTarget = InventoryBridgeBlock.getNegativeTarget(state);
+        Direction positiveTarget = InventoryBridgeBlock.getPositiveTarget(state);
+        BlockPos negativePos = pos.relative(negativeTarget);
+        BlockPos positivePos = pos.relative(positiveTarget);
+        BlockState negativeState = level.getBlockState(negativePos);
+        BlockState positiveState = level.getBlockState(positivePos);
+
+        if (negativeState.is(AllBlocks.MECHANICAL_CRAFTER)) {
+            boolean filterPass = true;
+            for (ItemStack item : items) {
+                if (!bridgeBE.negativeFilter.test(item)) {
+                    filterPass = false;
+                    break;
+                }
             }
-            if (bridge.isAttachedPositive()) {
-                Direction positiveTarget = InventoryBridgeBlock.getPositiveTarget(state);
-                if (unpacksIntoCrafter(level, pos.relative(positiveTarget), positiveTarget, bridge.positiveFilter, items, orderContext))
-                    return unpackIntoCrafter(level, pos.relative(positiveTarget), positiveTarget, items, orderContext, simulate);
+            if (filterPass && AllUnpackingHandlers.MECHANICAL_CRAFTER.unpack(
+                    level, negativePos, negativeState, negativeTarget, copyItems(items), orderContext, true))
+                return AllUnpackingHandlers.MECHANICAL_CRAFTER.unpack(
+                        level, negativePos, negativeState, negativeTarget, items, orderContext, simulate);
+        }
+        if (positiveState.is(AllBlocks.MECHANICAL_CRAFTER)) {
+            boolean filterPass = true;
+            for (ItemStack item : items) {
+                if (!bridgeBE.positiveFilter.test(item)) {
+                    filterPass = false;
+                    break;
+                }
             }
+            if (filterPass && AllUnpackingHandlers.MECHANICAL_CRAFTER.unpack(
+                    level, positivePos, positiveState, positiveTarget, copyItems(items), orderContext, true))
+                return AllUnpackingHandlers.MECHANICAL_CRAFTER.unpack(
+                        level, positivePos, positiveState, positiveTarget, items, orderContext, simulate);
         }
         return AllUnpackingHandlers.DEFAULT.unpack(level, pos, state, side, items, orderContext, simulate);
     }
 
-    private static boolean unpacksIntoCrafter(
-            Level level,
-            BlockPos targetPos,
-            Direction targetDirection,
-            ServerFilteringBehaviour filter,
-            List<ItemStack> items,
-            @Nullable PackageOrderWithCrafts orderContext
-    ) {
-        if (!level.getBlockState(targetPos).is(AllBlocks.MECHANICAL_CRAFTER))
-            return false;
-        for (ItemStack item : items) {
-            if (!filter.test(item))
-                return false;
-        }
-        return unpackIntoCrafter(level, targetPos, targetDirection, copyItems(items), orderContext, true);
-    }
-
-    private static boolean unpackIntoCrafter(
-            Level level,
-            BlockPos targetPos,
-            Direction targetDirection,
-            List<ItemStack> items,
-            @Nullable PackageOrderWithCrafts orderContext,
-            boolean simulate
-    ) {
-        return AllUnpackingHandlers.MECHANICAL_CRAFTER.unpack(
-                level, targetPos, level.getBlockState(targetPos), targetDirection, items, orderContext, simulate);
-    }
-
-    private static List<ItemStack> copyItems(List<ItemStack> items) {
+    private List<ItemStack> copyItems(List<ItemStack> items) {
         List<ItemStack> copy = new ArrayList<>(items.size());
         for (ItemStack item : items) {
             copy.add(item.copy());
