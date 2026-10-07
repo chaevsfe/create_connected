@@ -3,7 +3,6 @@ package com.hlysine.create_connected.content.inventoryaccessport;
 import com.zurrtum.create.AllBlocks;
 import com.zurrtum.create.AllUnpackingHandlers;
 import com.zurrtum.create.api.packager.unpacking.UnpackingHandler;
-import com.zurrtum.create.content.redstone.DirectedDirectionalBlock;
 import com.zurrtum.create.infrastructure.component.PackageOrderWithCrafts;
 import net.minecraft.core.BlockPos;
 import net.minecraft.core.Direction;
@@ -27,17 +26,18 @@ public enum InventoryAccessPortUnpackingHandler implements UnpackingHandler {
             @Nullable PackageOrderWithCrafts orderContext,
             boolean simulate
     ) {
-        if (state.getBlock() instanceof InventoryAccessPortBlock
-                && level.getBlockEntity(pos) instanceof InventoryAccessPortBlockEntity port
-                && port.isAttached()) {
-            Direction targetDirection = DirectedDirectionalBlock.getTargetDirection(state);
-            BlockPos targetPos = pos.relative(targetDirection);
-            BlockState targetState = level.getBlockState(targetPos);
-            if (targetState.is(AllBlocks.MECHANICAL_CRAFTER)) {
-                return AllUnpackingHandlers.MECHANICAL_CRAFTER.unpack(
-                        level, targetPos, targetState, targetDirection, items, orderContext, simulate);
-            }
+        if (!(state.getBlock() instanceof InventoryAccessPortBlock))
+            return AllUnpackingHandlers.DEFAULT.unpack(level, pos, state, side, items, orderContext, simulate);
+
+        Direction targetDirection = InventoryAccessPortBlock.getTargetDirection(state);
+        BlockPos targetPos = pos.relative(targetDirection);
+        BlockState targetState = level.getBlockState(targetPos);
+
+        if (targetState.is(AllBlocks.MECHANICAL_CRAFTER)) {
+            return AllUnpackingHandlers.MECHANICAL_CRAFTER.unpack(
+                    level, targetPos, targetState, targetDirection, items, orderContext, simulate);
+        } else {
+            return AllUnpackingHandlers.DEFAULT.unpack(level, pos, state, side, items, orderContext, simulate);
         }
-        return AllUnpackingHandlers.DEFAULT.unpack(level, pos, state, side, items, orderContext, simulate);
     }
 }
