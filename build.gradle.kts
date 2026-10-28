@@ -98,6 +98,8 @@ tasks.named<Jar>("sourcesJar") {
 val allowedJarPrefixes = listOf(
     "com/hlysine/create_connected/",
     "assets/create_connected/",
+    "resourcepacks/fly_6092_chain_cogwheel/pack.mcmeta",
+    "resourcepacks/fly_6092_chain_cogwheel/assets/create_connected/",
     "data/create_connected/",
     "data/c/tags/",
     "data/minecraft/tags/",

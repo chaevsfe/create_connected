@@ -5,6 +5,7 @@ import com.hlysine.create_connected.content.ClutchValueBox;
 import com.hlysine.create_connected.content.RotationScrollValueBehaviour;
 import com.hlysine.create_connected.content.brassgearbox.BrassGearboxRenderer;
 import com.hlysine.create_connected.content.brassgearbox.BrassGearboxVisual;
+import com.hlysine.create_connected.compat.CreateFlyPacks;
 import com.hlysine.create_connected.content.chaincogwheel.ChainCogwheelRenderer;
 import com.hlysine.create_connected.content.chaincogwheel.ChainCogwheelVisual;
 import com.hlysine.create_connected.content.crankwheel.CrankWheelVisual;
@@ -83,6 +84,7 @@ public class CreateConnectedClient implements ClientModInitializer {
 
     @Override
     public void onInitializeClient() {
+        CreateFlyPacks.register();
         CCPartialModels.register();
         CCModels.register();
         registerBlockEntityRenders();
