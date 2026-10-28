@@ -2,6 +2,7 @@
   "parent": "create_connected:block/brake/block",
   "textures": {
     "0": "create_connected:block/brake_on",
+    "side": "create_connected:block/brake_on",
     "particle": "create_connected:block/brake_on"
   }
 }
