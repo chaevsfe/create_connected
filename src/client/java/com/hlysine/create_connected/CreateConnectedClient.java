@@ -6,6 +6,7 @@ import com.hlysine.create_connected.content.RotationScrollValueBehaviour;
 import com.hlysine.create_connected.content.brassgearbox.BrassGearboxRenderer;
 import com.hlysine.create_connected.content.brassgearbox.BrassGearboxVisual;
 import com.hlysine.create_connected.content.chaincogwheel.ChainCogwheelRenderer;
+import com.hlysine.create_connected.content.chaincogwheel.ChainCogwheelVisual;
 import com.hlysine.create_connected.content.crankwheel.CrankWheelVisual;
 import com.hlysine.create_connected.content.dashboard.ClientPlayerAccess;
 import com.hlysine.create_connected.foundation.ClientHitResult;
@@ -52,7 +53,6 @@ import com.zurrtum.create.client.AllItemTooltips;
 import com.zurrtum.create.client.catnip.gui.ScreenOpener;
 import com.zurrtum.create.client.content.kinetics.base.ShaftRenderer;
 import com.zurrtum.create.client.content.kinetics.crank.HandCrankRenderer;
-import com.zurrtum.create.client.content.kinetics.simpleRelays.encased.EncasedCogVisual;
 import com.zurrtum.create.client.content.kinetics.transmission.SplitShaftRenderer;
 import com.zurrtum.create.client.content.kinetics.transmission.SplitShaftVisual;
 import com.zurrtum.create.client.content.logistics.chute.ChuteRenderer;
@@ -104,7 +104,7 @@ public class CreateConnectedClient implements ClientModInitializer {
         AllBlockEntityRenders.visual(
                 CCBlockEntityTypes.ENCASED_CHAIN_COGWHEEL,
                 ChainCogwheelRenderer::new,
-                EncasedCogVisual::small
+                ChainCogwheelVisual::new
         );
         AllBlockEntityRenders.visual(CCBlockEntityTypes.CRANK_WHEEL, HandCrankRenderer::new, CrankWheelVisual::new);
         AllBlockEntityRenders.visual(
