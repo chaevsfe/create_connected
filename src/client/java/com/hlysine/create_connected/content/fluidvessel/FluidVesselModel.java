@@ -59,7 +59,9 @@ public class FluidVesselModel extends CTModel {
             for (Direction direction : Iterate.directions) {
                 if (culls[direction.get3DDataValue()])
                     continue;
-                addQuads(builder, part, direction, state, random, indices[direction.get3DDataValue()]);
+                int index = indices[direction.get3DDataValue()];
+                for (BakedQuad quad : part.getQuads(direction))
+                    builder.addCulledFace(direction, replaceQuad(state, random, index, quad));
             }
             parts.add(new SimpleModelWrapper(builder.build(), part.useAmbientOcclusion(), part.particleMaterial()));
         }
