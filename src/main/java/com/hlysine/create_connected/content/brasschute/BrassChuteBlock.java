@@ -37,7 +37,7 @@ public class BrassChuteBlock extends ChuteBlock {
             return InteractionResult.SUCCESS;
         if (shape == Shape.ENCASED) {
             level.setBlockAndUpdate(context.getClickedPos(), state.setValue(SHAPE, Shape.NORMAL));
-            level.levelEvent(LevelEvent.PARTICLES_DESTROY_BLOCK, context.getClickedPos(),
+            level.levelEvent(LevelEvent.PARTICLES_AND_SOUND_DESTROY_BLOCK, context.getClickedPos(),
                     getId(AllBlocks.BRASS_BLOCK.defaultBlockState()));
             return InteractionResult.SUCCESS;
         }

@@ -39,7 +39,7 @@ public class EncasedCrossConnectorBlock extends CrossConnectorBlock implements S
     public InteractionResult onSneakWrenched(BlockState state, UseOnContext context) {
         if (context.getLevel().isClientSide())
             return InteractionResult.SUCCESS;
-        context.getLevel().levelEvent(LevelEvent.PARTICLES_DESTROY_BLOCK, context.getClickedPos(), Block.getId(state));
+        context.getLevel().levelEvent(LevelEvent.PARTICLES_AND_SOUND_DESTROY_BLOCK, context.getClickedPos(), Block.getId(state));
         KineticBlockEntity.switchToBlockState(context.getLevel(), context.getClickedPos(),
                 CCBlocks.CROSS_CONNECTOR.defaultBlockState().setValue(AXIS, state.getValue(AXIS)));
         return InteractionResult.SUCCESS;
