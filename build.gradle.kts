@@ -2,7 +2,7 @@ import java.util.zip.ZipEntry
 import java.util.zip.ZipFile
 
 plugins {
-    id("net.fabricmc.fabric-loom") version "1.16-SNAPSHOT"
+    id("net.fabricmc.fabric-loom") version "1.19-SNAPSHOT"
     `maven-publish`
 }
 
@@ -52,8 +52,8 @@ dependencies {
     implementation("maven.modrinth:create-fly:${property("create_fabric_version")}")
 
     compileOnly("com.google.code.findbugs:jsr305:3.0.2")
-    "clientCompileOnly"("mezz.jei:jei-26.2-fabric:30.24.0.165")
-    "clientCompileOnly"("maven.modrinth:rei:26.2.820+fabric")
+    "clientCompileOnly"("mezz.jei:jei-26.3-fabric:31.17.0.108")
+    "clientCompileOnly"("maven.modrinth:rei:26.3.824+fabric")
     include(recipeViewer)
 }
 
