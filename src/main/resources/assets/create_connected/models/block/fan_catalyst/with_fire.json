@@ -109,7 +109,7 @@
     {
       "from": [2.1, 2.1, 8],
       "to": [13.9, 13.9, 8],
-      "shade": false,
+      "shade_direction_override": "up",
       "rotation": {"angle": 45, "axis": "y", "origin": [8, 8, 8], "rescale": true},
       "faces": {
         "north": {"uv": [0, 0, 16, 16], "texture": "#fire"},
@@ -119,7 +119,7 @@
     {
       "from": [8, 2.1, 2.1],
       "to": [8, 13.9, 13.9],
-      "shade": false,
+      "shade_direction_override": "up",
       "rotation": {"angle": 45, "axis": "y", "origin": [8, 8, 8], "rescale": true},
       "faces": {
         "east": {"uv": [0, 0, 16, 16], "texture": "#fire"},
