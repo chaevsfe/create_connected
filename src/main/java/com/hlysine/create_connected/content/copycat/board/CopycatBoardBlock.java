@@ -12,6 +12,7 @@ import net.minecraft.core.Position;
 import net.minecraft.core.Vec3i;
 import net.minecraft.server.level.ServerLevel;
 import net.minecraft.util.Mth;
+import net.minecraft.util.Prediction;
 import net.minecraft.world.InteractionResult;
 import net.minecraft.world.entity.player.Player;
 import net.minecraft.world.item.ItemStack;
@@ -181,7 +182,7 @@ public class CopycatBoardBlock extends MigratingWaterloggedCopycatBlock implemen
                 List<ItemStack> drops = Block.getDrops(defaultBlockState().setValue(byDirection(options.get(0)), true),
                         serverLevel, pos, world.getBlockEntity(pos), player, context.getItemInHand());
                 for (ItemStack drop : drops) {
-                    player.getInventory().placeItemBackInInventory(drop);
+                    player.getInventory().placeItemBackInInventory(drop, Prediction.SERVER_ONLY);
                 }
             }
             world.setBlockAndUpdate(pos, state.setValue(byDirection(options.get(0)), false));

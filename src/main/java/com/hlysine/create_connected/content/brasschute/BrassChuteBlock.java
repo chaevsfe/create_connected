@@ -9,6 +9,7 @@ import net.minecraft.core.BlockPos;
 import net.minecraft.core.Direction;
 import net.minecraft.sounds.SoundEvents;
 import net.minecraft.sounds.SoundSource;
+import net.minecraft.util.Prediction;
 import net.minecraft.world.InteractionHand;
 import net.minecraft.world.InteractionResult;
 import net.minecraft.world.entity.player.Player;
@@ -72,7 +73,7 @@ public class BrassChuteBlock extends ChuteBlock {
             if (be.getItem().isEmpty())
                 return InteractionResult.TRY_WITH_EMPTY_HAND;
             player.getInventory()
-                    .placeItemBackInInventory(be.getItem());
+                    .placeItemBackInInventory(be.getItem(), Prediction.SERVER_ONLY);
             be.setItem(ItemStack.EMPTY);
             return InteractionResult.SUCCESS;
         });

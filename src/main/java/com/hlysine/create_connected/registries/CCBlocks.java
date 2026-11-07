@@ -108,12 +108,12 @@ public class CCBlocks {
 
     public static final ParallelGearboxBlock PARALLEL_GEARBOX = toggle(
             registerBlock("parallel_gearbox", ParallelGearboxBlock::new,
-                    Properties.ofFullCopy(Blocks.ANDESITE).noOcclusion().mapColor(MapColor.PODZOL).pushReaction(PushReaction.PUSH_ONLY)),
+                    Properties.ofFullCopy(Blocks.ANDESITE).noOcclusion().mapColor(MapColor.PODZOL).pushReaction(PushReaction.PUSH)),
             FeatureCategory.KINETIC);
 
     public static final SixWayGearboxBlock SIX_WAY_GEARBOX = toggle(
             registerBlock("six_way_gearbox", SixWayGearboxBlock::new,
-                    Properties.ofFullCopy(Blocks.ANDESITE).noOcclusion().mapColor(MapColor.PODZOL).pushReaction(PushReaction.PUSH_ONLY)),
+                    Properties.ofFullCopy(Blocks.ANDESITE).noOcclusion().mapColor(MapColor.PODZOL).pushReaction(PushReaction.PUSH)),
             FeatureCategory.KINETIC);
 
     public static final CrossConnectorBlock CROSS_CONNECTOR = toggle(
@@ -176,7 +176,7 @@ public class CCBlocks {
 
     public static final BrassGearboxBlock BRASS_GEARBOX = toggle(
             registerBlock("brass_gearbox", BrassGearboxBlock::new,
-                    Properties.ofFullCopy(Blocks.ANDESITE).noOcclusion().mapColor(MapColor.TERRACOTTA_BROWN).pushReaction(PushReaction.PUSH_ONLY)),
+                    Properties.ofFullCopy(Blocks.ANDESITE).noOcclusion().mapColor(MapColor.TERRACOTTA_BROWN).pushReaction(PushReaction.PUSH)),
             FeatureCategory.KINETIC);
 
     public static final BrakeBlock BRAKE = toggle(

@@ -16,6 +16,7 @@ import com.zurrtum.create.foundation.placement.PoleHelper;
 import net.minecraft.core.BlockPos;
 import net.minecraft.core.Direction;
 import net.minecraft.core.component.DataComponentPatch;
+import net.minecraft.util.Prediction;
 import net.minecraft.world.InteractionHand;
 import net.minecraft.world.InteractionResult;
 import net.minecraft.world.entity.LivingEntity;
@@ -179,7 +180,7 @@ public class KineticBatteryBlock extends DirectionalKineticBlock implements IBE<
             if (stack.isEmpty()) {
                 player.setItemInHand(hand, leftover);
             } else if (!player.getInventory().add(leftover)) {
-                player.drop(leftover, false);
+                player.drop(leftover, false, Prediction.SERVER_ONLY);
             }
         }
 
