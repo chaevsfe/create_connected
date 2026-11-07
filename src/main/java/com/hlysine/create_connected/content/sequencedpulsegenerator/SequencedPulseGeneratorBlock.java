@@ -7,7 +7,6 @@ import com.zurrtum.create.content.redstone.diodes.AbstractDiodeBlock;
 import com.zurrtum.create.content.redstone.diodes.BrassDiodeBlock;
 import com.zurrtum.create.content.redstone.diodes.PoweredLatchBlock;
 import com.zurrtum.create.foundation.block.IBE;
-import com.zurrtum.create.foundation.block.RedStoneConnectBlock;
 import net.minecraft.core.BlockPos;
 import net.minecraft.core.Direction;
 import net.minecraft.server.level.ServerLevel;
@@ -29,9 +28,10 @@ import net.minecraft.world.level.block.state.properties.BooleanProperty;
 import net.minecraft.world.phys.BlockHitResult;
 
 import java.util.function.Consumer;
+import org.jspecify.annotations.Nullable;
 
 public class SequencedPulseGeneratorBlock extends AbstractDiodeBlock
-        implements IBE<SequencedPulseGeneratorBlockEntity>, RedStoneConnectBlock {
+        implements IBE<SequencedPulseGeneratorBlockEntity> {
 
     public static final BooleanProperty POWERING = BrassDiodeBlock.POWERING;
     public static final BooleanProperty POWERED_SIDE = PoweredLatchBlock.POWERED_SIDE;
@@ -114,7 +114,7 @@ public class SequencedPulseGeneratorBlock extends AbstractDiodeBlock
     }
 
     @Override
-    public boolean canConnectRedstone(BlockState state, Direction side) {
+    protected boolean shouldRedstoneWireConnectTo(BlockState state, BlockGetter level, BlockPos pos, @Nullable Direction side) {
         if (side == null)
             return false;
         return side.getAxis().isHorizontal();
