@@ -20,7 +20,10 @@ repositories {
         content { includeGroup("maven.modrinth") }
     }
     maven("https://maven.blamejared.com/") {
-        content { includeGroup("mezz.jei") }
+        content {
+            includeGroup("mezz.jei")
+            includeGroup("net.mezzdev.config")
+        }
     }
     flatDir {
         dirs("libs", "../../create-rei/CreateReiViewer-Fly/build/libs")
