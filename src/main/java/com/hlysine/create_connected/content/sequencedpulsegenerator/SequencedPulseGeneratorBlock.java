@@ -2,7 +2,6 @@ package com.hlysine.create_connected.content.sequencedpulsegenerator;
 
 import com.hlysine.create_connected.foundation.advancement.AdvancementBehaviour;
 import com.hlysine.create_connected.registries.CCBlockEntityTypes;
-import com.mojang.serialization.MapCodec;
 import com.zurrtum.create.AllItems;
 import com.zurrtum.create.content.redstone.diodes.AbstractDiodeBlock;
 import com.zurrtum.create.content.redstone.diodes.BrassDiodeBlock;
@@ -22,7 +21,6 @@ import net.minecraft.world.item.ItemStack;
 import net.minecraft.world.level.BlockGetter;
 import net.minecraft.world.level.Level;
 import net.minecraft.world.level.block.Block;
-import net.minecraft.world.level.block.DiodeBlock;
 import net.minecraft.world.level.block.entity.BlockEntity;
 import net.minecraft.world.level.block.entity.BlockEntityType;
 import net.minecraft.world.level.block.state.BlockState;
@@ -38,8 +36,6 @@ public class SequencedPulseGeneratorBlock extends AbstractDiodeBlock
     public static final BooleanProperty POWERING = BrassDiodeBlock.POWERING;
     public static final BooleanProperty POWERED_SIDE = PoweredLatchBlock.POWERED_SIDE;
 
-    public static final MapCodec<SequencedPulseGeneratorBlock> CODEC = simpleCodec(SequencedPulseGeneratorBlock::new);
-
     private static Consumer<SequencedPulseGeneratorBlockEntity> screenOpener = be -> {
     };
 
@@ -54,11 +50,6 @@ public class SequencedPulseGeneratorBlock extends AbstractDiodeBlock
                 .setValue(POWERING, false)
                 .setValue(POWERED_SIDE, false)
         );
-    }
-
-    @Override
-    protected MapCodec<? extends DiodeBlock> codec() {
-        return CODEC;
     }
 
     @Override

@@ -1,7 +1,6 @@
 package com.hlysine.create_connected.content.dashboard;
 
 import com.hlysine.create_connected.registries.CCBlockEntityTypes;
-import com.mojang.serialization.MapCodec;
 import com.zurrtum.create.AllItems;
 import com.zurrtum.create.AllShapes;
 import com.zurrtum.create.content.equipment.wrench.IWrenchable;
@@ -46,8 +45,6 @@ import java.util.List;
 public class DashboardBlock extends HorizontalDirectionalBlock implements IWrenchable, ProperWaterloggedBlock, IBE<DashboardBlockEntity> {
 
     public static final BooleanProperty OPEN = BooleanProperty.create("open");
-
-    public static final MapCodec<DashboardBlock> CODEC = simpleCodec(DashboardBlock::new);
 
     public DashboardBlock(Properties properties) {
         super(properties);
@@ -161,11 +158,6 @@ public class DashboardBlock extends HorizontalDirectionalBlock implements IWrenc
     public VoxelShape getCollisionShape(BlockState pState, BlockGetter pLevel, BlockPos pPos,
                                         CollisionContext pContext) {
         return AllShapes.CONTROLS_COLLISION.get(pState.getValue(FACING));
-    }
-
-    @Override
-    protected MapCodec<? extends HorizontalDirectionalBlock> codec() {
-        return CODEC;
     }
 
     @Override

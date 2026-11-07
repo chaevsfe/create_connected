@@ -3,7 +3,6 @@ package com.hlysine.create_connected.content.linkedtransmitter;
 import com.hlysine.create_connected.foundation.ClientHitResult;
 import com.hlysine.create_connected.registries.CCBlockEntityTypes;
 import com.hlysine.create_connected.registries.CCItems;
-import com.mojang.serialization.MapCodec;
 import com.zurrtum.create.AllBlocks;
 import com.zurrtum.create.AllSoundEvents;
 import com.zurrtum.create.api.schematic.requirement.SpecialBlockItemRequirement;
@@ -56,9 +55,6 @@ public class LinkedAnalogLeverBlock extends FaceAttachedHorizontalDirectionalBlo
     public static BooleanProperty LOCKED = BlockStateProperties.LOCKED;
 
     public static final BooleanProperty POWERED = BlockStateProperties.POWERED;
-
-    public static final MapCodec<LinkedAnalogLeverBlock> CODEC =
-            simpleCodec(p -> new LinkedAnalogLeverBlock(p, () -> AllBlocks.ANALOG_LEVER));
 
     private final Supplier<AnalogLeverBlock> baseSupplier;
     private final Function<BlockState, VoxelShape> shapeFunction;
@@ -244,11 +240,6 @@ public class LinkedAnalogLeverBlock extends FaceAttachedHorizontalDirectionalBlo
     @Override
     protected boolean isPathfindable(BlockState state, PathComputationType pathComputationType) {
         return false;
-    }
-
-    @Override
-    protected MapCodec<? extends FaceAttachedHorizontalDirectionalBlock> codec() {
-        return CODEC;
     }
 
     @Override
