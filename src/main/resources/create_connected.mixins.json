@@ -26,6 +26,7 @@
     "copycat.stairs.StructureTransformMixin",
     "copycat.wall.TrackPaverMixin",
     "copycat.wall.WallBlockMixin",
+    "datafix.DataFixersMixin",
     "fluidvessel.BlazeBurnerBlockEntityMixin",
     "fluidvessel.FluidTankBlockEntityMixin",
     "fluidvessel.SteamEngineBlockEntityMixin",
