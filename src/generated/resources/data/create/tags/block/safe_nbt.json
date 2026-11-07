@@ -3,6 +3,7 @@
     "create_connected:sequenced_pulse_generator",
     "create_connected:linked_stone_button",
     "create_connected:linked_polished_blackstone_button",
+    "create_connected:linked_poplar_button",
     "create_connected:linked_oak_button",
     "create_connected:linked_spruce_button",
     "create_connected:linked_birch_button",
