@@ -105,11 +105,11 @@ public class DashboardRenderer implements BlockEntityRenderer<DashboardBlockEnti
         matrices.pushPose();
 
         matrices.translate(0.5f, 0.5f, 0.5f);
-        matrices.mulPose(state.yRot);
+        matrices.rotate(state.yRot);
         matrices.translate(-0.5f, -0.5f, -0.5f);
 
         matrices.translate(0.5f, 12 / 16f, 9 / 16f);
-        matrices.mulPose(Axis.XP.rotationDegrees(-66.80141f));
+        matrices.rotate(Axis.XP.rotationDegrees(-66.80141f));
         matrices.translate(0, 3.5f / 16f, 0.15f / 16f);
 
         matrices.scale(SCALE, -SCALE, SCALE);

@@ -80,9 +80,20 @@ public class FanCatalystRotatingHeadRenderer implements BlockEntityRenderer<FanC
             renderType,
             state.lightCoords,
             OverlayTexture.NO_OVERLAY,
-            -1,
-            state.breakProgress
+            -1
         );
+        if (state.breakProgress != null) {
+            queue.order(1).submitCrumblingOverlay(
+                model,
+                modelState,
+                matrices,
+                renderType,
+                state.lightCoords,
+                OverlayTexture.NO_OVERLAY,
+                -1,
+                state.breakProgress
+            );
+        }
         matrices.popPose();
     }
 

@@ -209,7 +209,7 @@ public class FluidVesselRenderer implements BlockEntityRenderer<FluidVesselBlock
             matrices.translate(centerX, 0.5f, centerZ);
             for (Quaternionf yRot : faces) {
                 matrices.pushPose();
-                matrices.mulPose(yRot);
+                matrices.rotate(yRot);
                 matrices.translate(gaugeOffsetX - 0.5f, -0.5f, -0.5f);
                 gauge.submit(matrices, queue);
                 if (xRot != null) {
