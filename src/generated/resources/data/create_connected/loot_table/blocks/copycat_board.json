@@ -3,18 +3,21 @@
   "pools": [
     {
       "bonus_rolls": 0.0,
-      "conditions": [
-        {
-          "condition": "minecraft:survives_explosion"
-        },
-        {
-          "block": "create_connected:copycat_board",
-          "condition": "minecraft:block_state_property",
-          "properties": {
-            "down": "true"
+      "condition": {
+        "type": "minecraft:all_of",
+        "terms": [
+          {
+            "type": "minecraft:survives_explosion"
+          },
+          {
+            "type": "minecraft:match_block",
+            "blocks": "create_connected:copycat_board",
+            "state": {
+              "down": "true"
+            }
           }
-        }
-      ],
+        ]
+      },
       "entries": [
         {
           "type": "minecraft:item",
@@ -25,18 +28,21 @@
     },
     {
       "bonus_rolls": 0.0,
-      "conditions": [
-        {
-          "condition": "minecraft:survives_explosion"
-        },
-        {
-          "block": "create_connected:copycat_board",
-          "condition": "minecraft:block_state_property",
-          "properties": {
-            "up": "true"
+      "condition": {
+        "type": "minecraft:all_of",
+        "terms": [
+          {
+            "type": "minecraft:survives_explosion"
+          },
+          {
+            "type": "minecraft:match_block",
+            "blocks": "create_connected:copycat_board",
+            "state": {
+              "up": "true"
+            }
           }
-        }
-      ],
+        ]
+      },
       "entries": [
         {
           "type": "minecraft:item",
@@ -47,18 +53,21 @@
     },
     {
       "bonus_rolls": 0.0,
-      "conditions": [
-        {
-          "condition": "minecraft:survives_explosion"
-        },
-        {
-          "block": "create_connected:copycat_board",
-          "condition": "minecraft:block_state_property",
-          "properties": {
-            "north": "true"
+      "condition": {
+        "type": "minecraft:all_of",
+        "terms": [
+          {
+            "type": "minecraft:survives_explosion"
+          },
+          {
+            "type": "minecraft:match_block",
+            "blocks": "create_connected:copycat_board",
+            "state": {
+              "north": "true"
+            }
           }
-        }
-      ],
+        ]
+      },
       "entries": [
         {
           "type": "minecraft:item",
@@ -69,18 +78,21 @@
     },
     {
       "bonus_rolls": 0.0,
-      "conditions": [
-        {
-          "condition": "minecraft:survives_explosion"
-        },
-        {
-          "block": "create_connected:copycat_board",
-          "condition": "minecraft:block_state_property",
-          "properties": {
-            "south": "true"
+      "condition": {
+        "type": "minecraft:all_of",
+        "terms": [
+          {
+            "type": "minecraft:survives_explosion"
+          },
+          {
+            "type": "minecraft:match_block",
+            "blocks": "create_connected:copycat_board",
+            "state": {
+              "south": "true"
+            }
           }
-        }
-      ],
+        ]
+      },
       "entries": [
         {
           "type": "minecraft:item",
@@ -91,18 +103,21 @@
     },
     {
       "bonus_rolls": 0.0,
-      "conditions": [
-        {
-          "condition": "minecraft:survives_explosion"
-        },
-        {
-          "block": "create_connected:copycat_board",
-          "condition": "minecraft:block_state_property",
-          "properties": {
-            "west": "true"
+      "condition": {
+        "type": "minecraft:all_of",
+        "terms": [
+          {
+            "type": "minecraft:survives_explosion"
+          },
+          {
+            "type": "minecraft:match_block",
+            "blocks": "create_connected:copycat_board",
+            "state": {
+              "west": "true"
+            }
           }
-        }
-      ],
+        ]
+      },
       "entries": [
         {
           "type": "minecraft:item",
@@ -113,18 +128,21 @@
     },
     {
       "bonus_rolls": 0.0,
-      "conditions": [
-        {
-          "condition": "minecraft:survives_explosion"
-        },
-        {
-          "block": "create_connected:copycat_board",
-          "condition": "minecraft:block_state_property",
-          "properties": {
-            "east": "true"
+      "condition": {
+        "type": "minecraft:all_of",
+        "terms": [
+          {
+            "type": "minecraft:survives_explosion"
+          },
+          {
+            "type": "minecraft:match_block",
+            "blocks": "create_connected:copycat_board",
+            "state": {
+              "east": "true"
+            }
           }
-        }
-      ],
+        ]
+      },
       "entries": [
         {
           "type": "minecraft:item",
