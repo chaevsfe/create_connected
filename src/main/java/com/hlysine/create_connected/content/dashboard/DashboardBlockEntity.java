@@ -26,7 +26,7 @@ import java.util.List;
 
 public class DashboardBlockEntity extends SmartBlockEntity implements DisplayHolder {
 
-    SignText text = new SignText().setColor(DyeColor.WHITE);
+    SignText text = SignText.EMPTY.withColor(DyeColor.WHITE);
     private @Nullable CompoundTag displayLink;
     int cycleTimer = 0;
     boolean wasDisplaying;
@@ -64,15 +64,15 @@ public class DashboardBlockEntity extends SmartBlockEntity implements DisplayHol
     }
 
     public void setLine(int line, Component text) {
-        this.setText(this.getText().setMessage(line, text));
+        this.setText(this.getText().asMutable().setLine(line, text).asImmutable());
     }
 
     public void clearText() {
-        SignText text = this.getText();
+        SignText.Mutable text = this.getText().asMutable();
         for (int i = 0; i < SignText.LINES; i++) {
-            text = text.setMessage(i, Component.empty());
+            text.setLine(i, Component.empty());
         }
-        this.setText(text);
+        this.setText(text.asImmutable());
     }
 
     public int getMaxTextLineWidth() {
@@ -93,7 +93,7 @@ public class DashboardBlockEntity extends SmartBlockEntity implements DisplayHol
         MutableComponent status = Component.empty();
         boolean needSpacer = false;
         for (int i = 0; i < SignText.LINES; i++) {
-            Component line = this.text.getMessage(i, false);
+            Component line = this.text.getMessages(false).get(i);
             if (line.getString().isEmpty()) continue;
             if (needSpacer)
                 status.append("   ");
@@ -181,14 +181,14 @@ public class DashboardBlockEntity extends SmartBlockEntity implements DisplayHol
     @Override
     protected void write(ValueOutput view, boolean clientPacket) {
         super.write(view, clientPacket);
-        view.store("text", SignText.DIRECT_CODEC, text);
+        view.store("text", SignText.CODEC, text);
         writeDisplayLink(view);
     }
 
     @Override
     protected void read(ValueInput view, boolean clientPacket) {
         super.read(view, clientPacket);
-        view.read("text", SignText.DIRECT_CODEC).ifPresent(signText -> this.text = signText);
+        view.read("text", SignText.CODEC).ifPresent(signText -> this.text = signText);
         readDisplayLink(view);
     }
 }

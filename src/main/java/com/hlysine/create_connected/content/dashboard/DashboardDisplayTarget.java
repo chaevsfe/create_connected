@@ -19,7 +19,7 @@ public class DashboardDisplayTarget extends DisplayTarget {
             return;
 
         boolean changed = false;
-        SignText signText = dashboard.getText();
+        SignText.Mutable signText = dashboard.getText().asMutable();
         for (int i = 0; i < text.size() && i + line < 4; i++) {
             if (i == 0)
                 reserve(i + line, dashboard, context);
@@ -27,12 +27,12 @@ public class DashboardDisplayTarget extends DisplayTarget {
                 break;
 
             String content = text.get(i).getString(dashboard.getMaxTextLineWidth());
-            signText = signText.setMessage(i + line, Component.literal(content));
+            signText.setLine(i + line, Component.literal(content));
             changed = true;
         }
 
         if (changed) {
-            dashboard.setText(signText);
+            dashboard.setText(signText.asImmutable());
         }
     }
 

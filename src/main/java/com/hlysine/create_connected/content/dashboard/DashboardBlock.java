@@ -31,6 +31,7 @@ import net.minecraft.world.level.block.HorizontalDirectionalBlock;
 import net.minecraft.world.level.block.entity.BlockEntityType;
 import net.minecraft.world.level.block.entity.SignBlockEntity;
 import net.minecraft.world.level.block.entity.SignText;
+import net.minecraft.world.level.block.entity.SignTextSlot;
 import net.minecraft.world.level.block.state.BlockState;
 import net.minecraft.world.level.block.state.StateDefinition;
 import net.minecraft.world.level.block.state.properties.BooleanProperty;
@@ -75,14 +76,15 @@ public class DashboardBlock extends HorizontalDirectionalBlock implements IWrenc
                 this.withBlockEntityDo(level, blockPos, be -> {
                     List<ClipboardEntry> entries = ClipboardEntry.getLastViewedEntries(stack);
                     int line = 0;
-                    SignText text = be.getText();
+                    SignText.Mutable text = be.getText().asMutable();
                     for (ClipboardEntry entry : entries) {
                         for (String string : entry.text.getString()
                                 .split("\n")) {
-                            text = text.setMessage(line++, Component.literal(string));
+                            if (line < SignText.LINES)
+                                text.setLine(line++, Component.literal(string));
                         }
                     }
-                    be.setText(text);
+                    be.setText(text.asImmutable());
                 });
                 return InteractionResult.SUCCESS;
             }
@@ -98,11 +100,11 @@ public class DashboardBlock extends HorizontalDirectionalBlock implements IWrenc
             this.withBlockEntityDo(level, blockPos, be -> {
                 final SignBlockEntity dummySign = new SignBlockEntity(blockPos, Blocks.OAK_SIGN.defaultBlockState());
                 dummySign.setLevel(be.getLevel());
-                dummySign.setText(be.text, true);
+                dummySign.setText(be.text, SignTextSlot.FRONT);
                 dummySign.setWaxed(true);
 
-                if (signApplicator.canApplyToSign(be.text, heldItem, player) && signApplicator.tryApplyToSign(be.getLevel(), dummySign, true, heldItem, player)) {
-                    be.setText(dummySign.getText(true));
+                if (signApplicator.canApplyToSign(be.text, heldItem, player) && signApplicator.tryApplyToSign(be.getLevel(), dummySign, SignTextSlot.FRONT, heldItem, player)) {
+                    be.setText(dummySign.getText(SignTextSlot.FRONT));
                     success.setTrue();
                 }
             });
