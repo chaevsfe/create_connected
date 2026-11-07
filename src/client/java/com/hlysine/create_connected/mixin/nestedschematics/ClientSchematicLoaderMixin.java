@@ -42,7 +42,7 @@ public class ClientSchematicLoaderMixin {
         try (Stream<Path> entries = Files.list(folder)) {
             entries.forEach(path -> {
                 if (Files.isDirectory(path)) {
-                    if (canRecurse && (depth != 0 || !path.getFileName().toString().equals("uploaded")))
+                    if (canRecurse && !path.equals(CreatePaths.UPLOADED_SCHEMATICS_DIR) && !path.equals(CreatePaths.SCHEMATICS_BACKUPS_DIR))
                         create_connected$searchInSubfolder(path, depth + 1);
                 } else if (depth != 0 && path.getFileName().toString().endsWith(".nbt")) {
                     availableSchematics.add(Component.literal(base.relativize(path).toString().replace('\\', '/')));
