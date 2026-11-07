@@ -25,7 +25,6 @@ import net.minecraft.world.level.Level;
 import net.minecraft.world.level.block.Block;
 import net.minecraft.world.level.block.entity.BlockEntityType;
 import net.minecraft.world.level.block.state.BlockState;
-import org.jspecify.annotations.Nullable;
 
 public class FluidVesselItem extends BlockItem {
 
@@ -43,28 +42,33 @@ public class FluidVesselItem extends BlockItem {
     }
 
     @Override
-    protected boolean updateCustomBlockEntityTag(BlockPos blockPos, Level level, @Nullable Player player,
-                                                 ItemStack itemStack, BlockState blockState) {
-        MinecraftServer minecraftserver = level.getServer();
-        if (minecraftserver == null)
+    protected boolean placeBlock(BlockPlaceContext context, BlockState placementState) {
+        if (!super.placeBlock(context, placementState))
             return false;
-        TypedEntityData<BlockEntityType<?>> data = itemStack.get(DataComponents.BLOCK_ENTITY_DATA);
-        if (data != null) {
-            CompoundTag nbt = data.copyTagWithoutId();
-            nbt.remove("Luminosity");
-            nbt.remove("Size");
-            nbt.remove("Height");
-            nbt.remove("Controller");
-            nbt.remove("LastKnownPos");
-            FluidStack fluid = FluidStack.fromNbt(minecraftserver.registryAccess(), nbt.getCompound("Fluid"));
-            if (!fluid.isEmpty()) {
-                fluid.setAmount(Math.min(FluidVesselBlockEntity.getCapacityMultiplier(), fluid.getAmount()));
-                nbt.put("Fluid", fluid.toNbt(minecraftserver.registryAccess()));
+        Level level = context.getLevel();
+        if (level.getBlockState(context.getClickedPos()).is(placementState.getBlock())) {
+            MinecraftServer minecraftserver = level.getServer();
+            if (minecraftserver != null) {
+                ItemStack itemStack = context.getItemInHand();
+                TypedEntityData<BlockEntityType<?>> data = itemStack.get(DataComponents.BLOCK_ENTITY_DATA);
+                if (data != null) {
+                    CompoundTag nbt = data.copyTagWithoutId();
+                    nbt.remove("Luminosity");
+                    nbt.remove("Size");
+                    nbt.remove("Height");
+                    nbt.remove("Controller");
+                    nbt.remove("LastKnownPos");
+                    FluidStack fluid = FluidStack.fromNbt(minecraftserver.registryAccess(), nbt.getCompound("Fluid"));
+                    if (!fluid.isEmpty()) {
+                        fluid.setAmount(Math.min(FluidVesselBlockEntity.getCapacityMultiplier(), fluid.getAmount()));
+                        nbt.put("Fluid", fluid.toNbt(minecraftserver.registryAccess()));
+                    }
+                    itemStack.set(DataComponents.BLOCK_ENTITY_DATA,
+                            TypedEntityData.of(((IBE<?>) getBlock()).getBlockEntityType(), nbt));
+                }
             }
-            itemStack.set(DataComponents.BLOCK_ENTITY_DATA,
-                    TypedEntityData.of(((IBE<?>) getBlock()).getBlockEntityType(), nbt));
         }
-        return super.updateCustomBlockEntityTag(blockPos, level, player, itemStack, blockState);
+        return true;
     }
 
     private void tryMultiPlace(BlockPlaceContext ctx) {

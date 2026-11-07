@@ -8,7 +8,7 @@ import net.minecraft.core.Direction;
 import net.minecraft.world.entity.player.Player;
 import net.minecraft.world.item.BlockItem;
 import net.minecraft.world.item.Item;
-import net.minecraft.world.item.ItemStack;
+import net.minecraft.world.item.context.BlockPlaceContext;
 import net.minecraft.world.level.Level;
 import net.minecraft.world.level.block.Block;
 import net.minecraft.world.level.block.state.BlockState;
@@ -28,13 +28,12 @@ public class VerticalBrassGearboxItem extends BlockItem {
     }
 
     @Override
-    protected boolean updateCustomBlockEntityTag(
-            BlockPos pos,
-            Level world,
-            @Nullable Player player,
-            ItemStack stack,
-            BlockState state
-    ) {
+    protected @Nullable BlockState getPlacementState(BlockPlaceContext context) {
+        BlockState state = super.getPlacementState(context);
+        if (state == null)
+            return null;
+        BlockPos pos = context.getClickedPos();
+        Level world = context.getLevel();
         Direction.Axis prefferedAxis = null;
         for (Direction side : Iterate.horizontalDirections) {
             BlockState blockState = world.getBlockState(pos.relative(side));
@@ -49,10 +48,12 @@ public class VerticalBrassGearboxItem extends BlockItem {
             }
         }
 
-        Direction.Axis axis = prefferedAxis == null ? player.getDirection().getClockWise().getAxis()
-                : prefferedAxis == Direction.Axis.X ? Direction.Axis.Z : Direction.Axis.X;
-        world.setBlockAndUpdate(pos, state.setValue(BlockStateProperties.AXIS, axis));
-        return super.updateCustomBlockEntityTag(pos, world, player, stack, state);
+        if (prefferedAxis != null)
+            return state.setValue(BlockStateProperties.AXIS, prefferedAxis == Direction.Axis.X ? Direction.Axis.Z : Direction.Axis.X);
+        Player player = context.getPlayer();
+        if (player != null)
+            return state.setValue(BlockStateProperties.AXIS, player.getDirection().getClockWise().getAxis());
+        return state;
     }
 
 }
