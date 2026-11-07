@@ -69,6 +69,7 @@ public interface LinkedTransmitterBlock {
             level.setBlock(pos, newState, Block.UPDATE_KNOWN_SHAPE | Block.UPDATE_ALL);
             level.gameEvent(GameEvent.BLOCK_CHANGE, pos, GameEvent.Context.of(player, newState));
             level.levelEvent(player, 3003, pos, 0);
+            level.playSound(player, pos, SoundEvents.HONEYCOMB_WAX_ON, SoundSource.BLOCKS, 1.0F, 1.0F);
             return InteractionResult.SUCCESS;
         }
         if (stack.is(ItemTags.AXES) && state.getValue(BlockStateProperties.LOCKED)) {
