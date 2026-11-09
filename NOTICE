@@ -29,6 +29,18 @@ As required by the additional terms of the licence, this port is
 distributed under a distinct name and a distinct icon to avoid confusion
 with the original program.
 
+Music
+-----
+elevator_music.ogg is "Casa Bossa Nova" and interlude_music.ogg is "Local
+Forecast - Elevator", both by Kevin MacLeod, unmodified. Upstream credits them:
+
+  Casa Bossa Nova Kevin MacLeod (incompetech.com)
+  Licensed under Creative Commons: By Attribution 3.0 License
+  http://creativecommons.org/licenses/by/3.0/
+  Local Forecast - Elevator Kevin MacLeod (incompetech.com)
+  Licensed under Creative Commons: By Attribution 3.0 License
+  http://creativecommons.org/licenses/by/3.0/
+
 Licence
 -------
 The original work is licensed under the GNU Affero General Public License v3.0 or later (AGPL-3.0-or-later),
@@ -39,8 +51,12 @@ accompanies this file as LICENSE.
 Adapted code
 ------------
 ChainCogwheelVisual and ChainCogwheelRenderer adapt Create's
-EncasedCogVisual and EncasedSmallCogRenderer as ported to Fabric by
-Create Fly (ZurrTum, CC0-1.0). Create's code is used under the MIT License:
+EncasedCogVisual and EncasedSmallCogRenderer, and FluidVesselRenderer,
+LinkedAnalogLeverRenderer and ItemSiloBlockEntity adapt Create's
+FluidTankRenderer, AnalogLeverRenderer and ItemVaultBlockEntity, as ported
+to Fabric by Create Fly (ZurrTum, CC0-1.0); other renderers, visuals and
+block entities draw on Create's code in the same way. Create's code is used
+under the MIT License:
 
   MIT License
 
