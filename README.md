@@ -11,9 +11,9 @@ Quality-of-life additions for Create: gearboxes, clutches, item silos, fluid ves
 
 | Component | Version |
 | --- | --- |
-| Minecraft | `26.2` |
+| Minecraft | `26.1`, `26.1.1` or `26.1.2` |
 | Mod loader | Fabric Loader `0.19.3` or newer |
-| Create Fly | `6.0.9-1` or newer |
+| Create Fly | `6.0.9-4` or newer |
 | Fabric API | required |
 | Java | `25` or newer |
 | Environments | Client and server |
