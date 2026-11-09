@@ -10,6 +10,7 @@ public abstract class MigratingCopycatBlock extends CopycatBlock {
 
     public MigratingCopycatBlock(Properties pProperties) {
         super(pProperties);
+        registerDefaultState(defaultBlockState().setValue(EMISSIVE, false));
     }
 
     protected boolean isSelfState(BlockState state) {
